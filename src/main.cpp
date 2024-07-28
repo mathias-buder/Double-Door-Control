@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <TimerOne.h>
 
 #define RBG_1_R         5
 #define RBG_1_G         6
@@ -8,14 +9,24 @@
 #define TUERSCHALTER_1  3
 #define TUERMAGNET_1    4
 
+int ledState = LOW;
+
+void blinkLed(){
+  ledState = !ledState;
+  digitalWrite(RBG_1_R, ledState);
+}
 
 void setup() {
   digitalWrite(RBG_1_R, HIGH);
   digitalWrite(RBG_1_G, HIGH);
   digitalWrite(RBG_1_B, HIGH);
 
-
+  Timer1.initialize(500000); //The led will blink in a half second time interval
+  Timer1.attachInterrupt(blinkLed);
 }
+
+
+
 
 void loop() {
   
