@@ -77,12 +77,12 @@
     {
       "type": "wokwi-resistor",
       "id": "r4",
-      "top": 427.2,
+      "top": 465.6,
       "left": 268.25,
       "rotate": 90,
       "attrs": { "value": "10000" }
     },
-    { "type": "wokwi-gnd", "id": "gnd4", "top": 489.6, "left": 287.4, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd4", "top": 528, "left": 287.4, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd5", "top": 57.6, "left": 162.6, "attrs": {} },
     {
       "type": "wokwi-resistor",
@@ -113,7 +113,25 @@
     },
     { "type": "wokwi-gnd", "id": "gnd6", "top": -105.6, "left": 709.8, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd7", "top": -105.6, "left": 623.4, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd8", "top": 28.8, "left": 556.2, "attrs": {} }
+    { "type": "wokwi-gnd", "id": "gnd8", "top": 28.8, "left": 556.2, "attrs": {} },
+    {
+      "type": "wokwi-resistor",
+      "id": "r8",
+      "top": 475.2,
+      "left": 469.85,
+      "rotate": 90,
+      "attrs": { "value": "1000" }
+    },
+    { "type": "wokwi-gnd", "id": "gnd9", "top": 528, "left": 489, "attrs": {} },
+    {
+      "type": "wokwi-resistor",
+      "id": "r9",
+      "top": -100.8,
+      "left": 412.25,
+      "rotate": 90,
+      "attrs": { "value": "1000" }
+    },
+    { "type": "wokwi-gnd", "id": "gnd10", "top": -57.6, "left": 431.4, "attrs": {} }
   ],
   "connections": [
     [ "r2:2", "gnd1:GND", "green", [ "h0" ] ],
@@ -125,7 +143,6 @@
     [ "relay2:GND", "gnd3:GND", "black", [ "h0" ] ],
     [ "uno:4", "relay2:IN", "green", [ "v0" ] ],
     [ "rgb1:COM", "r4:1", "green", [ "v0" ] ],
-    [ "r4:2", "gnd4:GND", "green", [ "h0" ] ],
     [ "rgb1:B", "uno:5", "green", [ "h78.4", "v-259.2" ] ],
     [ "rgb1:G", "uno:6", "green", [ "v9.6", "h78.1", "v-268.8" ] ],
     [ "rgb1:R", "uno:7", "green", [ "v19.2", "h76.8", "v-278.4" ] ],
@@ -147,7 +164,12 @@
     [ "vcc6:VCC", "sw1:3", "red", [ "v0" ] ],
     [ "r6:1", "sw1:2", "green", [ "h0" ] ],
     [ "r6:2", "gnd7:GND", "green", [ "h0" ] ],
-    [ "uno:9", "sw1:2", "green", [ "h0.8", "v-297.6", "h287.9" ] ]
+    [ "uno:9", "sw1:2", "green", [ "h0.8", "v-297.6", "h287.9" ] ],
+    [ "relay2:IN", "r8:1", "green", [ "h0" ] ],
+    [ "gnd9:GND", "r8:2", "black", [ "v0" ] ],
+    [ "r9:2", "gnd10:GND", "green", [ "h0" ] ],
+    [ "r9:1", "relay1:IN", "green", [ "h0", "v-19.2", "h38.4", "v153.6" ] ],
+    [ "r4:2", "gnd4:GND", "green", [ "h0" ] ]
   ],
   "dependencies": {}
 }
