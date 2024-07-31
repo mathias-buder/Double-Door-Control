@@ -1,136 +1,337 @@
 #include <Arduino.h>
+#include <ArduinoLog.h>
 #include <TimerOne.h>
 
-/****************************************************************************************/
-/*                                    PIN KONFIGURATION                                 */
-/****************************************************************************************/
-/* TÜR 1 */
-/****************************************************************************************/
-#define RBG_LED_1_R       5   /*!< Pin für die rote LED der RGB-LED */
-#define RBG_LED_1_G       6   /*!< Pin für die grüne LED der RGB-LED */
-#define RBG_LED_1_B       7   /*!< Pin für die blaue LED der RGB-LED */
-
-#define TUER_1_TASTER     2   /*!< Pin für den Taster an Tür 1 */
-#define TUER_1_SCHALTER   3   /*!< Pin für den Schalter an Tür 1 */
-#define TUER_1_MAGNET     4   /*!< Pin für den Magnetschalter an Tür 1 */
+#include "hsm.h"
 
 /****************************************************************************************/
-/* TÜR 2 */
+/*                                    PIN CONFIGURATION                                 */
 /****************************************************************************************/
-#define RBG_LED_2_R       8   /*!< Pin für die rote LED der RGB-LED */
-#define RBG_LED_2_G       9   /*!< Pin für die grüne LED der RGB-LED */
-#define RBG_LED_2_B       10  /*!< Pin für die blaue LED der RGB-LED */
+/* DOOR 1 */
+/****************************************************************************************/
+#define RBG_LED_1_R       5   /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_1_G       6   /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_1_B       7   /*!< Pin for the blue LED of the RGB-LED */
 
-#define TUER_2_TASTER     11  /*!< Pin für den Taster an Tür 2 */
-#define TUER_2_SCHALTER   12  /*!< Pin für den Schalter an Tür 2 */
-#define TUER_2_MAGNET     13  /*!< Pin für den Magnetschalter an Tür 2 */
+#define TUER_1_TASTER     2   /*!< Pin for the button of the door */
+#define TUER_1_SCHALTER   3   /*!< Pin for the switch of the door */
+#define TUER_1_MAGNET     4   /*!< Pin for the magnet of the door */
+
+/****************************************************************************************/
+/* DOOR 2 */
+/****************************************************************************************/
+#define RBG_LED_2_R       8   /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_2_G       9   /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_2_B       10  /*!< Pin for the blue LED of the RGB-LED */
+
+#define TUER_2_TASTER     11  /*!< Pin for the button of the door */
+#define TUER_2_SCHALTER   12  /*!< Pin for the switch of the door */
+#define TUER_2_MAGNET     13  /*!< Pin for the magnet of the door */
 
 /****************************************************************************************/
 
+
+/************************************* ENUMERATION **************************************/
 
 /**
- * @brief Zustände der Steuerung
+ * @brief
  */
-typedef enum {
-  ZUSTAND_TYP_INIT,       /*!< Initialisierung */
-  ZUSTAND_TYP_FEHLER,     /*!< Fehlerzustand */
-  ZUSTAND_TYP_LEERLAUF,   /*!< Leerlauf */
-  ZUSTAND_TYP_TUER_1_AUF, /*!< Tür 1 ist auf */
-  ZUSTAND_TYP_TUER_2_AUF, /*!< Tür 2 ist auf */
-  ZUSTAND_TYP_ANZAHL      /*!< Anzahl der Zustände */
-} Zustand_typ_t;
+typedef enum
+{
+    PROCESS_STATE_INIT,        /*!< Initializing the state machine */
+    PROCESS_STATE_IDLE,        /*!< The state machine is in idle state */
+    PROCESS_STATE_FAULT,       /*!< The state machine is in fault state */
+    PROCESS_STATE_DOOR_1_OPEN, /*!< The door 1 is open */
+    PROCESS_STATE_DOOR_2_OPEN  /*!< The door 2 is open */
+} process_state_t;
 
 /**
- * @brief Events der Steuerung
+ * @brief
  */
-typedef enum {
-  EVENT_LEERLAUF,     /*!< Leerlauf, im aktuellen Zustand verbleiben */
-  EVENT_TUER_1_AUF,   /*!< Tür 1 ist auf */
-  EVENT_TUER_2_AUF,   /*!< Tür 2 ist auf */
-  EVENT_TUER_1_2_ZU,  /*!< Tür 1 und Tür 2 sind zu */
-  EVENT_TUER_1_2_AUF, /*!< Tür 1 und Tür 2 sind auf */
-  EVENT_ANZAHL        /*!< Anzahl der Events */
-} Event_t;
+typedef enum
+{
+    EVENT_INIT_DONE = 1,       /*!< The initialization is done */
+    EVENT_DOOR_1_OPEN,         /*!< The door 1 is open */
+    EVENT_DOOR_1_CLOSE,        /*!< The door 1 is closed */
+    EVENT_DOOR_1_OPEN_TIMEOUT, /*!< The door 1 is open timeout */
+    EVENT_DOOR_2_OPEN,         /*!< The door 2 is open */
+    EVENT_DOOR_2_CLOSE,        /*!< The door 2 is closed */
+    EVENT_DOOR_2_OPEN_TIMEOUT, /*!< The door 2 is open timeout */
+    EVENT_DOOR_1_2_OPEN,       /*!< The door 1 and 2 are open */
+} process_event_t;
 
-typedef void (*ZustandsRoutine)();
+/************************************* STRUCTURE **************************************/
 
-/**
- * @brief Struktur für die Zustandsmaschine
- */
-typedef struct {
-  Zustand_typ_t   zustand;  /*!< Enthält den aktuellen Zustand */
-  ZustandsRoutine routine;  /*!< Enthält die Routine des Zustands */
-} Zustand_t;
-
-// General functions
-void evaluate_state(Event e);
-
-// State routines to be executed at each state
-void state_routine_a(void);
-void state_routine_b(void);
-void state_routine_c(void);
-
-// Defining each state with associated state routine
-const State state_a = {STATE_A, state_routine_a};
-const State state_b = {STATE_B, state_routine_b};
-const State state_c = {STATE_C, state_routine_c};
-
-// Defning state transition matrix as visualized in the header (events not
-// defined, result in mainting the same state)
-State state_transition_mat[STATE_SIZE][EVENT_SIZE] = {
-    {state_a, state_b, state_a, state_a},
-    {state_b, state_b, state_c, state_b},
-    {state_c, state_c, state_c, state_a}};
-
-// Define current state and initialize
-State current_state = state_a;
+//! process state machine
+typedef struct
+{
+  state_machine_t machine;      //!< Abstract state machine
+  // uint32_t Set_Time;    //! Set time of a process
+  // uint32_t Resume_Time; //!< Remaining time when the process is paused
+  // uint32_t Timer;       //!< Process timer
+}process_t;
 
 
-int ledState = LOW;
-void blinkLed() {
-  ledState = !ledState;
-  digitalWrite(RBG_LED_1_R, ledState);
-}
 
 
+/******************************** Function prototype ************************************/
+
+static state_machine_result_t initHandler( state_machine_t* const State );
+static state_machine_result_t initEntryHandler( state_machine_t* const State );
+static state_machine_result_t initExitHandler( state_machine_t* const State );
+
+static state_machine_result_t idleHandler( state_machine_t* const State );
+static state_machine_result_t idleEntryHandler( state_machine_t* const State );
+static state_machine_result_t idleExitHandler( state_machine_t* const State );
+
+static state_machine_result_t faultHandler( state_machine_t* const State );
+static state_machine_result_t faultEntryHandler( state_machine_t* const State );
+static state_machine_result_t faultExitHandler( state_machine_t* const State );
+
+static state_machine_result_t door1OpenHandler( state_machine_t* const State );
+static state_machine_result_t door1OpenEntryHandler( state_machine_t* const State );
+static state_machine_result_t door1OpenExitHandler( state_machine_t* const State );
+
+static state_machine_result_t door2OpenHandler( state_machine_t* const State );
+static state_machine_result_t door2OpenEntryHandler( state_machine_t* const State );
+static state_machine_result_t door2OpenExitHandler( state_machine_t* const State );
+
+static void                   initProcess( process_t* const pProcess, uint32_t processTime );
+void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void                          resultLogger( uint32_t state, state_machine_result_t result );
+
+/******************************** Global variables ************************************/
+
+static const state_t processStates[] = {
+
+    [PROCESS_STATE_INIT] = {
+        .Handler = initHandler,
+        .Entry   = initEntryHandler,
+        .Exit    = initExitHandler,
+        .Id      = PROCESS_STATE_INIT
+    },
+
+    [PROCESS_STATE_IDLE] = {
+        .Handler = idleHandler,
+        .Entry   = idleEntryHandler,
+        .Exit    = idleExitHandler,
+        .Id      = PROCESS_STATE_IDLE
+    },
+
+    [PROCESS_STATE_FAULT] = {
+        .Handler = faultHandler,
+        .Entry   = faultEntryHandler,
+        .Exit    = faultExitHandler,
+        .Id      = PROCESS_STATE_FAULT
+    },
+
+    [PROCESS_STATE_DOOR_1_OPEN] = {
+        .Handler = door1OpenHandler,
+        .Entry   = door1OpenEntryHandler,
+        .Exit    = door1OpenExitHandler,
+        .Id      = PROCESS_STATE_DOOR_1_OPEN
+    },
+
+    [PROCESS_STATE_DOOR_2_OPEN] = {
+        .Handler = door2OpenHandler,
+        .Entry   = door2OpenEntryHandler,
+        .Exit    = door2OpenExitHandler,
+        .Id      = PROCESS_STATE_DOOR_2_OPEN
+    }
+};
+
+process_t              process;                                          /*!< Instance of process_t */
+state_machine_t* const stateMachines[] = {(state_machine_t*) &process}; /*!< Create and initialize the array of state machines. */
 
 /**
  * @brief Setup Funktion
  * @details Wird einmalig beim Start des Programms ausgeführt und initialisiert
  * die Steuerung
  */
-void setup() {
+void setup()
+{
 
-  Serial.begin(115200);
-  Serial.println("Initialisiere Steuerung");
+    Serial.begin(115200);
+    // Initialize with log level and log output. 
+    // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
 
-  digitalWrite(RBG_LED_1_R, HIGH);
-  digitalWrite(RBG_1_G, HIGH);
-  digitalWrite(RBG_1_B, HIGH);
+    // Log.notice("*** Logging example " CR); 
 
-  Timer1.initialize(500000); // The led will blink in a half second time
-                             // interval
-  Timer1.attachInterrupt(blinkLed);
+  // digitalWrite(RBG_LED_1_R, HIGH);
+  // digitalWrite(RBG_LED_1_G, HIGH);
+  // digitalWrite(RBG_LED_1_R, HIGH);
 }
 
 /* ***************************************************************************************
  *                                     HAUPTPROGRAMM
  * **************************************************************************************/
-void loop() {}
+void loop()
+{
+    /* Initialize the process */
+    initProcess( &process, 0 );
 
-/*
- * Determine state based on event and perform state routine
- */
-void evaluate_state(Event ev) {
-  // Determine state based on event
-  current_state = state_transition_mat[current_state.id][ev];
-  // Run state routine
-  (*current_state.routine)();
+    /* Dispatch the event to the state machine */
+    if ( dispatch_event( stateMachines, 1, eventLogger, resultLogger ) == EVENT_UN_HANDLED )
+    {
+        printf( "Invalid event dispatched\n" );
+    }
 }
 
-/*
- * State routines
- */
-void state_routine_a() { Serial.println("State A routine ran."); }
-void state_routine_b() { Serial.println("State B routine ran."); }
-void state_routine_c() { Serial.println("State C routine ran."); }
+
+static void initProcess( process_t* const pProcess, uint32_t processTime )
+{
+    pProcess->machine.State = &processStates[PROCESS_STATE_INIT];
+    pProcess->machine.Event = 0;
+    // pProcess->Set_Time      = processTime;
+    // pProcess->Resume_Time   = 0;
+
+    initEntryHandler( (state_machine_t*) pProcess );
+}
+
+
+static state_machine_result_t initHandler( state_machine_t* const State )
+{
+    Log.notice("Init Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t initEntryHandler( state_machine_t* const State )
+{
+    Log.notice("Init Entry Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t initExitHandler( state_machine_t* const State )
+{
+    Log.notice("Init Exit Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t idleHandler( state_machine_t* const State )
+{
+    Log.notice("Idle Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t idleEntryHandler( state_machine_t* const State )
+{
+    Log.notice("Idle Entry Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t idleExitHandler( state_machine_t* const State )
+{
+    Log.notice("Idle Exit Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t faultHandler( state_machine_t* const State )
+{
+    Log.notice("Fault Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t faultEntryHandler( state_machine_t* const State )
+{
+    Log.notice("Fault Entry Handler" CR);
+    return EVENT_HANDLED;
+}
+
+static state_machine_result_t faultExitHandler( state_machine_t* const State )
+{
+    Log.notice("Fault Exit Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t door1OpenHandler( state_machine_t* const State )
+{
+    Log.notice("Door 1 Open Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t door1OpenEntryHandler( state_machine_t* const State )
+{
+    Log.notice("Door 1 Open Entry Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t door1OpenExitHandler( state_machine_t* const State )
+{
+    Log.notice("Door 1 Open Exit Handler" CR);
+    return EVENT_HANDLED;
+}
+
+static state_machine_result_t door2OpenHandler( state_machine_t* const State )
+{
+    Log.notice("Door 2 Open Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t door2OpenEntryHandler( state_machine_t* const State )
+{
+    Log.notice("Door 2 Open Entry Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+static state_machine_result_t door2OpenExitHandler( state_machine_t* const State )
+{
+    Log.notice("Door 2 Open Exit Handler" CR);
+    return EVENT_HANDLED;
+}
+
+
+
+
+//! Callback function to log the events dispatched by state machine framework.
+void eventLogger(uint32_t stateMachine, uint32_t state, uint32_t event)
+{
+    Log.notice( "Event: %d, State: %d, State Machine: %d\n", event, state, stateMachine );
+}
+
+//! Callback function to log the result of event processed by state machine
+void resultLogger(uint32_t state, state_machine_result_t result)
+{
+    Log.notice( "Result: %d, State: %d\n", result, state );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // Timer1.initialize(1000000); // The led will blink in a half second time
+  //                            // interval
+  // Timer1.attachInterrupt(blinkLed);
+
+
+// int ledState = LOW;
+// void blinkLed() {
+//   ledState = !ledState;
+//   digitalWrite(RBG_LED_1_R, ledState);
+// }
