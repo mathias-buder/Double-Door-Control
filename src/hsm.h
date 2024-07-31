@@ -25,7 +25,8 @@
 #endif // HIERARCHICAL_STATES
 
 #ifndef STATE_MACHINE_LOGGER
-#define STATE_MACHINE_LOGGER    1        //!< Disable the logging of state machine
+//!< Disable the logging of state machine
+#define STATE_MACHINE_LOGGER    1
 #endif // STATE_MACHINE_LOGGER
 
 #ifndef HSM_USE_VARIABLE_LENGTH_ARRAY

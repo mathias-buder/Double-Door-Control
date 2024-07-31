@@ -151,11 +151,14 @@ state_machine_t* const stateMachines[] = {(state_machine_t*) &process}; /*!< Cre
 void setup()
 {
 
-    Serial.begin(115200);
-    // Initialize with log level and log output. 
-    // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+    // Initialize with log level and log output.
+    Serial.begin( 115200 );
+    Log.begin( LOG_LEVEL_INFO, &Serial );
 
     // Log.notice("*** Logging example " CR); 
+    
+    /* Initialize the process */
+    initProcess( &process, 0 );
 
   // digitalWrite(RBG_LED_1_R, HIGH);
   // digitalWrite(RBG_LED_1_G, HIGH);
@@ -167,13 +170,11 @@ void setup()
  * **************************************************************************************/
 void loop()
 {
-    /* Initialize the process */
-    initProcess( &process, 0 );
 
     /* Dispatch the event to the state machine */
     if ( dispatch_event( stateMachines, 1, eventLogger, resultLogger ) == EVENT_UN_HANDLED )
     {
-        printf( "Invalid event dispatched\n" );
+        Log.error( "Event is not handled" CR );
     }
 }
 
