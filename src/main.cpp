@@ -20,13 +20,13 @@
 /****************************************************************************************/
 /* DOOR 2 */
 /****************************************************************************************/
-#define RBG_LED_2_R         11   /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_2_G         12   /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_2_R         11  /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_2_G         12  /*!< Pin for the green LED of the RGB-LED */
 #define RBG_LED_2_B         13  /*!< Pin for the blue LED of the RGB-LED */
 
 #define DOOR_2_BUTTON       10  /*!< Pin for the button of the door */
-#define DOOR_2_SWITCH       9  /*!< Pin for the switch of the door */
-#define DOOR_2_MAGNET       8  /*!< Pin for the magnet of the door */
+#define DOOR_2_SWITCH       9   /*!< Pin for the switch of the door */
+#define DOOR_2_MAGNET       8   /*!< Pin for the magnet of the door */
 
 /****************************************************************************************/
 #define DOOR_BUTTON_DEBOUNCE_DELAY  100 /*!< Debounce delay for the door button @unit ms*/
@@ -41,11 +41,11 @@
  */
 typedef enum
 {
-    PROCESS_STATE_INIT,        /*!< Initializing the state machine */
-    PROCESS_STATE_IDLE,        /*!< The state machine is in idle state */
-    PROCESS_STATE_FAULT,       /*!< The state machine is in fault state */
-    PROCESS_STATE_DOOR_1_OPEN, /*!< The door 1 is open */
-    PROCESS_STATE_DOOR_2_OPEN  /*!< The door 2 is open */
+    DOOR_CONTROL_STATE_INIT,        /*!< Initializing the state machine */
+    DOOR_CONTROL_STATE_IDLE,        /*!< The state machine is in idle state */
+    DOOR_CONTROL_STATE_FAULT,       /*!< The state machine is in fault state */
+    DOOR_CONTROL_STATE_DOOR_1_OPEN, /*!< The door 1 is open */
+    DOOR_CONTROL_STATE_DOOR_2_OPEN  /*!< The door 2 is open */
 } door_control_state_t;
 
 /**
@@ -53,28 +53,29 @@ typedef enum
  */
 typedef enum
 {
-    PROCESS_EVENT_INIT_DONE = 1,       /*!< The initialization is done */
-    PROCESS_EVENT_DOOR_1_OPEN,         /*!< The door 1 is open */
-    PROCESS_EVENT_DOOR_1_CLOSE,        /*!< The door 1 is closed */
-    PROCESS_EVENT_DOOR_1_OPEN_TIMEOUT, /*!< The door 1 is open timeout */
-    PROCESS_EVENT_DOOR_2_OPEN,         /*!< The door 2 is open */
-    PROCESS_EVENT_DOOR_2_CLOSE,        /*!< The door 2 is closed */
-    PROCESS_EVENT_DOOR_2_OPEN_TIMEOUT, /*!< The door 2 is open timeout */
-    PROCESS_EVENT_DOOR_1_2_OPEN,       /*!< The door 1 and 2 are open */
+    DOOR_CONTROL_EVENT_INIT_DONE = 1,       /*!< The initialization is done successfully */
+    DOOR_CONTROL_EVENT_DOOR_1_OPEN,         /*!< The door 1 is open */
+    DOOR_CONTROL_EVENT_DOOR_1_CLOSE,        /*!< The door 1 is closed */
+    DOOR_CONTROL_EVENT_DOOR_1_OPEN_TIMEOUT, /*!< The door 1 is open timeout */
+    DOOR_CONTROL_EVENT_DOOR_2_OPEN,         /*!< The door 2 is open */
+    DOOR_CONTROL_EVENT_DOOR_2_CLOSE,        /*!< The door 2 is closed */
+    DOOR_CONTROL_EVENT_DOOR_2_OPEN_TIMEOUT, /*!< The door 2 is open timeout */
+    DOOR_CONTROL_EVENT_DOOR_1_2_OPEN,       /*!< The door 1 and 2 are open */
+    DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE       /*!< The door 1 and 2 are closed */
 } door_control_event_t;
 
 typedef enum
 {
     DOOR_TYPE_DOOR_1, /*!< The door 1 */
     DOOR_TYPE_DOOR_2, /*!< The door 2 */
-    DOOR_TYPE_SIZE    /*!< The size of the door */
+    DOOR_TYPE_SIZE    /*!< Number of doors */
 } door_type_t;
 
 typedef enum
 {
     DOOR_STATE_CLOSED = 0, /*!< The door is closed */
     DOOR_STATE_OPEN        /*!< The door is open */
-} door_state_t;
+} lock_state_t;
 
 typedef enum
 {
@@ -89,8 +90,6 @@ typedef enum
 typedef struct
 {
     state_machine_t machine;      //!< Abstract state machine
-    // door_side_t door1;            //!< Door 1 state
-    // door_side_t door2;            //!< Door 2 state
 
     // uint32_t Set_Time;    //! Set time of a doorControl
     // uint32_t Resume_Time; //!< Remaining time when the doorControl is paused
@@ -122,50 +121,54 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState );
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState );
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState );
 
-static void init( door_control_t* const pDoorControl, uint32_t processTime );
-void        eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
-void        resultLogger( uint32_t state, state_machine_result_t result );
-static void getDoorState( const door_type_t door, door_state_t* const doorSwitch, door_state_t* const doorButton );
-static void setDoorState( const door_type_t door, const door_state_t state );
+static void           init( door_control_t* const pDoorControl, uint32_t processTime );
+void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void                  resultLogger( uint32_t state, state_machine_result_t result );
+static void           getDoorState( const door_type_t door, button_state_t* const doorSwitch, button_state_t* const doorButton );
+static void           setDoorState( const door_type_t door, const lock_state_t state );
 static button_state_t getDoorButtonState( const door_type_t door );
+static void           generateEvent( door_control_t* const pDoorControl );
+char* stateToString( door_control_state_t state );
+char* eventToString( door_control_event_t event );
+char* resultToString( state_machine_result_t result );
 
 /******************************** Global variables ************************************/
 
 static const state_t doorControlStates[] = {
 
-    [PROCESS_STATE_INIT] = {
+    [DOOR_CONTROL_STATE_INIT] = {
         .Handler = initHandler,
         .Entry   = initEntryHandler,
         .Exit    = initExitHandler,
-        .Id      = PROCESS_STATE_INIT
+        .Id      = DOOR_CONTROL_STATE_INIT
     },
 
-    [PROCESS_STATE_IDLE] = {
+    [DOOR_CONTROL_STATE_IDLE] = {
         .Handler = idleHandler,
         .Entry   = idleEntryHandler,
         .Exit    = idleExitHandler,
-        .Id      = PROCESS_STATE_IDLE
+        .Id      = DOOR_CONTROL_STATE_IDLE
     },
 
-    [PROCESS_STATE_FAULT] = {
+    [DOOR_CONTROL_STATE_FAULT] = {
         .Handler = faultHandler,
         .Entry   = faultEntryHandler,
         .Exit    = faultExitHandler,
-        .Id      = PROCESS_STATE_FAULT
+        .Id      = DOOR_CONTROL_STATE_FAULT
     },
 
-    [PROCESS_STATE_DOOR_1_OPEN] = {
+    [DOOR_CONTROL_STATE_DOOR_1_OPEN] = {
         .Handler = door1OpenHandler,
         .Entry   = door1OpenEntryHandler,
         .Exit    = door1OpenExitHandler,
-        .Id      = PROCESS_STATE_DOOR_1_OPEN
+        .Id      = DOOR_CONTROL_STATE_DOOR_1_OPEN
     },
 
-    [PROCESS_STATE_DOOR_2_OPEN] = {
+    [DOOR_CONTROL_STATE_DOOR_2_OPEN] = {
         .Handler = door2OpenHandler,
         .Entry   = door2OpenEntryHandler,
         .Exit    = door2OpenExitHandler,
-        .Id      = PROCESS_STATE_DOOR_2_OPEN
+        .Id      = DOOR_CONTROL_STATE_DOOR_2_OPEN
     }
 };
 
@@ -179,19 +182,12 @@ state_machine_t* const stateMachines[] = { (state_machine_t* ) &doorControl }; /
  */
 void setup()
 {
-
-    // Initialize with log level and log output.
+    /* Initialize with log level and log output */
     Serial.begin( 115200 );
     Log.begin( LOG_LEVEL_INFO, &Serial );
 
-    // Log.notice("*** Logging example " CR); 
-    
     /* Initialize the doorControl */
     init( &doorControl, 0 );
-
-  // digitalWrite(RBG_LED_1_R, HIGH);
-  // digitalWrite(RBG_LED_1_G, HIGH);
-  // digitalWrite(RBG_LED_1_R, HIGH);
 }
 
 /* ***************************************************************************************
@@ -199,9 +195,8 @@ void setup()
  * **************************************************************************************/
 void loop()
 {
-
-    getDoorButtonState( DOOR_TYPE_DOOR_1 );
-    getDoorButtonState( DOOR_TYPE_DOOR_2 );
+    /* Generate/Process the event */
+    generateEvent( &doorControl );
 
     /* Dispatch the event to the state machine */
     if ( dispatch_event( stateMachines, 1, eventLogger, resultLogger ) == EVENT_UN_HANDLED )
@@ -213,7 +208,7 @@ void loop()
 
 static void init( door_control_t* const pDoorControl, uint32_t processTime )
 {
-    pDoorControl->machine.State = &doorControlStates[PROCESS_STATE_INIT];
+    pDoorControl->machine.State = &doorControlStates[DOOR_CONTROL_STATE_INIT];
     pDoorControl->machine.Event = 0;
 
     // pDoorControl->Set_Time      = processTime;
@@ -231,13 +226,24 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState )
     return EVENT_HANDLED;
 }
 
-
 static state_machine_result_t initHandler( state_machine_t* const pState )
 {
-    Log.notice("Init Handler with event %d" CR, pState->Event);
+    Log.notice( "Init Handler with event %d" CR, pState->Event );
+
+    switch ( pState->Event )
+    {
+    case DOOR_CONTROL_EVENT_INIT_DONE:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
+        break;
+    default:
+        return EVENT_UN_HANDLED;
+    }
+
     return EVENT_HANDLED;
 }
-
 
 static state_machine_result_t initExitHandler( state_machine_t* const pState )
 {
@@ -281,6 +287,16 @@ static state_machine_result_t faultEntryHandler( state_machine_t* const pState )
 static state_machine_result_t faultHandler( state_machine_t* const pState )
 {
     Log.notice("Fault Handler" CR);
+
+        switch ( pState->Event )
+    {
+    case DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    default:
+        return EVENT_UN_HANDLED;
+    }
+
     return EVENT_HANDLED;
 }
 
@@ -340,17 +356,17 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 //! Callback function to log the events dispatched by state machine framework.
 void eventLogger(uint32_t stateMachine, uint32_t state, uint32_t event)
 {
-    Log.notice( "Event: %d, State: %d, State Machine: %d" CR, event, state, stateMachine );
+    Log.notice( "Event: %s, State: %s, State Machine: %d" CR, eventToString( event ), stateToString( state ), stateMachine );
 }
 
 //! Callback function to log the result of event processed by state machine
 void resultLogger(uint32_t state, state_machine_result_t result)
 {
-    Log.notice( "Result: %d, State: %d" CR, result, state );
+    Log.notice( "Result: %s, State: %s" CR, resultToString( result ), stateToString( state ) );
 }
 
 
-static void getDoorState( const door_type_t door, door_state_t* const doorSwitch, door_state_t* const doorButton )
+static void getDoorState( const door_type_t door, button_state_t* const doorSwitch, button_state_t* const doorButton )
 {
     if (    ( doorSwitch == NULL )
          || ( doorButton == NULL ) )
@@ -362,22 +378,19 @@ static void getDoorState( const door_type_t door, door_state_t* const doorSwitch
     switch ( door )
     {
     case DOOR_TYPE_DOOR_1:
-        *doorSwitch = (door_state_t) digitalRead( DOOR_1_SWITCH );
-        *doorButton = (door_state_t) digitalRead( DOOR_1_BUTTON );
+        *doorSwitch = (button_state_t) digitalRead( DOOR_1_SWITCH );
+        *doorButton = getDoorButtonState( DOOR_TYPE_DOOR_1 );
         break;
 
     case DOOR_TYPE_DOOR_2:
-        *doorSwitch = (door_state_t) digitalRead( DOOR_2_SWITCH );
-        *doorButton = (door_state_t) digitalRead( DOOR_2_BUTTON );
-        break;
-
-    default:
+        *doorSwitch = (button_state_t) digitalRead( DOOR_2_SWITCH );
+        *doorButton = getDoorButtonState( DOOR_TYPE_DOOR_2 );
         break;
     }
 }
 
 
-static void setDoorState( const door_type_t door, const door_state_t state )
+static void setDoorState( const door_type_t door, const lock_state_t state )
 {
     switch ( door )
     {
@@ -453,6 +466,116 @@ static button_state_t getDoorButtonState( const door_type_t door )
     lastButtonState[door] = reading;
     return state;
 }
+
+
+static void generateEvent( door_control_t* const pDoorControl )
+{
+    button_state_t door1Switch, door1Button, door2Switch, door2Button;
+
+    /* Get the current state of the door switches and buttons */
+    getDoorState( DOOR_TYPE_DOOR_1, &door1Switch, &door1Button );
+    getDoorState( DOOR_TYPE_DOOR_2, &door2Switch, &door2Button );
+
+
+    if (    ( door1Switch == BUTTON_STATE_RELEASED )
+         && ( door2Switch == BUTTON_STATE_RELEASED ) )
+    {
+        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_2_OPEN;
+    }
+    else if (    ( door1Switch == BUTTON_STATE_PRESSED )
+              && ( door2Switch == BUTTON_STATE_PRESSED ) )
+    {
+        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE;
+    }
+    else if ( door1Switch == BUTTON_STATE_PRESSED )
+    {
+        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_CLOSE;
+    }
+    else if ( door2Switch == BUTTON_STATE_PRESSED )
+    {
+        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_2_CLOSE;
+    }
+    else if ( door1Switch == BUTTON_STATE_PRESSED )
+    {
+        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_OPEN;
+    }
+    else if ( door2Switch == BUTTON_STATE_PRESSED )
+    {
+        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_2_OPEN;
+    }
+    else
+    {
+        pDoorControl->machine.Event = 0;
+    }
+}
+
+
+char* stateToString( door_control_state_t state )
+{
+    switch ( state )
+    {
+    case DOOR_CONTROL_STATE_INIT:
+        return "DOOR_CONTROL_STATE_INIT";
+    case DOOR_CONTROL_STATE_IDLE:
+        return "DOOR_CONTROL_STATE_IDLE";
+    case DOOR_CONTROL_STATE_FAULT:
+        return "DOOR_CONTROL_STATE_FAULT";
+    case DOOR_CONTROL_STATE_DOOR_1_OPEN:
+        return "DOOR_CONTROL_STATE_DOOR_1_OPEN";
+    case DOOR_CONTROL_STATE_DOOR_2_OPEN:
+        return "DOOR_CONTROL_STATE_DOOR_2_OPEN";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+
+
+char* eventToString( door_control_event_t event )
+{
+    switch ( event )
+    {
+    case DOOR_CONTROL_EVENT_INIT_DONE:
+        return "DOOR_CONTROL_EVENT_INIT_DONE";
+    case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
+        return "DOOR_CONTROL_EVENT_DOOR_1_OPEN";
+    case DOOR_CONTROL_EVENT_DOOR_1_CLOSE:
+        return "DOOR_CONTROL_EVENT_DOOR_1_CLOSE";
+    case DOOR_CONTROL_EVENT_DOOR_1_OPEN_TIMEOUT:
+        return "DOOR_CONTROL_EVENT_DOOR_1_OPEN_TIMEOUT";
+    case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
+        return "DOOR_CONTROL_EVENT_DOOR_2_OPEN";
+    case DOOR_CONTROL_EVENT_DOOR_2_CLOSE:
+        return "DOOR_CONTROL_EVENT_DOOR_2_CLOSE";
+    case DOOR_CONTROL_EVENT_DOOR_2_OPEN_TIMEOUT:
+        return "DOOR_CONTROL_EVENT_DOOR_2_OPEN_TIMEOUT";
+    case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
+        return "DOOR_CONTROL_EVENT_DOOR_1_2_OPEN";
+    case DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE:
+        return "DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+
+char* resultToString( state_machine_result_t result )
+{
+    switch ( result )
+    {
+    case EVENT_HANDLED:
+        return "EVENT_HANDLED";
+    case EVENT_UN_HANDLED:
+        return "EVENT_UN_HANDLED";
+    case TRIGGERED_TO_SELF:
+        return "TRIGGERED_TO_SELF";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+
+
 
   // Timer1.initialize(1000000); // The led will blink in a half second time
   //                            // interval
