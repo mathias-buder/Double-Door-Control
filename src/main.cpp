@@ -20,15 +20,18 @@
 /****************************************************************************************/
 /* DOOR 2 */
 /****************************************************************************************/
-#define RBG_LED_2_R         8   /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_2_G         9   /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_2_B         10  /*!< Pin for the blue LED of the RGB-LED */
+#define RBG_LED_2_R         11   /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_2_G         12   /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_2_B         13  /*!< Pin for the blue LED of the RGB-LED */
 
-#define DOOR_2_BUTTON       11  /*!< Pin for the button of the door */
-#define DOOR_2_SWITCH       12  /*!< Pin for the switch of the door */
-#define DOOR_2_MAGNET       13  /*!< Pin for the magnet of the door */
+#define DOOR_2_BUTTON       10  /*!< Pin for the button of the door */
+#define DOOR_2_SWITCH       9  /*!< Pin for the switch of the door */
+#define DOOR_2_MAGNET       8  /*!< Pin for the magnet of the door */
 
 /****************************************************************************************/
+#define DOOR_BUTTON_DEBOUNCE_DELAY  100 /*!< Debounce delay for the door button @unit ms*/
+
+
 
 
 /************************************* ENUMERATION **************************************/
@@ -50,7 +53,8 @@ typedef enum
  */
 typedef enum
 {
-    PROCESS_EVENT_DOOR_1_OPEN = 1,     /*!< The door 1 is open */
+    PROCESS_EVENT_INIT_DONE = 1,       /*!< The initialization is done */
+    PROCESS_EVENT_DOOR_1_OPEN,         /*!< The door 1 is open */
     PROCESS_EVENT_DOOR_1_CLOSE,        /*!< The door 1 is closed */
     PROCESS_EVENT_DOOR_1_OPEN_TIMEOUT, /*!< The door 1 is open timeout */
     PROCESS_EVENT_DOOR_2_OPEN,         /*!< The door 2 is open */
@@ -62,29 +66,22 @@ typedef enum
 typedef enum
 {
     DOOR_TYPE_DOOR_1, /*!< The door 1 */
-    DOOR_TYPE_DOOR_2  /*!< The door 2 */
+    DOOR_TYPE_DOOR_2, /*!< The door 2 */
+    DOOR_TYPE_SIZE    /*!< The size of the door */
 } door_type_t;
-
 
 typedef enum
 {
     DOOR_STATE_CLOSED = 0, /*!< The door is closed */
-    DOOR_STATE_OPEN,        /*!< The door is open */
-    DOOR_STATE_UNKNOWN      /*!< The state of the door is unknown */
+    DOOR_STATE_OPEN        /*!< The door is open */
 } door_state_t;
 
-// typedef enum
-// {
-//     OFF = 0, /*!< The door is closed */
-//     ON       /*!< The door is open */
-// } switch_state_t;
+typedef enum
+{
+    BUTTON_STATE_RELEASED = 0, /*!< The button is released */
+    BUTTON_STATE_PRESSED        /*!< The button is pressed */
+} button_state_t;
 
-// typedef struct
-// {
-//     door_state_t   doorState;   /*!< The state of the door */
-//     switch_state_t switchState; /*!< The state of the switch */
-//     switch_state_t buttonState; /*!< The state of the button */
-// } door_side_t;
 
 /************************************* STRUCTURE **************************************/
 
@@ -125,11 +122,12 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState );
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState );
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState );
 
-static void initProcess( door_control_t* const pDoorControl, uint32_t processTime );
+static void init( door_control_t* const pDoorControl, uint32_t processTime );
 void        eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void        resultLogger( uint32_t state, state_machine_result_t result );
 static void getDoorState( const door_type_t door, door_state_t* const doorSwitch, door_state_t* const doorButton );
 static void setDoorState( const door_type_t door, const door_state_t state );
+static button_state_t getDoorButtonState( const door_type_t door );
 
 /******************************** Global variables ************************************/
 
@@ -171,8 +169,8 @@ static const state_t doorControlStates[] = {
     }
 };
 
-door_control_t              doorControl;                                             /*!< Instance of door_control_t */
-state_machine_t* const stateMachines[] = { ( state_machine_t* ) &doorControl }; /*!< Create and initialize the array of state machines. */
+door_control_t         doorControl;                                            /*!< Instance of door_control_t */
+state_machine_t* const stateMachines[] = { (state_machine_t* ) &doorControl }; /*!< Create and initialize the array of state machines. */
 
 /**
  * @brief Setup Funktion
@@ -189,7 +187,7 @@ void setup()
     // Log.notice("*** Logging example " CR); 
     
     /* Initialize the doorControl */
-    initProcess( &doorControl, 0 );
+    init( &doorControl, 0 );
 
   // digitalWrite(RBG_LED_1_R, HIGH);
   // digitalWrite(RBG_LED_1_G, HIGH);
@@ -201,6 +199,10 @@ void setup()
  * **************************************************************************************/
 void loop()
 {
+
+    getDoorButtonState( DOOR_TYPE_DOOR_1 );
+    getDoorButtonState( DOOR_TYPE_DOOR_2 );
+
     /* Dispatch the event to the state machine */
     if ( dispatch_event( stateMachines, 1, eventLogger, resultLogger ) == EVENT_UN_HANDLED )
     {
@@ -209,9 +211,9 @@ void loop()
 }
 
 
-static void initProcess( door_control_t* const pDoorControl, uint32_t processTime )
+static void init( door_control_t* const pDoorControl, uint32_t processTime )
 {
-    pDoorControl->machine.State = &doorControlStates[PROCESS_STATE_IDLE];
+    pDoorControl->machine.State = &doorControlStates[PROCESS_STATE_INIT];
     pDoorControl->machine.Event = 0;
 
     // pDoorControl->Set_Time      = processTime;
@@ -232,7 +234,7 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t initHandler( state_machine_t* const pState )
 {
-    Log.notice("Init Handler" CR);
+    Log.notice("Init Handler with event %d" CR, pState->Event);
     return EVENT_HANDLED;
 }
 
@@ -389,6 +391,67 @@ static void setDoorState( const door_type_t door, const door_state_t state )
     default:
         break;
     }
+}
+
+
+static button_state_t getDoorButtonState( const door_type_t door )
+{
+    uint8_t         buttonPin;
+    static uint8_t  buttonState[DOOR_TYPE_SIZE]      = {LOW};
+    static uint8_t  lastButtonState[DOOR_TYPE_SIZE]  = {LOW};
+    static uint32_t lastDebounceTime[DOOR_TYPE_SIZE] = {0};
+    button_state_t  state                            = BUTTON_STATE_RELEASED;
+
+    switch ( door )
+    {
+    case DOOR_TYPE_DOOR_1:
+        buttonPin = DOOR_1_BUTTON;
+        break;
+    case DOOR_TYPE_DOOR_2:
+        buttonPin = DOOR_2_BUTTON;
+        break;
+    }
+
+    // read the state of the switch into a local variable:
+    uint8_t reading = digitalRead( buttonPin );
+
+    // check to see if you just pressed the button
+    // (i.e. the input went from LOW to HIGH), and you've waited long enough
+    // since the last press to ignore any noise:
+
+    // If the switch changed, due to noise or pressing:
+    if ( reading != lastButtonState[door] )
+    {
+        // reset the debouncing timer
+        lastDebounceTime[door] = millis();
+    }
+
+    if ( ( millis() - lastDebounceTime[door] ) > DOOR_BUTTON_DEBOUNCE_DELAY )
+    {
+        // whatever the reading is at, it's been there for longer than the debounce
+        // delay, so take it as the actual current state:
+
+        // if the button state has changed:
+        if ( reading != buttonState[door] )
+        {
+            buttonState[door] = reading;
+
+            if ( buttonState[door] == HIGH )
+            {
+                state = BUTTON_STATE_PRESSED;
+                Log.notice( "Button %d is pressed" CR, door );
+            }
+            else
+            {
+                state = BUTTON_STATE_RELEASED;
+                Log.notice( "Button %d is released" CR, door );
+            }
+        }
+    }
+
+    // save the reading. Next time through the loop, it'll be the lastButtonState:
+    lastButtonState[door] = reading;
+    return state;
 }
 
   // Timer1.initialize(1000000); // The led will blink in a half second time
