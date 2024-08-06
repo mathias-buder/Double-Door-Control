@@ -128,9 +128,9 @@ static void           getDoorState( const door_type_t door, button_state_t* cons
 static void           setDoorState( const door_type_t door, const lock_state_t state );
 static button_state_t getDoorButtonState( const door_type_t door );
 static void           generateEvent( door_control_t* const pDoorControl );
-char* stateToString( door_control_state_t state );
-char* eventToString( door_control_event_t event );
-char* resultToString( state_machine_result_t result );
+String stateToString( door_control_state_t state );
+String eventToString( door_control_event_t event );
+String resultToString( state_machine_result_t result );
 
 /******************************** Global variables ************************************/
 
@@ -510,7 +510,7 @@ static void generateEvent( door_control_t* const pDoorControl )
 }
 
 
-char* stateToString( door_control_state_t state )
+String stateToString( door_control_state_t state )
 {
     switch ( state )
     {
@@ -531,7 +531,7 @@ char* stateToString( door_control_state_t state )
 
 
 
-char* eventToString( door_control_event_t event )
+String eventToString( door_control_event_t event )
 {
     switch ( event )
     {
@@ -559,7 +559,7 @@ char* eventToString( door_control_event_t event )
 }
 
 
-char* resultToString( state_machine_result_t result )
+String resultToString( state_machine_result_t result )
 {
     switch ( result )
     {
