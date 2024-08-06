@@ -102,24 +102,24 @@ typedef struct
 /******************************** Function prototype ************************************/
 
 static state_machine_result_t initHandler( state_machine_t* const pState );
-static state_machine_result_t initEntryHandler( state_machine_t* const pState );
-static state_machine_result_t initExitHandler( state_machine_t* const pState );
+/* static state_machine_result_t initEntryHandler( state_machine_t* const pState ); */
+/* static state_machine_result_t initExitHandler( state_machine_t* const pState ); */
 
 static state_machine_result_t idleHandler( state_machine_t* const pState );
-static state_machine_result_t idleEntryHandler( state_machine_t* const pState );
-static state_machine_result_t idleExitHandler( state_machine_t* const pState );
+/* static state_machine_result_t idleEntryHandler( state_machine_t* const pState ); */
+/* static state_machine_result_t idleExitHandler( state_machine_t* const pState ); */
 
 static state_machine_result_t faultHandler( state_machine_t* const pState );
-static state_machine_result_t faultEntryHandler( state_machine_t* const pState );
-static state_machine_result_t faultExitHandler( state_machine_t* const pState );
+/* static state_machine_result_t faultEntryHandler( state_machine_t* const pState ); */
+/* static state_machine_result_t faultExitHandler( state_machine_t* const pState ); */
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState );
-static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState );
-static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState );
+/* static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState ); */
+/* static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState ); */
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState );
-static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState );
-static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState );
+/* static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState ); */
+/* static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState ); */
 
 static void           init( door_control_t* const pDoorControl, uint32_t processTime );
 void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
@@ -138,36 +138,36 @@ static const state_t doorControlStates[] = {
 
     [DOOR_CONTROL_STATE_INIT] = {
         .Handler = initHandler,
-        .Entry   = initEntryHandler,
-        .Exit    = initExitHandler,
+        .Entry   = NULL,
+        .Exit    = NULL,
         .Id      = DOOR_CONTROL_STATE_INIT
     },
 
     [DOOR_CONTROL_STATE_IDLE] = {
         .Handler = idleHandler,
-        .Entry   = idleEntryHandler,
-        .Exit    = idleExitHandler,
+        .Entry   = NULL,
+        .Exit    = NULL,
         .Id      = DOOR_CONTROL_STATE_IDLE
     },
 
     [DOOR_CONTROL_STATE_FAULT] = {
         .Handler = faultHandler,
-        .Entry   = faultEntryHandler,
-        .Exit    = faultExitHandler,
+        .Entry   = NULL,
+        .Exit    = NULL,
         .Id      = DOOR_CONTROL_STATE_FAULT
     },
 
     [DOOR_CONTROL_STATE_DOOR_1_OPEN] = {
-        .Handler = door1OpenHandler,
-        .Entry   = door1OpenEntryHandler,
-        .Exit    = door1OpenExitHandler,
+        .Handler = door1OpenHandler, 
+        .Entry   = NULL,
+        .Exit    = NULL,
         .Id      = DOOR_CONTROL_STATE_DOOR_1_OPEN
     },
 
     [DOOR_CONTROL_STATE_DOOR_2_OPEN] = {
         .Handler = door2OpenHandler,
-        .Entry   = door2OpenEntryHandler,
-        .Exit    = door2OpenExitHandler,
+        .Entry   = NULL,
+        .Exit    = NULL,
         .Id      = DOOR_CONTROL_STATE_DOOR_2_OPEN
     }
 };
@@ -214,17 +214,17 @@ static void init( door_control_t* const pDoorControl, uint32_t processTime )
     // pDoorControl->Set_Time      = processTime;
     // pDoorControl->Resume_Time   = 0;
 
-    initEntryHandler( (state_machine_t*) pDoorControl );
+    /* initEntryHandler( (state_machine_t*) pDoorControl ); */
 }
 
 
-
-
+/*
 static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 {
     Log.notice("Init Entry Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
 static state_machine_result_t initHandler( state_machine_t* const pState )
 {
@@ -245,21 +245,22 @@ static state_machine_result_t initHandler( state_machine_t* const pState )
     return EVENT_HANDLED;
 }
 
+/*
 static state_machine_result_t initExitHandler( state_machine_t* const pState )
 {
     Log.notice("Init Exit Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
-
-
-
-
+/*
 static state_machine_result_t idleEntryHandler( state_machine_t* const pState )
 {
     Log.notice("Idle Entry Handler" CR);
     return EVENT_HANDLED;
 }
+*/
+
 
 static state_machine_result_t idleHandler( state_machine_t* const pState )
 {
@@ -267,22 +268,21 @@ static state_machine_result_t idleHandler( state_machine_t* const pState )
     return EVENT_HANDLED;
 }
 
+/*
 static state_machine_result_t idleExitHandler( state_machine_t* const pState )
 {
     Log.notice("Idle Exit Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
-
-
-
-
-
+/*
 static state_machine_result_t faultEntryHandler( state_machine_t* const pState )
 {
     Log.notice("Fault Entry Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
 static state_machine_result_t faultHandler( state_machine_t* const pState )
 {
@@ -300,21 +300,22 @@ static state_machine_result_t faultHandler( state_machine_t* const pState )
     return EVENT_HANDLED;
 }
 
+/*
 static state_machine_result_t faultExitHandler( state_machine_t* const pState )
 {
     Log.notice("Fault Exit Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
 
-
-
-
+/*
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState )
 {
     Log.notice("Door 1 Open Entry Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState )
 {
@@ -322,21 +323,23 @@ static state_machine_result_t door1OpenHandler( state_machine_t* const pState )
     return EVENT_HANDLED;
 }
 
+/*
 static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState )
 {
     Log.notice("Door 1 Open Exit Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
 
 
-
-
+/*
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState )
 {
     Log.notice("Door 2 Open Entry Handler" CR);
     return EVENT_HANDLED;
 }
+*/
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState )
 {
@@ -344,25 +347,36 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState )
     return EVENT_HANDLED;
 }
 
+/*
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState )
 {
     Log.notice("Door 2 Open Exit Handler" CR);
     return EVENT_HANDLED;
 }
-
+*/
 
 
 
 //! Callback function to log the events dispatched by state machine framework.
 void eventLogger(uint32_t stateMachine, uint32_t state, uint32_t event)
 {
-    Log.notice( "Event: %s, State: %s, State Machine: %d" CR, eventToString( event ), stateToString( state ), stateMachine );
+    static uint32_t lastEvent = 0;
+
+    /* Only log if the event is changed */
+    if ( lastEvent != event )
+    {
+        Log.notice( "Event: %s, State: %s, State Machine: %d" CR, eventToString( (door_control_event_t) event ),
+                                                              stateToString( (door_control_state_t) state ),
+                                                              stateMachine );
+    }
+
+    lastEvent = event;
 }
 
 //! Callback function to log the result of event processed by state machine
 void resultLogger(uint32_t state, state_machine_result_t result)
 {
-    Log.notice( "Result: %s, State: %s" CR, resultToString( result ), stateToString( state ) );
+    // Log.notice( "Result: %s, State: %s" CR, resultToString( result ), stateToString( (door_control_state_t) state ) );
 }
 
 
