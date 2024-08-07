@@ -228,7 +228,7 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t initHandler( state_machine_t* const pState )
 {
-    Log.notice( "Init Handler with event %d" CR, pState->Event );
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
 
     switch ( pState->Event )
     {
@@ -239,7 +239,7 @@ static state_machine_result_t initHandler( state_machine_t* const pState )
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
         break;
     default:
-        return EVENT_UN_HANDLED;
+       break;
     }
 
     return EVENT_HANDLED;
@@ -264,7 +264,23 @@ static state_machine_result_t idleEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t idleHandler( state_machine_t* const pState )
 {
-    Log.notice("Idle Handler with event %d" CR, pState->Event);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+
+    switch ( pState->Event )
+    {
+        case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_OPEN] );
+            break;
+        case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_OPEN] );
+            break;
+        case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
+            break;
+        default:
+            break;
+    }
+
     return EVENT_HANDLED;
 }
 
@@ -286,15 +302,15 @@ static state_machine_result_t faultEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t faultHandler( state_machine_t* const pState )
 {
-    Log.notice("Fault Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
 
         switch ( pState->Event )
     {
-    case DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE:
-        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
-        break;
-    default:
-        return EVENT_UN_HANDLED;
+        case DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+            break;
+        default:
+            break;
     }
 
     return EVENT_HANDLED;
@@ -319,7 +335,16 @@ static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pSta
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState )
 {
-    Log.notice("Door 1 Open Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+
+    switch ( pState->Event )
+    {
+    case DOOR_CONTROL_EVENT_DOOR_1_CLOSE:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    default:
+        break;
+    }
     return EVENT_HANDLED;
 }
 
@@ -343,7 +368,17 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState )
 {
-    Log.notice("Door 2 Open Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+
+    switch ( pState->Event )
+    {
+    case DOOR_CONTROL_EVENT_DOOR_2_CLOSE:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    default:
+        Log.error("%s: EVENT_UN_HANDLED" CR, __func__);
+        return EVENT_UN_HANDLED;
+    }
     return EVENT_HANDLED;
 }
 
@@ -358,16 +393,16 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 
 
 //! Callback function to log the events dispatched by state machine framework.
-void eventLogger(uint32_t stateMachine, uint32_t state, uint32_t event)
+void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
 {
+    (void) stateMachine;
     static uint32_t lastEvent = 0;
 
     /* Only log if the event is changed */
     if ( lastEvent != event )
     {
-        Log.notice( "Event: %s, State: %s, State Machine: %d" CR, eventToString( (door_control_event_t) event ),
-                                                              stateToString( (door_control_state_t) state ),
-                                                              stateMachine );
+        Log.notice( "Event: %s, State: %s" CR, eventToString( (door_control_event_t) event ).c_str(),
+                                               stateToString( (door_control_state_t) state ).c_str() );
     }
 
     lastEvent = event;
@@ -376,7 +411,15 @@ void eventLogger(uint32_t stateMachine, uint32_t state, uint32_t event)
 //! Callback function to log the result of event processed by state machine
 void resultLogger(uint32_t state, state_machine_result_t result)
 {
-    // Log.notice( "Result: %s, State: %s" CR, resultToString( result ), stateToString( (door_control_state_t) state ) );
+    static uint32_t lastState = 0;
+
+    /* Only log if the state is changed */
+    if ( lastState != state )
+    {
+        Log.notice( "Result: %s, Current state: %s" CR, resultToString( result ).c_str(), stateToString( (door_control_state_t) state ).c_str() );
+    }
+
+    lastState = state;
 }
 
 
