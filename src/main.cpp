@@ -73,8 +73,8 @@ typedef enum
 
 typedef enum
 {
-    DOOR_STATE_CLOSED = 0, /*!< The door is closed */
-    DOOR_STATE_OPEN        /*!< The door is open */
+    LOCK_STATE_CLOSED = LOW,    /*!< The door is closed */
+    LOCK_STATE_OPEN   = HIGH    /*!< The door is open */
 } lock_state_t;
 
 typedef enum
@@ -264,8 +264,26 @@ static state_machine_result_t idleEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t idleHandler( state_machine_t* const pState )
 {
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+    Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
 
+    /* Process door buttons */
+    door_type_t doors[DOOR_TYPE_SIZE] = {DOOR_TYPE_DOOR_1, DOOR_TYPE_DOOR_2};
+
+    for ( uint8_t i = 0; i < DOOR_TYPE_SIZE; i++ )
+    {
+        if ( getDoorButtonState( doors[i] ) == BUTTON_STATE_PRESSED )
+        {
+            // Log.notice( "Door %d is pressed" CR, doors[i] );
+            setDoorState( doors[i], LOCK_STATE_OPEN );
+        }
+        else if ( getDoorButtonState( doors[i] ) == BUTTON_STATE_RELEASED )
+        {
+            // Log.notice( "Door %d is released" CR, doors[i] );
+            setDoorState( doors[i], LOCK_STATE_CLOSED );
+        }
+    }
+
+    /* Process the event */
     switch ( pState->Event )
     {
         case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
@@ -337,6 +355,9 @@ static state_machine_result_t door1OpenHandler( state_machine_t* const pState )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
 
+    /* Keep the door open */
+    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_OPEN );
+
     switch ( pState->Event )
     {
     case DOOR_CONTROL_EVENT_DOOR_1_CLOSE:
@@ -370,6 +391,9 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
 
+    /* Keep the door open */
+    setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_OPEN );
+
     switch ( pState->Event )
     {
     case DOOR_CONTROL_EVENT_DOOR_2_CLOSE:
@@ -401,8 +425,9 @@ void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
     /* Only log if the event is changed */
     if ( lastEvent != event )
     {
-        Log.notice( "Event: %s, State: %s" CR, eventToString( (door_control_event_t) event ).c_str(),
-                                               stateToString( (door_control_state_t) state ).c_str() );
+        Log.notice( "%s: Event: %s, State: %s" CR, __func__,
+                                                   eventToString( (door_control_event_t) event ).c_str(),
+                                                   stateToString( (door_control_state_t) state ).c_str() );
     }
 
     lastEvent = event;
@@ -416,7 +441,9 @@ void resultLogger(uint32_t state, state_machine_result_t result)
     /* Only log if the state is changed */
     if ( lastState != state )
     {
-        Log.notice( "Result: %s, Current state: %s" CR, resultToString( result ).c_str(), stateToString( (door_control_state_t) state ).c_str() );
+        Log.notice( "%s: Result: %s, Current state: %s" CR, __func__,
+                                                            resultToString( result ).c_str(),
+                                                            stateToString( (door_control_state_t) state ).c_str() );
     }
 
     lastState = state;
@@ -449,28 +476,37 @@ static void getDoorState( const door_type_t door, button_state_t* const doorSwit
 
 static void setDoorState( const door_type_t door, const lock_state_t state )
 {
+    static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_CLOSED};
+
+    if ( lastState[door] != state )
+    {
+        Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_OPEN ) ? "open" : "closed" );
+    }
+
     switch ( door )
     {
     case DOOR_TYPE_DOOR_1:
-        digitalWrite( DOOR_1_SWITCH, (uint8_t) state );
+        digitalWrite( DOOR_1_MAGNET, (uint8_t) state );
         break;
     case DOOR_TYPE_DOOR_2:
-        digitalWrite( DOOR_2_SWITCH, (uint8_t) state );
+        digitalWrite( DOOR_2_MAGNET, (uint8_t) state );
         break;
 
     default:
         break;
     }
+
+    lastState[door] = state;
 }
 
 
 static button_state_t getDoorButtonState( const door_type_t door )
 {
-    uint8_t         buttonPin;
-    static uint8_t  buttonState[DOOR_TYPE_SIZE]      = {LOW};
-    static uint8_t  lastButtonState[DOOR_TYPE_SIZE]  = {LOW};
-    static uint32_t lastDebounceTime[DOOR_TYPE_SIZE] = {0};
-    button_state_t  state                            = BUTTON_STATE_RELEASED;
+    uint8_t               buttonPin;
+    static uint8_t        buttonState[DOOR_TYPE_SIZE]      = {LOW};
+    static uint8_t        lastButtonState[DOOR_TYPE_SIZE]  = {LOW};
+    static uint32_t       lastDebounceTime[DOOR_TYPE_SIZE] = {0};
+    static button_state_t state[DOOR_TYPE_SIZE]            = {BUTTON_STATE_RELEASED};
 
     switch ( door )
     {
@@ -508,20 +544,20 @@ static button_state_t getDoorButtonState( const door_type_t door )
 
             if ( buttonState[door] == HIGH )
             {
-                state = BUTTON_STATE_PRESSED;
-                Log.notice( "Button %d is pressed" CR, door );
+                state[door] = BUTTON_STATE_PRESSED;
+                Log.notice( "%s: Button %d is pressed" CR, __func__, door );
             }
             else
             {
-                state = BUTTON_STATE_RELEASED;
-                Log.notice( "Button %d is released" CR, door );
+                state[door] = BUTTON_STATE_RELEASED;
+                Log.notice( "%s: Button %d is released" CR, __func__, door );
             }
         }
     }
 
     // save the reading. Next time through the loop, it'll be the lastButtonState:
     lastButtonState[door] = reading;
-    return state;
+    return state[door];
 }
 
 
