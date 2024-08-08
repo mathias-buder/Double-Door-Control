@@ -88,10 +88,15 @@ struct hierarchical_state
   uint32_t Level;            //!< Hierarchy level from the top state.
 };
 
+typedef struct event_t {
+    uint32_t        event;   //!< Event to be dispatched
+    struct event_t* next;    //!< Pointer to next event
+} event_t;
+
 //! Abstract state machine structure
 struct state_machine_t {
-  uint32_t Event;       //!< Pending Event for state machine
-  const state_t *State; //!< State of state machine.
+    event_t        eventQueue;   //!< Pending events to be dispatched
+    const state_t* State;        //!< State of state machine.
 };
 
 /*
@@ -117,6 +122,9 @@ extern state_machine_result_t traverse_state(state_machine_t* const pState_Machi
 
 extern state_machine_result_t switch_state(state_machine_t* const pState_Machine,
                                                     const state_t* const pTarget_State);
+
+void   pushEvent( event_t* head, uint32_t event );
+int8_t popEvent( event_t** head );
 
 #ifdef __cplusplus
 }

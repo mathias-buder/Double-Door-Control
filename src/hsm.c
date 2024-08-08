@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "hsm.h"
 
@@ -63,73 +64,78 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
 #endif // STATE_MACHINE_LOGGER
                                       )
 {
-  state_machine_result_t result;
+    state_machine_result_t result;
 
   // Iterate through all state machines in the array to check if event is pending to dispatch.
-  for(uint32_t index = 0; index < quantity;)
-  {
-    if(pState_Machine[index]->Event == 0)
+    for(uint32_t index = 0; index < quantity;)
     {
-      index++;
-      continue;
-    }
+        event_t* currentEvent = &pState_Machine[index]->eventQueue;
 
-    const state_t* pState = pState_Machine[index]->State;
-    do
-    {
+        while( currentEvent != NULL )
+        {
+            const state_t* pState = pState_Machine[index]->State;
+
+            do
+            {
 #if STATE_MACHINE_LOGGER
-      event_logger(index, pState->Id, pState_Machine[index]->Event);
+                event_logger(index, pState->Id, pState_Machine[index]->eventQueue.event);
 #endif // STATE_MACHINE_LOGGER
         // Call the state handler.
-      result = pState->Handler(pState_Machine[index]);
+                result = pState->Handler(pState_Machine[index]);
 #if STATE_MACHINE_LOGGER
-      result_logger(pState_Machine[index]->State->Id, result);
+                result_logger(pState_Machine[index]->State->Id, result);
 #endif // STATE_MACHINE_LOGGER
 
-      switch(result)
-      {
-      case EVENT_HANDLED:
-        // Clear event, if successfully handled by state handler.
-        pState_Machine[index]->Event = 0;
+                switch(result)
+                {
+                case EVENT_HANDLED:
+                    // Clear event, if successfully handled by state handler.
+                    // pState_Machine[index]->Event = 0;
 
-        // intentional fall through
+                    // intentional fall through
 
-        // State handler handled the previous event successfully,
-        // and posted a new event to itself.
-      case TRIGGERED_TO_SELF:
+                    // State handler handled the previous event successfully,
+                    // and posted a new event to itself.
+                case TRIGGERED_TO_SELF:
 
-        index = 0;  // Restart the event dispatcher from the first state machine.
-        break;
+                index = 0;  // Restart the event dispatcher from the first state machine.
+                break;
 
-    #if HIERARCHICAL_STATES
-    // State handler could not handled the event.
-    // Traverse to its parent state and dispatch event to parent state handler.
-      case EVENT_UN_HANDLED:
+                #if HIERARCHICAL_STATES
+                // State handler could not handled the event.
+                // Traverse to its parent state and dispatch event to parent state handler.
+                case EVENT_UN_HANDLED:
 
-        do
-        {
-          // check if state has parent state.
-          if(pState->Parent == NULL)   // Is Node reached top
-          {
-            // This is a fatal error. terminate state machine.
-            return EVENT_UN_HANDLED;
-          }
+                do
+                {
+                // check if state has parent state.
+                if(pState->Parent == NULL)   // Is Node reached top
+                {
+                    // This is a fatal error. terminate state machine.
+                    return EVENT_UN_HANDLED;
+                }
 
-          pState = pState->Parent;        // traverse to parent state
-        }while(pState->Handler == NULL);   // repeat again if parent state doesn't have handler
+                pState = pState->Parent;        // traverse to parent state
+                } while(pState->Handler == NULL);   // repeat again if parent state doesn't have handler
+                continue;
+#endif // HIERARCHICAL_STATES
+
+                // Either state handler could not handle the event or it has returned
+                // the unknown return code. Terminate the state machine.
+                default:
+                    return result;
+                }
+                break;
+
+            } while(1);
+
+            currentEvent = currentEvent->next;
+        }
+
+        index++;
         continue;
-    #endif // HIERARCHICAL_STATES
-
-      // Either state handler could not handle the event or it has returned
-      // the unknown return code. Terminate the state machine.
-      default:
-        return result;
-      }
-      break;
-
-    }while(1);
-  }
-  return EVENT_HANDLED;
+    }
+    return EVENT_HANDLED;
 }
 
 /** \brief Switch to target states without traversing to hierarchical levels.
@@ -245,3 +251,37 @@ state_machine_result_t traverse_state(state_machine_t* const pState_Machine,
 }
 #endif // HIERARCHICAL_STATES
 
+
+/** \brief Push event to the event queue
+ *
+ * \param head event_t* head of the event queue
+ * \param event uint32_t event to be pushed
+ */
+void pushEvent( event_t* head, uint32_t event )
+{
+    event_t* current = head;
+
+    /* Check if head is empty */
+    if ( current->event == 0 )
+    {
+        current->event = event;
+        return;
+    }
+
+    while ( current->next != NULL )
+    {
+        current = current->next;
+    }
+
+    /* Now we can add a new variable */
+    current->next = (event_t*) malloc( sizeof( event_t ) );
+
+    /* Check if memory allocation was successful */
+    if ( current->next == NULL )
+    {
+        return;
+    }
+
+    current->next->event = event;
+    current->next->next  = NULL;
+}

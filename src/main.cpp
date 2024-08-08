@@ -209,7 +209,6 @@ void loop()
 static void init( door_control_t* const pDoorControl, uint32_t processTime )
 {
     pDoorControl->machine.State = &doorControlStates[DOOR_CONTROL_STATE_INIT];
-    pDoorControl->machine.Event = 0;
 
     // pDoorControl->Set_Time      = processTime;
     // pDoorControl->Resume_Time   = 0;
@@ -228,9 +227,9 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t initHandler( state_machine_t* const pState )
 {
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->eventQueue.event ).c_str() );
 
-    switch ( pState->Event )
+    switch ( pState->eventQueue.event )
     {
     case DOOR_CONTROL_EVENT_INIT_DONE:
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
@@ -264,7 +263,7 @@ static state_machine_result_t idleEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t idleHandler( state_machine_t* const pState )
 {
-    Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+    Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->eventQueue.event ).c_str() );
 
     /* Process door buttons */
     door_type_t doors[DOOR_TYPE_SIZE] = {DOOR_TYPE_DOOR_1, DOOR_TYPE_DOOR_2};
@@ -284,7 +283,7 @@ static state_machine_result_t idleHandler( state_machine_t* const pState )
     }
 
     /* Process the event */
-    switch ( pState->Event )
+    switch ( pState->eventQueue.event )
     {
         case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
             switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_OPEN] );
@@ -320,9 +319,9 @@ static state_machine_result_t faultEntryHandler( state_machine_t* const pState )
 
 static state_machine_result_t faultHandler( state_machine_t* const pState )
 {
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->eventQueue.event ).c_str() );
 
-        switch ( pState->Event )
+        switch ( pState->eventQueue.event )
     {
         case DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE:
             switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
@@ -353,12 +352,12 @@ static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pSta
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState )
 {
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->eventQueue.event ).c_str() );
 
     /* Keep the door open */
     setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_OPEN );
 
-    switch ( pState->Event )
+    switch ( pState->eventQueue.event )
     {
     case DOOR_CONTROL_EVENT_DOOR_1_CLOSE:
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
@@ -389,12 +388,12 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState )
 {
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->Event ).c_str() );
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) pState->eventQueue.event ).c_str() );
 
     /* Keep the door open */
     setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_OPEN );
 
-    switch ( pState->Event )
+    switch ( pState->eventQueue.event )
     {
     case DOOR_CONTROL_EVENT_DOOR_2_CLOSE:
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
@@ -569,36 +568,37 @@ static void generateEvent( door_control_t* const pDoorControl )
     getDoorState( DOOR_TYPE_DOOR_1, &door1Switch, &door1Button );
     getDoorState( DOOR_TYPE_DOOR_2, &door2Switch, &door2Button );
 
-
+    /* Generate the event */
     if (    ( door1Switch == BUTTON_STATE_RELEASED )
          && ( door2Switch == BUTTON_STATE_RELEASED ) )
     {
-        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_2_OPEN;
+        pushEvent( &pDoorControl->machine.eventQueue, DOOR_CONTROL_EVENT_DOOR_1_2_OPEN );
     }
-    else if (    ( door1Switch == BUTTON_STATE_PRESSED )
-              && ( door2Switch == BUTTON_STATE_PRESSED ) )
+
+    if (    ( door1Switch == BUTTON_STATE_PRESSED )
+         && ( door2Switch == BUTTON_STATE_PRESSED ) )
     {
-        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE;
+        pushEvent( &pDoorControl->machine.eventQueue, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
     }
-    else if ( door1Switch == BUTTON_STATE_PRESSED )
+
+    if ( door1Switch == BUTTON_STATE_PRESSED )
     {
-        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_CLOSE;
+        pushEvent( &pDoorControl->machine.eventQueue, DOOR_CONTROL_EVENT_DOOR_1_CLOSE );
     }
-    else if ( door2Switch == BUTTON_STATE_PRESSED )
+
+    if ( door2Switch == BUTTON_STATE_PRESSED )
     {
-        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_2_CLOSE;
+        pushEvent( &pDoorControl->machine.eventQueue, DOOR_CONTROL_EVENT_DOOR_2_CLOSE );
     }
-    else if ( door1Switch == BUTTON_STATE_PRESSED )
+
+    if ( door1Switch == BUTTON_STATE_PRESSED )
     {
-        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_1_OPEN;
+        pushEvent( &pDoorControl->machine.eventQueue, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
     }
-    else if ( door2Switch == BUTTON_STATE_PRESSED )
+
+    if ( door2Switch == BUTTON_STATE_PRESSED )
     {
-        pDoorControl->machine.Event = DOOR_CONTROL_EVENT_DOOR_2_OPEN;
-    }
-    else
-    {
-        pDoorControl->machine.Event = 0;
+        pushEvent( &pDoorControl->machine.eventQueue, DOOR_CONTROL_EVENT_DOOR_2_OPEN );
     }
 }
 
