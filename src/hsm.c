@@ -27,23 +27,24 @@
  *  --------------------- DEFINITION ---------------------
  */
 
-#define EXECUTE_HANDLER(handler, triggerd, state_machine)       \
-do{                                                             \
-  if(handler != NULL)                                           \
-  {                                                             \
-    state_machine_result_t result = handler(state_machine);     \
-    switch(result)                                              \
-    {                                                           \
-    case TRIGGERED_TO_SELF:                                     \
-      triggerd = true;                                          \
-    case EVENT_HANDLED:                                         \
-      break;                                                    \
-                                                                \
-    default:                                                    \
-      return result;                                            \
-    }                                                           \
-  }                                                             \
-} while(0)
+#define EXECUTE_HANDLER( handler, triggerd, state_machine )                                \
+do                                                                                         \
+{                                                                                          \
+    if ( handler != NULL )                                                                 \
+    {                                                                                      \
+        state_machine_result_t result = handler( state_machine, state_machine->event.id ); \
+        switch ( result )                                                                  \
+        {                                                                                  \
+        case TRIGGERED_TO_SELF:                                                            \
+            triggerd = true;                                                               \
+        case EVENT_HANDLED:                                                                \
+            break;                                                                         \
+                                                                                           \
+        default:                                                                           \
+            return result;                                                                 \
+        }                                                                                  \
+    }                                                                                      \
+} while ( 0 )
 
 /*
  *  --------------------- FUNCTION BODY ---------------------
@@ -69,7 +70,7 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
   // Iterate through all state machines in the array to check if event is pending to dispatch.
     for(uint32_t index = 0; index < quantity;)
     {
-        event_t* currentEvent = &pState_Machine[index]->eventQueue;
+        event_t* currentEvent = &pState_Machine[index]->event;
 
         while( currentEvent != NULL )
         {
@@ -78,10 +79,10 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
             do
             {
 #if STATE_MACHINE_LOGGER
-                event_logger(index, pState->Id, pState_Machine[index]->eventQueue.event);
+                event_logger(index, pState->Id, pState_Machine[index]->event.id);
 #endif // STATE_MACHINE_LOGGER
         // Call the state handler.
-                result = pState->Handler(pState_Machine[index]);
+                result = pState->Handler(pState_Machine[index], pState_Machine[index]->event.id);
 #if STATE_MACHINE_LOGGER
                 result_logger(pState_Machine[index]->State->Id, result);
 #endif // STATE_MACHINE_LOGGER
@@ -262,9 +263,9 @@ void pushEvent( event_t* head, uint32_t event )
     event_t* current = head;
 
     /* Check if head is empty */
-    if ( current->event == 0 )
+    if ( current->id == 0 )
     {
-        current->event = event;
+        current->id = event;
         return;
     }
 
@@ -282,6 +283,6 @@ void pushEvent( event_t* head, uint32_t event )
         return;
     }
 
-    current->next->event = event;
-    current->next->next  = NULL;
+    current->next->id   = event;
+    current->next->next = NULL;
 }

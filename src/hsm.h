@@ -57,7 +57,7 @@ typedef struct finite_state state_t;
 #endif // HIERARCHICAL_STATES
 
 typedef struct state_machine_t state_machine_t;
-typedef state_machine_result_t (*state_handler) (state_machine_t* const State);
+typedef state_machine_result_t (*state_handler) (state_machine_t* const State, const uint32_t event);
 typedef void (*state_machine_event_logger)(uint32_t state_machine, uint32_t state, uint32_t event);
 typedef void (*state_machine_result_logger)(uint32_t state, state_machine_result_t result);
 
@@ -89,14 +89,14 @@ struct hierarchical_state
 };
 
 typedef struct event_t {
-    uint32_t        event;   //!< Event to be dispatched
-    struct event_t* next;    //!< Pointer to next event
+    uint32_t        id;     //!< Event to be dispatched
+    struct event_t* next;   //!< Pointer to next event
 } event_t;
 
 //! Abstract state machine structure
 struct state_machine_t {
-    event_t        eventQueue;   //!< Pending events to be dispatched
-    const state_t* State;        //!< State of state machine.
+    event_t        event;   //!< Pending events to be dispatched
+    const state_t* State;   //!< State of state machine.
 };
 
 /*
