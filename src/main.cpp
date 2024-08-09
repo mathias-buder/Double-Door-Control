@@ -32,6 +32,8 @@
 #define DEBOUNCE_DELAY_DOOR_SWITCH_1    100  /*!< Debounce delay for the door switch @unit ms*/
 #define DEBOUNCE_DELAY_DOOR_SWITCH_2    100  /*!< Debounce delay for the door switch @unit ms*/
 
+#define SERIAL_BAUD_RATE                115200 /*!< Baud rate of the serial communication @unit bps */
+#define LED_BLINK_INTERVAL              500    /*!< Interval of the led blink @unit ms */
 
 /************************************* ENUMERATION **************************************/
 
@@ -262,14 +264,16 @@ uint16_t sensorDebounceTime[SENSOR_SIZE] = {
 void setup()
 {
     /* Initialize with log level and log output */
-    Serial.begin( 115200 );
+    Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( LOG_LEVEL_INFO, &Serial );
 
     /* Initialize the doorControl */
     init( &doorControl, 0 );
 
-    /* Initialize the led blink timer with the interval of 500ms */
-    Timer1.initialize( 1000000 );
+    /* Initialize the led blink timer */
+    unsigned long ledBlinkInterval = 2000;
+    ledBlinkInterval *= LED_BLINK_INTERVAL;
+    Timer1.initialize( ledBlinkInterval );
 }
 
 /**
