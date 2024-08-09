@@ -9,24 +9,28 @@
 /****************************************************************************************/
 /* DOOR 1 */
 /****************************************************************************************/
-#define RBG_LED_1_R                7    /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_1_G                6    /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_1_B                5    /*!< Pin for the blue LED of the RGB-LED */
-#define DOOR_1_BUTTON              2    /*!< Pin for the button of the door */
-#define DOOR_1_SWITCH              3    /*!< Pin for the switch of the door */
-#define DOOR_1_MAGNET              4    /*!< Pin for the magnet of the door */
+#define RBG_LED_1_R                     7    /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_1_G                     6    /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_1_B                     5    /*!< Pin for the blue LED of the RGB-LED */
+#define DOOR_1_BUTTON                   2    /*!< Pin for the button of the door */
+#define DOOR_1_SWITCH                   3    /*!< Pin for the switch of the door */
+#define DOOR_1_MAGNET                   4    /*!< Pin for the magnet of the door */
 
 /****************************************************************************************/
 /* DOOR 2 */
 /****************************************************************************************/
-#define RBG_LED_2_R                13   /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_2_G                12   /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_2_B                11   /*!< Pin for the blue LED of the RGB-LED */
-#define DOOR_2_BUTTON              10   /*!< Pin for the button of the door */
-#define DOOR_2_SWITCH              9    /*!< Pin for the switch of the door */
-#define DOOR_2_MAGNET              8    /*!< Pin for the magnet of the door */
+#define RBG_LED_2_R                     13   /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_2_G                     12   /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_2_B                     11   /*!< Pin for the blue LED of the RGB-LED */
+#define DOOR_2_BUTTON                   10   /*!< Pin for the button of the door */
+#define DOOR_2_SWITCH                   9    /*!< Pin for the switch of the door */
+#define DOOR_2_MAGNET                   8    /*!< Pin for the magnet of the door */
 /****************************************************************************************/
-#define DOOR_BUTTON_DEBOUNCE_DELAY 100  /*!< Debounce delay for the door button @unit ms*/
+
+#define DEBOUNCE_DELAY_DOOR_BUTTON_1    100  /*!< Debounce delay for the door button @unit ms*/
+#define DEBOUNCE_DELAY_DOOR_BUTTON_2    100  /*!< Debounce delay for the door button @unit ms*/
+#define DEBOUNCE_DELAY_DOOR_SWITCH_1    100  /*!< Debounce delay for the door switch @unit ms*/
+#define DEBOUNCE_DELAY_DOOR_SWITCH_2    100  /*!< Debounce delay for the door switch @unit ms*/
 
 
 /************************************* ENUMERATION **************************************/
@@ -243,10 +247,10 @@ uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {                       /*!<
  * @details The debounce time is used to filter out the noise of each sensor
  */
 uint16_t sensorDebounceTime[SENSOR_SIZE] = {
-    DOOR_BUTTON_DEBOUNCE_DELAY,     /*!< Button 1 debounce time @umit ms */
-    DOOR_BUTTON_DEBOUNCE_DELAY,     /*!< Button 2 debounce time @umit ms */
-    DOOR_BUTTON_DEBOUNCE_DELAY,     /*!< Switch 1 debounce time @umit ms */
-    DOOR_BUTTON_DEBOUNCE_DELAY      /*!< Switch 2 debounce time @umit ms */
+    DEBOUNCE_DELAY_DOOR_BUTTON_1,     /*!< Button 1 debounce time @umit ms */
+    DEBOUNCE_DELAY_DOOR_BUTTON_2,     /*!< Button 2 debounce time @umit ms */
+    DEBOUNCE_DELAY_DOOR_SWITCH_1,     /*!< Switch 1 debounce time @umit ms */
+    DEBOUNCE_DELAY_DOOR_SWITCH_2      /*!< Switch 2 debounce time @umit ms */
 };
 
 
