@@ -95,7 +95,7 @@ typedef struct event_t {
 
 //! Abstract state machine structure
 struct state_machine_t {
-    event_t        event;   //!< Pending events to be dispatched
+    event_t*       event;   //!< Pointer to head of event queue
     const state_t* State;   //!< State of state machine.
 };
 
@@ -123,8 +123,7 @@ extern state_machine_result_t traverse_state(state_machine_t* const pState_Machi
 extern state_machine_result_t switch_state(state_machine_t* const pState_Machine,
                                                     const state_t* const pTarget_State);
 
-void   pushEvent( event_t* head, uint32_t event );
-int8_t popEvent( event_t** head );
+void pushEvent( event_t** head, uint32_t event );
 
 #ifdef __cplusplus
 }

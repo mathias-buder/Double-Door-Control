@@ -32,7 +32,7 @@ do                                                                              
 {                                                                                          \
     if ( handler != NULL )                                                                 \
     {                                                                                      \
-        state_machine_result_t result = handler( state_machine, state_machine->event.id ); \
+        state_machine_result_t result = handler( state_machine, state_machine->event->id ); \
         switch ( result )                                                                  \
         {                                                                                  \
         case TRIGGERED_TO_SELF:                                                            \
@@ -70,7 +70,8 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
   // Iterate through all state machines in the array to check if event is pending to dispatch.
     for(uint32_t index = 0; index < quantity;)
     {
-        event_t* currentEvent = &pState_Machine[index]->event;
+        event_t* currentEvent  = pState_Machine[index]->event;
+        event_t* previousEvent = NULL;
 
         while( currentEvent != NULL )
         {
@@ -79,10 +80,10 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
             do
             {
 #if STATE_MACHINE_LOGGER
-                event_logger(index, pState->Id, pState_Machine[index]->event.id);
+                event_logger(index, pState->Id, pState_Machine[index]->event->id);
 #endif // STATE_MACHINE_LOGGER
         // Call the state handler.
-                result = pState->Handler(pState_Machine[index], pState_Machine[index]->event.id);
+                result = pState->Handler(pState_Machine[index], pState_Machine[index]->event->id);
 #if STATE_MACHINE_LOGGER
                 result_logger(pState_Machine[index]->State->Id, result);
 #endif // STATE_MACHINE_LOGGER
@@ -90,8 +91,21 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
                 switch(result)
                 {
                 case EVENT_HANDLED:
-                    // Clear event, if successfully handled by state handler.
-                    // pState_Machine[index]->Event = 0;
+                    if (previousEvent == NULL)
+                    {
+                        /* Remove the event from the queue */
+                        pState_Machine[index]->event = currentEvent->next;
+                    }
+                    else
+                    {
+                        /* Bypass the current event in the queue */
+                        previousEvent->next = currentEvent->next;
+                    }
+
+                    /* Free the memory allocated for the event */
+                    event_t* temp = currentEvent;
+                    currentEvent  = currentEvent->next;
+                    free( temp );
 
                     // intentional fall through
 
@@ -124,19 +138,18 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
                 // Either state handler could not handle the event or it has returned
                 // the unknown return code. Terminate the state machine.
                 default:
-                    return result;
+                    previousEvent = currentEvent;
+                    currentEvent  = currentEvent->next;
                 }
                 break;
 
             } while(1);
-
-            currentEvent = currentEvent->next;
         }
 
         index++;
         continue;
     }
-    return EVENT_HANDLED;
+    return result;
 }
 
 /** \brief Switch to target states without traversing to hierarchical levels.
@@ -258,16 +271,18 @@ state_machine_result_t traverse_state(state_machine_t* const pState_Machine,
  * \param head event_t* head of the event queue
  * \param event uint32_t event to be pushed
  */
-void pushEvent( event_t* head, uint32_t event )
+void pushEvent( event_t** head, uint32_t event )
 {
-    event_t* current = head;
-
     /* Check if head is empty */
-    if ( current->id == 0 )
+    if ( *head == NULL )
     {
-        current->id = event;
+        *head           = (event_t*) malloc( sizeof( event_t ) );
+        ( *head )->id   = event;
+        ( *head )->next = NULL;
         return;
     }
+
+    event_t* current = *head;
 
     while ( current->next != NULL )
     {

@@ -2,6 +2,8 @@
 #include <ArduinoLog.h>
 #include <TimerOne.h>
 
+#include <stdlib.h>
+
 #include "hsm.h"
 
 /****************************************************************************************/
@@ -205,17 +207,16 @@ void loop()
     }
 }
 
-
 static void init( door_control_t* const pDoorControl, uint32_t processTime )
 {
     pDoorControl->machine.State = &doorControlStates[DOOR_CONTROL_STATE_INIT];
+    pDoorControl->machine.event = NULL;
 
     // pDoorControl->Set_Time      = processTime;
     // pDoorControl->Resume_Time   = 0;
 
     /* initEntryHandler( (state_machine_t*) pDoorControl ); */
 }
-
 
 /*
 static state_machine_result_t initEntryHandler( state_machine_t* const pState )
@@ -420,16 +421,19 @@ void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
 {
     (void) stateMachine;
     static uint32_t lastEvent = 0;
+    static uint32_t lastState = 0;
 
     /* Only log if the event is changed */
-    if ( lastEvent != event )
+    if (    ( lastEvent != event )
+         && ( lastState != state ) )
     {
         Log.notice( "%s: Event: %s, State: %s" CR, __func__,
-                                                   eventToString( (door_control_event_t) event ).c_str(),
-                                                   stateToString( (door_control_state_t) state ).c_str() );
+                    eventToString( (door_control_event_t) event ).c_str(),
+                    stateToString( (door_control_state_t) state ).c_str() );
     }
 
     lastEvent = event;
+    lastState = state;
 }
 
 //! Callback function to log the result of event processed by state machine
@@ -568,35 +572,38 @@ static void generateEvent( door_control_t* const pDoorControl )
     getDoorState( DOOR_TYPE_DOOR_1, &door1Switch, &door1Button );
     getDoorState( DOOR_TYPE_DOOR_2, &door2Switch, &door2Button );
 
+    /* Get pointer to the current event */
+    event_t** pCurrentEvent = &pDoorControl->machine.event;
+
     /* Generate the event */
     if (    ( door1Switch == BUTTON_STATE_RELEASED )
          && ( door2Switch == BUTTON_STATE_RELEASED ) )
     {
-        pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_1_2_OPEN );
+        pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_OPEN );
     }
 
     if (    ( door1Switch == BUTTON_STATE_PRESSED )
          && ( door2Switch == BUTTON_STATE_PRESSED ) )
     {
-        pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
+        pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
     }
 
     if ( door1Switch == BUTTON_STATE_PRESSED )
     {
-        pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_1_CLOSE );
+        pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_CLOSE );
+    }
+
+    if ( door1Switch == BUTTON_STATE_RELEASED )
+    {
+        pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
     }
 
     if ( door2Switch == BUTTON_STATE_PRESSED )
     {
-        pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_2_CLOSE );
+        pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_2_CLOSE );
     }
 
-    if ( door1Switch == BUTTON_STATE_PRESSED )
-    {
-        pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
-    }
-
-    if ( door2Switch == BUTTON_STATE_PRESSED )
+    if ( door2Switch == BUTTON_STATE_RELEASED )
     {
         pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_2_OPEN );
     }
