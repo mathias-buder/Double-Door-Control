@@ -11,9 +11,9 @@
 /****************************************************************************************/
 /* DOOR 1 */
 /****************************************************************************************/
-#define RBG_LED_1_R         5   /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_1_R         7   /*!< Pin for the red LED of the RGB-LED */
 #define RBG_LED_1_G         6   /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_1_B         7   /*!< Pin for the blue LED of the RGB-LED */
+#define RBG_LED_1_B         5   /*!< Pin for the blue LED of the RGB-LED */
 
 #define DOOR_1_BUTTON       2   /*!< Pin for the button of the door */
 #define DOOR_1_SWITCH       3   /*!< Pin for the switch of the door */
@@ -22,9 +22,9 @@
 /****************************************************************************************/
 /* DOOR 2 */
 /****************************************************************************************/
-#define RBG_LED_2_R         11  /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_2_R         13  /*!< Pin for the red LED of the RGB-LED */
 #define RBG_LED_2_G         12  /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_2_B         13  /*!< Pin for the blue LED of the RGB-LED */
+#define RBG_LED_2_B         11  /*!< Pin for the blue LED of the RGB-LED */
 
 #define DOOR_2_BUTTON       10  /*!< Pin for the button of the door */
 #define DOOR_2_SWITCH       9   /*!< Pin for the switch of the door */
@@ -32,8 +32,6 @@
 
 /****************************************************************************************/
 #define DOOR_BUTTON_DEBOUNCE_DELAY  100 /*!< Debounce delay for the door button @unit ms*/
-
-
 
 
 /************************************* ENUMERATION **************************************/
@@ -86,6 +84,26 @@ typedef enum
 } button_state_t;
 
 
+typedef enum
+{
+    RGB_LED_PIN_R, /*!< Red color */
+    RGB_LED_PIN_G, /*!< Green color */
+    RGB_LED_PIN_B, /*!< Blue color */
+    RGB_LED_PIN_SIZE /*!< Number of colors */
+} rgb_led_pin_t;
+
+typedef enum
+{
+    LED_COLOR_RED,     /*!< Red color */
+    LED_COLOR_GREEN,   /*!< Green color */
+    LED_COLOR_BLUE,    /*!< Blue color */
+    LED_COLOR_YELLOW,  /*!< Yellow color */
+    LED_COLOR_MAGENTA, /*!< Magenta color */
+    LED_COLOR_CYAN,    /*!< Cyan color */
+    LED_COLOR_WHITE,   /*!< White color */
+    LED_COLOR_SIZE     /*!< Number of colors */
+} led_color_t;
+
 /************************************* STRUCTURE **************************************/
 
 //! doorControl state machine
@@ -108,20 +126,23 @@ static state_machine_result_t initHandler( state_machine_t* const pState, const 
 /* static state_machine_result_t initExitHandler( state_machine_t* const pState, const uint32_t event ); */
 
 static state_machine_result_t idleHandler( state_machine_t* const pState, const uint32_t event );
-/* static state_machine_result_t idleEntryHandler( state_machine_t* const pState, const uint32_t event ); */
-/* static state_machine_result_t idleExitHandler( state_machine_t* const pState, const uint32_t event ); */
+static state_machine_result_t idleEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t idleExitHandler( state_machine_t* const pState, const uint32_t event );
 
 static state_machine_result_t faultHandler( state_machine_t* const pState, const uint32_t event );
-/* static state_machine_result_t faultEntryHandler( state_machine_t* const pState, const uint32_t event ); */
-/* static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event ); */
+static state_machine_result_t faultEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event );
+static void                   faultBlinkLedIsrHandler( void );
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event );
+static void                   door1BlinkLedIsrHandler( void );
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
+static void                   door2BlinkLedIsrHandler( void );
 
 static void           init( door_control_t* const pDoorControl, uint32_t processTime );
 void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
@@ -130,9 +151,10 @@ static void           getDoorState( const door_type_t door, button_state_t* cons
 static void           setDoorState( const door_type_t door, const lock_state_t state );
 static button_state_t getDoorButtonState( const door_type_t door );
 static void           generateEvent( door_control_t* const pDoorControl );
-String stateToString( door_control_state_t state );
-String eventToString( door_control_event_t event );
-String resultToString( state_machine_result_t result );
+String                stateToString( door_control_state_t state );
+String                eventToString( door_control_event_t event );
+String                resultToString( state_machine_result_t result );
+void                  setLed( bool enable, door_type_t door, led_color_t color );
 
 /******************************** Global variables ************************************/
 
@@ -147,15 +169,15 @@ static const state_t doorControlStates[] = {
 
     [DOOR_CONTROL_STATE_IDLE] = {
         .Handler = idleHandler,
-        .Entry   = NULL,
-        .Exit    = NULL,
+        .Entry   = idleEntryHandler,
+        .Exit    = idleExitHandler,
         .Id      = DOOR_CONTROL_STATE_IDLE
     },
 
     [DOOR_CONTROL_STATE_FAULT] = {
         .Handler = faultHandler,
-        .Entry   = NULL,
-        .Exit    = NULL,
+        .Entry   = faultEntryHandler,
+        .Exit    = faultExitHandler,
         .Id      = DOOR_CONTROL_STATE_FAULT
     },
 
@@ -174,8 +196,13 @@ static const state_t doorControlStates[] = {
     }
 };
 
-door_control_t         doorControl;                                            /*!< Instance of door_control_t */
-state_machine_t* const stateMachines[] = { (state_machine_t* ) &doorControl }; /*!< Create and initialize the array of state machines. */
+door_control_t         doorControl;                                         /*!< Instance of door_control_t */
+state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl}; /*!< Create and initialize the array of state machines. */
+
+uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
+    {RBG_LED_1_R, RBG_LED_1_G, RBG_LED_1_B},
+    {RBG_LED_2_R, RBG_LED_2_G, RBG_LED_2_B}
+};
 
 /**
  * @brief Setup Funktion
@@ -190,6 +217,9 @@ void setup()
 
     /* Initialize the doorControl */
     init( &doorControl, 0 );
+
+    /* Initialize the led blink timer with the interval of 500ms */
+    Timer1.initialize( 1000000 );
 }
 
 /* ***************************************************************************************
@@ -253,13 +283,19 @@ static state_machine_result_t initExitHandler( state_machine_t* const pState )
 }
 */
 
-/*
-static state_machine_result_t idleEntryHandler( state_machine_t* const pState )
+
+
+static state_machine_result_t idleEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Idle Entry Handler" CR);
+    Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Set both door leds to white */
+    setLed( HIGH, DOOR_TYPE_DOOR_1, LED_COLOR_WHITE );
+    setLed( HIGH, DOOR_TYPE_DOOR_2, LED_COLOR_WHITE );
+
     return EVENT_HANDLED;
 }
-*/
+
 
 
 static state_machine_result_t idleHandler( state_machine_t* const pState, const uint32_t event )
@@ -310,21 +346,30 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     return EVENT_HANDLED;
 }
 
-/*
-static state_machine_result_t idleExitHandler( state_machine_t* const pState )
-{
-    Log.notice("Idle Exit Handler" CR);
-    return EVENT_HANDLED;
-}
-*/
 
-/*
-static state_machine_result_t faultEntryHandler( state_machine_t* const pState )
+static state_machine_result_t idleExitHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Fault Entry Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Set both door leds to off */
+    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+
     return EVENT_HANDLED;
 }
-*/
+
+
+
+static state_machine_result_t faultEntryHandler( state_machine_t* const pState, const uint32_t event )
+{
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    Timer1.attachInterrupt( faultBlinkLedIsrHandler );
+    Timer1.start();
+
+    return EVENT_HANDLED;
+}
+
 
 static state_machine_result_t faultHandler( state_machine_t* const pState, const uint32_t event )
 {
@@ -342,13 +387,27 @@ static state_machine_result_t faultHandler( state_machine_t* const pState, const
     return EVENT_HANDLED;
 }
 
-/*
-static state_machine_result_t faultExitHandler( state_machine_t* const pState )
+
+static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Fault Exit Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    Timer1.stop();
+    Timer1.detachInterrupt();
+    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+
     return EVENT_HANDLED;
 }
-*/
+
+
+static void faultBlinkLedIsrHandler( void )
+{
+    static uint8_t ledState = LOW;
+    ledState                = !ledState;
+    setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_MAGENTA );
+    setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_MAGENTA );
+}
 
 
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
@@ -357,6 +416,8 @@ static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pSta
 
     /* Unlock the door */
     setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_UNLOCKED );
+    Timer1.attachInterrupt( door1BlinkLedIsrHandler );
+    Timer1.start();
 
     return EVENT_HANDLED;
 }
@@ -385,9 +446,23 @@ static state_machine_result_t door1OpenExitHandler( state_machine_t* const pStat
     /* Lock the door */
     setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
 
+    Timer1.stop();
+    Timer1.detachInterrupt();
+    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+
     return EVENT_HANDLED;
 }
 
+
+
+static void door1BlinkLedIsrHandler( void )
+{
+    static uint8_t ledState = LOW;
+    ledState                = !ledState;
+    setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_GREEN );
+    setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_RED );
+}
 
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
@@ -395,6 +470,9 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
 
     /* Unlock the door */
     setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_UNLOCKED );
+
+    Timer1.attachInterrupt( door2BlinkLedIsrHandler );
+    Timer1.start();
 
     return EVENT_HANDLED;
 }
@@ -423,9 +501,21 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
     /* Lock the door */
     setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
 
+    Timer1.stop();
+    Timer1.detachInterrupt();
+    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+
     return EVENT_HANDLED;
 }
 
+static void door2BlinkLedIsrHandler( void )
+{
+    static uint8_t ledState = LOW;
+    ledState                = !ledState;
+    setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_RED );
+    setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_GREEN );
+}
 
 
 
@@ -623,6 +713,62 @@ static void generateEvent( door_control_t* const pDoorControl )
 }
 
 
+
+void setLed( bool enable, door_type_t door, led_color_t color )
+{
+
+    if ( enable )
+    {
+        switch ( color )
+        {
+            case LED_COLOR_RED:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+                break;
+            case LED_COLOR_GREEN:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+                break;
+            case LED_COLOR_BLUE:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                break;
+            case LED_COLOR_YELLOW:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+                break;
+            case LED_COLOR_MAGENTA:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                break;
+            case LED_COLOR_CYAN:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                break;
+            case LED_COLOR_WHITE:
+                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
+                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                break;
+            default:
+                break;
+        }
+    }
+    else
+    {
+        digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
+        digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
+        digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+    }
+}
+
+
 String stateToString( door_control_state_t state )
 {
     switch ( state )
@@ -686,17 +832,3 @@ String resultToString( state_machine_result_t result )
         return "UNKNOWN";
     }
 }
-
-
-
-
-  // Timer1.initialize(1000000); // The led will blink in a half second time
-  //                            // interval
-  // Timer1.attachInterrupt(blinkLed);
-
-
-// int ledState = LOW;
-// void blinkLed() {
-//   ledState = !ledState;
-//   digitalWrite(RBG_LED_1_R, ledState);
-// }
