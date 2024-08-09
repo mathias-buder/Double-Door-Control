@@ -267,20 +267,28 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
     /* Process door buttons */
-    door_type_t doors[DOOR_TYPE_SIZE] = {DOOR_TYPE_DOOR_1, DOOR_TYPE_DOOR_2};
+    button_state_t buttonState[DOOR_TYPE_SIZE] = {BUTTON_STATE_RELEASED};
 
     for ( uint8_t i = 0; i < DOOR_TYPE_SIZE; i++ )
     {
-        if ( getDoorButtonState( doors[i] ) == BUTTON_STATE_PRESSED )
-        {
-            // Log.notice( "Door %d is pressed" CR, doors[i] );
-            setDoorState( doors[i], LOCK_STATE_UNLOCKED );
-        }
-        else if ( getDoorButtonState( doors[i] ) == BUTTON_STATE_RELEASED )
-        {
-            // Log.notice( "Door %d is released" CR, doors[i] );
-            setDoorState( doors[i], LOCK_STATE_LOCKED );
-        }
+        buttonState[i] = getDoorButtonState( (door_type_t) i );
+    }
+
+    /* XOR-logic to allow only one door to be open */
+    if (    ( buttonState[DOOR_TYPE_DOOR_1] == BUTTON_STATE_PRESSED )
+         && ( buttonState[DOOR_TYPE_DOOR_2] == BUTTON_STATE_RELEASED ) )
+    {
+        setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_UNLOCKED );
+    }
+    else if (    ( buttonState[DOOR_TYPE_DOOR_1] == BUTTON_STATE_RELEASED )
+              && ( buttonState[DOOR_TYPE_DOOR_2] == BUTTON_STATE_PRESSED ) )
+    {
+        setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_UNLOCKED );
+    }
+    else
+    {
+        setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
+        setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
     }
 
     /* Process the event */
