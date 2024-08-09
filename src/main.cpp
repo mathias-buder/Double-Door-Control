@@ -400,8 +400,7 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState, c
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
         break;
     default:
-        Log.error("%s: EVENT_UN_HANDLED" CR, __func__);
-        return EVENT_UN_HANDLED;
+        break;
     }
     return EVENT_HANDLED;
 }
