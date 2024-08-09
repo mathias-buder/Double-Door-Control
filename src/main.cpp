@@ -75,8 +75,8 @@ typedef enum
 
 typedef enum
 {
-    LOCK_STATE_CLOSED = LOW,    /*!< The door is closed */
-    LOCK_STATE_OPEN   = HIGH    /*!< The door is open */
+    LOCK_STATE_LOCKED   = LOW, /*!< The door is closed */
+    LOCK_STATE_UNLOCKED = HIGH /*!< The door is open */
 } lock_state_t;
 
 typedef enum
@@ -116,12 +116,12 @@ static state_machine_result_t faultHandler( state_machine_t* const pState, const
 /* static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event ); */
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event );
-/* static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event ); */
-/* static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event ); */
+static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event );
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event );
-/* static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event ); */
-/* static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event ); */
+static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
 
 static void           init( door_control_t* const pDoorControl, uint32_t processTime );
 void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
@@ -160,16 +160,16 @@ static const state_t doorControlStates[] = {
     },
 
     [DOOR_CONTROL_STATE_DOOR_1_OPEN] = {
-        .Handler = door1OpenHandler, 
-        .Entry   = NULL,
-        .Exit    = NULL,
+        .Handler = door1OpenHandler,
+        .Entry   = door1OpenEntryHandler,
+        .Exit    = door1OpenExitHandler,
         .Id      = DOOR_CONTROL_STATE_DOOR_1_OPEN
     },
 
     [DOOR_CONTROL_STATE_DOOR_2_OPEN] = {
         .Handler = door2OpenHandler,
-        .Entry   = NULL,
-        .Exit    = NULL,
+        .Entry   = door2OpenEntryHandler,
+        .Exit    = door2OpenExitHandler,
         .Id      = DOOR_CONTROL_STATE_DOOR_2_OPEN
     }
 };
@@ -274,12 +274,12 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
         if ( getDoorButtonState( doors[i] ) == BUTTON_STATE_PRESSED )
         {
             // Log.notice( "Door %d is pressed" CR, doors[i] );
-            setDoorState( doors[i], LOCK_STATE_OPEN );
+            setDoorState( doors[i], LOCK_STATE_UNLOCKED );
         }
         else if ( getDoorButtonState( doors[i] ) == BUTTON_STATE_RELEASED )
         {
             // Log.notice( "Door %d is released" CR, doors[i] );
-            setDoorState( doors[i], LOCK_STATE_CLOSED );
+            setDoorState( doors[i], LOCK_STATE_LOCKED );
         }
     }
 
@@ -343,20 +343,20 @@ static state_machine_result_t faultExitHandler( state_machine_t* const pState )
 */
 
 
-/*
-static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState )
+static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Door 1 Open Entry Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Unlock the door */
+    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_UNLOCKED );
+
     return EVENT_HANDLED;
 }
-*/
+
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
-
-    /* Keep the door open */
-    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_OPEN );
 
     switch ( event )
     {
@@ -369,30 +369,32 @@ static state_machine_result_t door1OpenHandler( state_machine_t* const pState, c
     return EVENT_HANDLED;
 }
 
-/*
-static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState )
+
+static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Door 1 Open Exit Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Lock the door */
+    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
+
     return EVENT_HANDLED;
 }
-*/
 
 
-
-/*
-static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState )
+static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Door 2 Open Entry Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Unlock the door */
+    setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_UNLOCKED );
+
     return EVENT_HANDLED;
 }
-*/
+
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
-
-    /* Keep the door open */
-    setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_OPEN );
 
     switch ( event )
     {
@@ -405,13 +407,17 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState, c
     return EVENT_HANDLED;
 }
 
-/*
-static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState )
+
+static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event )
 {
-    Log.notice("Door 2 Open Exit Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Lock the door */
+    setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
+
     return EVENT_HANDLED;
 }
-*/
+
 
 
 
@@ -478,11 +484,11 @@ static void getDoorState( const door_type_t door, button_state_t* const doorSwit
 
 static void setDoorState( const door_type_t door, const lock_state_t state )
 {
-    static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_CLOSED};
+    static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED};
 
     if ( lastState[door] != state )
     {
-        Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_OPEN ) ? "open" : "closed" );
+        Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_UNLOCKED ) ? "open" : "closed" );
     }
 
     switch ( door )
