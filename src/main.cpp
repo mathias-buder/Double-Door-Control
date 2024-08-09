@@ -158,7 +158,6 @@ static void                   door2BlinkLedIsrHandler( void );
 static void           init( door_control_t* const pDoorControl, uint32_t processTime );
 void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                  resultLogger( uint32_t state, state_machine_result_t result );
-static void           getDoorState( const door_type_t door, button_state_t* const doorSwitch, button_state_t* const doorButton );
 static void           setDoorState( const door_type_t door, const lock_state_t state );
 static button_state_t getDoorButtonState( const door_type_t door );
 static void           generateEvent( door_control_t* const pDoorControl );
@@ -667,37 +666,6 @@ void resultLogger(uint32_t state, state_machine_result_t result)
 
 
 /**
- * @brief Get the state of the door
- *
- * @param door - The door type
- * @param doorSwitch - The state of the switch
- * @param doorButton - The state of the button
- */
-static void getDoorState( const door_type_t door, button_state_t* const doorSwitch, button_state_t* const doorButton )
-{
-    if (    ( doorSwitch == NULL )
-         || ( doorButton == NULL ) )
-    {
-        Log.error( "doorSwitch or doorButton is NULL" CR );
-        return;
-    }
-
-    switch ( door )
-    {
-    case DOOR_TYPE_DOOR_1:
-        *doorSwitch = (button_state_t) digitalRead( DOOR_1_SWITCH );
-        *doorButton = getDoorButtonState( DOOR_TYPE_DOOR_1 );
-        break;
-
-    case DOOR_TYPE_DOOR_2:
-        *doorSwitch = (button_state_t) digitalRead( DOOR_2_SWITCH );
-        *doorButton = getDoorButtonState( DOOR_TYPE_DOOR_2 );
-        break;
-    }
-}
-
-
-/**
  * @brief Set the state of the door
  *
  * @param door - The door type
@@ -803,11 +771,9 @@ static button_state_t getDoorButtonState( const door_type_t door )
  */
 static void generateEvent( door_control_t* const pDoorControl )
 {
-    button_state_t door1Switch, door1Button, door2Switch, door2Button;
-
-    /* Get the current state of the door switches and buttons */
-    getDoorState( DOOR_TYPE_DOOR_1, &door1Switch, &door1Button );
-    getDoorState( DOOR_TYPE_DOOR_2, &door2Switch, &door2Button );
+    /* Read the state of both door switches */
+    button_state_t door1Switch = (button_state_t) digitalRead( DOOR_1_SWITCH );
+    button_state_t door2Switch = (button_state_t) digitalRead( DOOR_2_SWITCH );
 
     /* Get pointer to the current event */
     event_t** pCurrentEvent = &pDoorControl->machine.event;
