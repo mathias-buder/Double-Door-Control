@@ -2,8 +2,6 @@
 #include <ArduinoLog.h>
 #include <TimerOne.h>
 
-#include <stdlib.h>
-
 #include "hsm.h"
 
 /****************************************************************************************/
@@ -11,33 +9,30 @@
 /****************************************************************************************/
 /* DOOR 1 */
 /****************************************************************************************/
-#define RBG_LED_1_R         7   /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_1_G         6   /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_1_B         5   /*!< Pin for the blue LED of the RGB-LED */
-
-#define DOOR_1_BUTTON       2   /*!< Pin for the button of the door */
-#define DOOR_1_SWITCH       3   /*!< Pin for the switch of the door */
-#define DOOR_1_MAGNET       4   /*!< Pin for the magnet of the door */
+#define RBG_LED_1_R                7    /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_1_G                6    /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_1_B                5    /*!< Pin for the blue LED of the RGB-LED */
+#define DOOR_1_BUTTON              2    /*!< Pin for the button of the door */
+#define DOOR_1_SWITCH              3    /*!< Pin for the switch of the door */
+#define DOOR_1_MAGNET              4    /*!< Pin for the magnet of the door */
 
 /****************************************************************************************/
 /* DOOR 2 */
 /****************************************************************************************/
-#define RBG_LED_2_R         13  /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_2_G         12  /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_2_B         11  /*!< Pin for the blue LED of the RGB-LED */
-
-#define DOOR_2_BUTTON       10  /*!< Pin for the button of the door */
-#define DOOR_2_SWITCH       9   /*!< Pin for the switch of the door */
-#define DOOR_2_MAGNET       8   /*!< Pin for the magnet of the door */
-
+#define RBG_LED_2_R                13   /*!< Pin for the red LED of the RGB-LED */
+#define RBG_LED_2_G                12   /*!< Pin for the green LED of the RGB-LED */
+#define RBG_LED_2_B                11   /*!< Pin for the blue LED of the RGB-LED */
+#define DOOR_2_BUTTON              10   /*!< Pin for the button of the door */
+#define DOOR_2_SWITCH              9    /*!< Pin for the switch of the door */
+#define DOOR_2_MAGNET              8    /*!< Pin for the magnet of the door */
 /****************************************************************************************/
-#define DOOR_BUTTON_DEBOUNCE_DELAY  100 /*!< Debounce delay for the door button @unit ms*/
+#define DOOR_BUTTON_DEBOUNCE_DELAY 100  /*!< Debounce delay for the door button @unit ms*/
 
 
 /************************************* ENUMERATION **************************************/
 
 /**
- * @brief
+ * @brief Enumeration of the door control state
  */
 typedef enum
 {
@@ -49,7 +44,7 @@ typedef enum
 } door_control_state_t;
 
 /**
- * @brief
+ * @brief Enumeration of the door control event
  */
 typedef enum
 {
@@ -64,6 +59,9 @@ typedef enum
     DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE       /*!< The door 1 and 2 are closed */
 } door_control_event_t;
 
+/**
+ * @brief Enumeration of the door type
+ */
 typedef enum
 {
     DOOR_TYPE_DOOR_1, /*!< The door 1 */
@@ -71,27 +69,38 @@ typedef enum
     DOOR_TYPE_SIZE    /*!< Number of doors */
 } door_type_t;
 
+/**
+ * @brief Enumeration of the lock state
+ */
 typedef enum
 {
     LOCK_STATE_LOCKED   = LOW, /*!< The door is closed */
     LOCK_STATE_UNLOCKED = HIGH /*!< The door is open */
 } lock_state_t;
 
+/**
+ * @brief Enumeration of the button state
+ */
 typedef enum
 {
     BUTTON_STATE_RELEASED = 0, /*!< The button is released */
-    BUTTON_STATE_PRESSED        /*!< The button is pressed */
+    BUTTON_STATE_PRESSED       /*!< The button is pressed */
 } button_state_t;
 
-
+/**
+ * @brief Enumeration of the RGB LED pin
+ */
 typedef enum
 {
-    RGB_LED_PIN_R, /*!< Red color */
-    RGB_LED_PIN_G, /*!< Green color */
-    RGB_LED_PIN_B, /*!< Blue color */
+    RGB_LED_PIN_R,   /*!< Red color */
+    RGB_LED_PIN_G,   /*!< Green color */
+    RGB_LED_PIN_B,   /*!< Blue color */
     RGB_LED_PIN_SIZE /*!< Number of colors */
 } rgb_led_pin_t;
 
+/**
+ * @brief Enumeration of the led color
+ */
 typedef enum
 {
     LED_COLOR_RED,     /*!< Red color */
@@ -106,7 +115,9 @@ typedef enum
 
 /************************************* STRUCTURE **************************************/
 
-//! doorControl state machine
+/**
+ * @brief The door control state machine
+ */
 typedef struct
 {
     state_machine_t machine;      //!< Abstract state machine
@@ -158,6 +169,9 @@ void                  setLed( bool enable, door_type_t door, led_color_t color )
 
 /******************************** Global variables ************************************/
 
+/**
+ * @brief The state machine for the door control
+ */
 static const state_t doorControlStates[] = {
 
     [DOOR_CONTROL_STATE_INIT] = {
@@ -199,15 +213,14 @@ static const state_t doorControlStates[] = {
 door_control_t         doorControl;                                         /*!< Instance of door_control_t */
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl}; /*!< Create and initialize the array of state machines. */
 
-uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
+uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {                       /*!< RGB LED pins */
     {RBG_LED_1_R, RBG_LED_1_G, RBG_LED_1_B},
     {RBG_LED_2_R, RBG_LED_2_G, RBG_LED_2_B}
 };
 
+
 /**
- * @brief Setup Funktion
- * @details Wird einmalig beim Start des Programms ausgeführt und initialisiert
- * die Steuerung
+ * @brief Setup the application
  */
 void setup()
 {
@@ -237,6 +250,12 @@ void loop()
     }
 }
 
+/**
+ * @brief Convert the state to string
+ * 
+ * @param state - The state to convert
+ * @return String - The string representation of the state
+ */
 static void init( door_control_t* const pDoorControl, uint32_t processTime )
 {
     pDoorControl->machine.State = &doorControlStates[DOOR_CONTROL_STATE_INIT];
@@ -256,6 +275,13 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 }
 */
 
+/**
+ * @brief Handler for the init state
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t initHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -284,20 +310,32 @@ static state_machine_result_t initExitHandler( state_machine_t* const pState )
 */
 
 
-
+/**
+ * @brief Handler for the idle state entry
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t idleEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
     /* Set both door leds to white */
-    setLed( HIGH, DOOR_TYPE_DOOR_1, LED_COLOR_WHITE );
-    setLed( HIGH, DOOR_TYPE_DOOR_2, LED_COLOR_WHITE );
+    setLed( true, DOOR_TYPE_DOOR_1, LED_COLOR_WHITE );
+    setLed( true, DOOR_TYPE_DOOR_2, LED_COLOR_WHITE );
 
     return EVENT_HANDLED;
 }
 
 
-
+/**
+ * @brief Handler for the idle state
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t idleHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -347,19 +385,32 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
 }
 
 
+/**
+ * @brief Handler for the idle state exit
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t idleExitHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
     /* Set both door leds to off */
-    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
-    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
 
     return EVENT_HANDLED;
 }
 
 
-
+/**
+ * @brief Handler for the fault state entry
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t faultEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -371,6 +422,13 @@ static state_machine_result_t faultEntryHandler( state_machine_t* const pState, 
 }
 
 
+/**
+ * @brief Handler for the fault state
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t faultHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -388,28 +446,45 @@ static state_machine_result_t faultHandler( state_machine_t* const pState, const
 }
 
 
+/**
+ * @brief Handler for the fault state exit
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
     Timer1.stop();
     Timer1.detachInterrupt();
-    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
-    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
 
     return EVENT_HANDLED;
 }
 
 
+/**
+ * @brief Handler for the fault led blink
+ */
 static void faultBlinkLedIsrHandler( void )
 {
-    static uint8_t ledState = LOW;
+    static uint8_t ledState = false;
     ledState                = !ledState;
     setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_MAGENTA );
     setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_MAGENTA );
 }
 
 
+/**
+ * @brief Handler for the door 1 open entry
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -423,6 +498,13 @@ static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pSta
 }
 
 
+/**
+ * @brief Handler for the door 1 open
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -439,6 +521,13 @@ static state_machine_result_t door1OpenHandler( state_machine_t* const pState, c
 }
 
 
+/**
+ * @brief Handler for the door 1 open exit
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -448,17 +537,19 @@ static state_machine_result_t door1OpenExitHandler( state_machine_t* const pStat
 
     Timer1.stop();
     Timer1.detachInterrupt();
-    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
-    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
 
     return EVENT_HANDLED;
 }
 
 
-
+/**
+ * @brief Handler for the door 1 led blink
+ */
 static void door1BlinkLedIsrHandler( void )
 {
-    static uint8_t ledState = LOW;
+    static uint8_t ledState = false;
     ledState                = !ledState;
     setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_GREEN );
     setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_RED );
@@ -477,7 +568,13 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
     return EVENT_HANDLED;
 }
 
-
+/**
+ * @brief Handler for the door 2 open
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -493,7 +590,13 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState, c
     return EVENT_HANDLED;
 }
 
-
+/**
+ * @brief Handler for the door 2 open exit
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -503,23 +606,30 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 
     Timer1.stop();
     Timer1.detachInterrupt();
-    setLed( LOW, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
-    setLed( LOW, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+    setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
 
     return EVENT_HANDLED;
 }
 
+/**
+ * @brief Handler for the door 2 led blink
+ */
 static void door2BlinkLedIsrHandler( void )
 {
-    static uint8_t ledState = LOW;
+    static uint8_t ledState = false;
     ledState                = !ledState;
     setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_RED );
     setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_GREEN );
 }
 
 
-
-//! Callback function to log the events dispatched by state machine framework.
+/**
+ * @brief Convert the event to string
+ * 
+ * @param event - The event to convert
+ * @return String - The string representation of the event
+ */
 void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
 {
     (void) stateMachine;
@@ -556,6 +666,13 @@ void resultLogger(uint32_t state, state_machine_result_t result)
 }
 
 
+/**
+ * @brief Get the state of the door
+ *
+ * @param door - The door type
+ * @param doorSwitch - The state of the switch
+ * @param doorButton - The state of the button
+ */
 static void getDoorState( const door_type_t door, button_state_t* const doorSwitch, button_state_t* const doorButton )
 {
     if (    ( doorSwitch == NULL )
@@ -580,6 +697,12 @@ static void getDoorState( const door_type_t door, button_state_t* const doorSwit
 }
 
 
+/**
+ * @brief Set the state of the door
+ *
+ * @param door - The door type
+ * @param state - The state of the door
+ */
 static void setDoorState( const door_type_t door, const lock_state_t state )
 {
     static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED};
@@ -606,6 +729,12 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
 }
 
 
+/**
+ * @brief Get the state of the door button
+ *
+ * @param door - The door type
+ * @return button_state_t - The state of the button
+ */
 static button_state_t getDoorButtonState( const door_type_t door )
 {
     uint8_t               buttonPin;
@@ -667,6 +796,11 @@ static button_state_t getDoorButtonState( const door_type_t door )
 }
 
 
+/**
+ * @brief Generate the event based on the door switches and buttons
+ *
+ * @param pDoorControl - Pointer to the door control
+ */
 static void generateEvent( door_control_t* const pDoorControl )
 {
     button_state_t door1Switch, door1Button, door2Switch, door2Button;
@@ -713,7 +847,13 @@ static void generateEvent( door_control_t* const pDoorControl )
 }
 
 
-
+/**
+ * Sets the LED color for a specific door.
+ *
+ * @param enable - Whether to enable or disable the LED.
+ * @param door - The type of door.
+ * @param color - The color of the LED.
+ */
 void setLed( bool enable, door_type_t door, led_color_t color )
 {
 
@@ -769,6 +909,12 @@ void setLed( bool enable, door_type_t door, led_color_t color )
 }
 
 
+/**
+ * @brief Convert the state to string
+ * 
+ * @param state - The state to convert
+ * @return String - The string representation of the state
+ */
 String stateToString( door_control_state_t state )
 {
     switch ( state )
@@ -789,7 +935,12 @@ String stateToString( door_control_state_t state )
 }
 
 
-
+/**
+ * @brief Convert the event to string
+ * 
+ * @param event - The event to convert
+ * @return String - The string representation of the event
+ */
 String eventToString( door_control_event_t event )
 {
     switch ( event )
@@ -818,6 +969,12 @@ String eventToString( door_control_event_t event )
 }
 
 
+/**
+ * @brief Convert the result to string
+ * 
+ * @param result - The result to convert
+ * @return String - The string representation of the result
+ */
 String resultToString( state_machine_result_t result )
 {
     switch ( result )
