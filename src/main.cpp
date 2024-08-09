@@ -513,6 +513,9 @@ static state_machine_result_t door1OpenHandler( state_machine_t* const pState, c
     case DOOR_CONTROL_EVENT_DOOR_1_CLOSE:
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
         break;
+    case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
+        break;
     default:
         break;
     }
@@ -582,6 +585,9 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState, c
     {
     case DOOR_CONTROL_EVENT_DOOR_2_CLOSE:
         switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
         break;
     default:
         break;
