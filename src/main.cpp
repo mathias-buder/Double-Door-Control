@@ -71,6 +71,7 @@ typedef enum
 
 /**
  * @brief Enumeration of the lock state
+ * @details The lock state defines whether the door is magnetically locked or not
  */
 typedef enum
 {
@@ -80,6 +81,7 @@ typedef enum
 
 /**
  * @brief Enumeration of the button state
+ * @details The button state defines whether the button is pressed or released
  */
 typedef enum
 {
@@ -92,9 +94,9 @@ typedef enum
  */
 typedef enum
 {
-    RGB_LED_PIN_R,   /*!< Red color */
-    RGB_LED_PIN_G,   /*!< Green color */
-    RGB_LED_PIN_B,   /*!< Blue color */
+    RGB_LED_PIN_R,   /*!< Red color pin */
+    RGB_LED_PIN_G,   /*!< Green color pin */
+    RGB_LED_PIN_B,   /*!< Blue color pin */
     RGB_LED_PIN_SIZE /*!< Number of colors */
 } rgb_led_pin_t;
 
@@ -170,6 +172,7 @@ void                  setLed( bool enable, door_type_t door, led_color_t color )
 
 /**
  * @brief The state machine for the door control
+ * @details The state machine is defined as an array of states and its handlers
  */
 static const state_t doorControlStates[] = {
 
@@ -263,13 +266,14 @@ static void init( door_control_t* const pDoorControl, uint32_t processTime )
     // pDoorControl->Set_Time      = processTime;
     // pDoorControl->Resume_Time   = 0;
 
+    /* Initialize the door control */
     /* initEntryHandler( (state_machine_t*) pDoorControl ); */
 }
 
 /*
 static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 {
-    Log.notice("Init Entry Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
     return EVENT_HANDLED;
 }
 */
@@ -303,7 +307,7 @@ static state_machine_result_t initHandler( state_machine_t* const pState, const 
 /*
 static state_machine_result_t initExitHandler( state_machine_t* const pState )
 {
-    Log.notice("Init Exit Handler" CR);
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
     return EVENT_HANDLED;
 }
 */
@@ -342,9 +346,9 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     /* Process door buttons */
     button_state_t buttonState[DOOR_TYPE_SIZE] = {BUTTON_STATE_RELEASED};
 
-    for ( uint8_t i = 0; i < DOOR_TYPE_SIZE; i++ )
+    for ( uint8_t idx = 0; idx < DOOR_TYPE_SIZE; idx++ )
     {
-        buttonState[i] = getDoorButtonState( (door_type_t) i );
+        buttonState[idx] = getDoorButtonState( (door_type_t) idx );
     }
 
     /* XOR-logic to allow only one door to be open */
@@ -537,6 +541,7 @@ static state_machine_result_t door1OpenExitHandler( state_machine_t* const pStat
     /* Lock the door */
     setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
 
+    /* Stop the led blink */
     Timer1.stop();
     Timer1.detachInterrupt();
     setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
@@ -557,6 +562,14 @@ static void door1BlinkLedIsrHandler( void )
     setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_RED );
 }
 
+
+/**
+ * @brief Handler for the door 2 open entry
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
@@ -569,6 +582,7 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
 
     return EVENT_HANDLED;
 }
+
 
 /**
  * @brief Handler for the door 2 open
@@ -595,6 +609,7 @@ static state_machine_result_t door2OpenHandler( state_machine_t* const pState, c
     return EVENT_HANDLED;
 }
 
+
 /**
  * @brief Handler for the door 2 open exit
  * 
@@ -609,6 +624,7 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
     /* Lock the door */
     setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
 
+    /* Stop the led blink */
     Timer1.stop();
     Timer1.detachInterrupt();
     setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
@@ -616,6 +632,7 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 
     return EVENT_HANDLED;
 }
+
 
 /**
  * @brief Handler for the door 2 led blink
@@ -641,7 +658,7 @@ void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
     static uint32_t lastEvent = 0;
     static uint32_t lastState = 0;
 
-    /* Only log if the event is changed */
+    /* Only log if the event and state are changed */
     if (    ( lastEvent != event )
          && ( lastState != state ) )
     {
@@ -650,11 +667,18 @@ void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
                     stateToString( (door_control_state_t) state ).c_str() );
     }
 
+    /* Save the last event and state */
     lastEvent = event;
     lastState = state;
 }
 
-//! Callback function to log the result of event processed by state machine
+
+/**
+ * @brief Convert the state to string
+ * 
+ * @param state - The state to convert
+ * @return String - The string representation of the state
+ */
 void resultLogger(uint32_t state, state_machine_result_t result)
 {
     static uint32_t lastState = 0;
@@ -667,6 +691,7 @@ void resultLogger(uint32_t state, state_machine_result_t result)
                                                             stateToString( (door_control_state_t) state ).c_str() );
     }
 
+    /* Save the last state */
     lastState = state;
 }
 
@@ -727,26 +752,26 @@ static button_state_t getDoorButtonState( const door_type_t door )
         break;
     }
 
-    // read the state of the switch into a local variable:
+    /* Read the state of the switch into a local variable */
     uint8_t reading = digitalRead( buttonPin );
 
-    // check to see if you just pressed the button
-    // (i.e. the input went from LOW to HIGH), and you've waited long enough
-    // since the last press to ignore any noise:
+    /* check to see if you just pressed the button
+     * (i.e. the input went from LOW to HIGH), and you've waited long enough
+     * since the last press to ignore any noise: */
 
-    // If the switch changed, due to noise or pressing:
+    /* If the switch changed, due to noise or pressing: */
     if ( reading != lastButtonState[door] )
     {
-        // reset the debouncing timer
+        /* reset the debouncing timer */
         lastDebounceTime[door] = millis();
     }
 
     if ( ( millis() - lastDebounceTime[door] ) > DOOR_BUTTON_DEBOUNCE_DELAY )
     {
-        // whatever the reading is at, it's been there for longer than the debounce
-        // delay, so take it as the actual current state:
+        /* whatever the reading is at, it's been there for longer than the debounce
+         * delay, so take it as the actual current state: */
 
-        // if the button state has changed:
+        /* if the button state has changed: */
         if ( reading != buttonState[door] )
         {
             buttonState[door] = reading;
@@ -764,7 +789,7 @@ static button_state_t getDoorButtonState( const door_type_t door )
         }
     }
 
-    // save the reading. Next time through the loop, it'll be the lastButtonState:
+    /* save the reading. Next time through the loop, it'll be the lastButtonState: */
     lastButtonState[door] = reading;
     return state[door];
 }
