@@ -271,9 +271,8 @@ void setup()
     init( &doorControl, 0 );
 
     /* Initialize the led blink timer */
-    unsigned long ledBlinkInterval = 2000;
-    ledBlinkInterval *= LED_BLINK_INTERVAL;
-    Timer1.initialize( ledBlinkInterval );
+    Timer1.initialize( ( (uint32_t) 2000 ) * (uint32_t) LED_BLINK_INTERVAL );
+    
 }
 
 /**
