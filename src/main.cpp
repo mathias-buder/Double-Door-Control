@@ -321,8 +321,11 @@ static void init( door_control_t* const pDoorControl, uint32_t processTime )
     pDoorControl->door2Timer.timeReference = 0;
 
     /* Initialize the state machine */
+    pDoorControl->machine.State = &doorControlStates[DOOR_CONTROL_STATE_INIT];
     pDoorControl->machine.event = NULL;
-    switch_state( &pDoorControl->machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
+
+    /* Initialize the door control */
+    /* initEntryHandler( (state_machine_t*) pDoorControl ); */
 }
 
 /*
