@@ -35,7 +35,7 @@
 
 #define SERIAL_BAUD_RATE                115200  /*!< Baud rate of the serial communication @unit bps */
 #define LED_BLINK_INTERVAL              500     /*!< Interval of the led blink @unit ms */
-#define DOOR_OPEN_TIMEOUT               0      /*!< Timeout for the door open ( 0 = disabled ) @unit s */
+#define DOOR_OPEN_TIMEOUT               30      /*!< Timeout for the door open ( 0 = disabled ) @unit s */
 
 /************************************* ENUMERATION **************************************/
 
