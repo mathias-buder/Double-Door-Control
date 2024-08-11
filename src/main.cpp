@@ -35,7 +35,7 @@
 
 #define SERIAL_BAUD_RATE                115200  /*!< Baud rate of the serial communication @unit bps */
 #define LED_BLINK_INTERVAL              500     /*!< Interval of the led blink @unit ms */
-#define DOOR_OPEN_TIMEOUT               30      /*!< Timeout for the door open ( 0 = disabled ) @unit s */
+#define DOOR_OPEN_TIMEOUT               600      /*!< Timeout for the door open ( 0 = disabled ) @unit s */
 
 /************************************* ENUMERATION **************************************/
 
@@ -318,10 +318,10 @@ static void init( door_control_t* const pDoorControl, uint32_t processTime )
 {
     /* Initialize the door open timers */
     pDoorControl->door1Timer.handler       = door1OpenTimeoutHandler;
-    pDoorControl->door1Timer.timeout       = DOOR_OPEN_TIMEOUT * 1000;
+    pDoorControl->door1Timer.timeout       = ( (uint32_t) DOOR_OPEN_TIMEOUT ) * ( (uint32_t) 1000 );
     pDoorControl->door1Timer.timeReference = 0;
     pDoorControl->door2Timer.handler       = door2OpenTimeoutHandler;
-    pDoorControl->door2Timer.timeout       = DOOR_OPEN_TIMEOUT * 1000;
+    pDoorControl->door2Timer.timeout       = ( (uint32_t) DOOR_OPEN_TIMEOUT ) * ( (uint32_t) 1000 );
     pDoorControl->door2Timer.timeReference = 0;
 
     /* Initialize the state machine */
