@@ -142,7 +142,8 @@ typedef enum
  * @brief The timer structure
  * @details The timer structure is used to hold the door 1/2 open timeout timers
  */
-typedef struct {
+typedef struct
+{
     void ( *handler )( uint32_t time );   //!< The handler function that is called when the timer expires
     uint32_t timeout;                     //!< The timeout after which the handler is called @unit ms
     uint64_t timeReference;               //!< The time reference when the timer is started @unit ms
@@ -187,18 +188,18 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 static void                   door2BlinkLedIsrHandler( void );
 static void                   door2OpenTimeoutHandler( uint32_t time );
 
-static void           init( door_control_t* const pDoorControl, uint32_t processTime );
-void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
-void                  resultLogger( uint32_t state, state_machine_result_t result );
-static void           setDoorState( const door_type_t door, const lock_state_t state );
-static sensor_state_t getDoorSensorState( const sensor_t sensor );
-static void           generateEvent( door_control_t* const pDoorControl );
-static String         stateToString( door_control_state_t state );
-static String         eventToString( door_control_event_t event );
-static String         resultToString( state_machine_result_t result );
-static String         sensorToString( sensor_t sensor );
-static void           setLed( bool enable, door_type_t door, led_color_t color );
-static void           processTimers( door_control_t* const pDoorControl );
+static void                   init( door_control_t* const pDoorControl, uint32_t processTime );
+void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void                          resultLogger( uint32_t state, state_machine_result_t result );
+static void                   setDoorState( const door_type_t door, const lock_state_t state );
+static sensor_state_t         getDoorSensorState( const sensor_t sensor );
+static void                   generateEvent( door_control_t* const pDoorControl );
+static String                 stateToString( door_control_state_t state );
+static String                 eventToString( door_control_event_t event );
+static String                 resultToString( state_machine_result_t result );
+static String                 sensorToString( sensor_t sensor );
+static void                   setLed( bool enable, door_type_t door, led_color_t color );
+static void                   processTimers( door_control_t* const pDoorControl );
 
 /******************************** Global variables ************************************/
 
@@ -290,6 +291,7 @@ void setup()
     Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) LED_BLINK_INTERVAL ) );
 }
 
+
 /**
  * @brief The main loop of the application
  */
@@ -307,6 +309,7 @@ void loop()
         Log.error( "Event is not handled" CR );
     }
 }
+
 
 /**
  * @brief Convert the state to string
@@ -340,6 +343,7 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState )
 }
 */
 
+
 /**
  * @brief Handler for the init state
  * 
@@ -365,6 +369,7 @@ static state_machine_result_t initHandler( state_machine_t* const pState, const 
 
     return EVENT_HANDLED;
 }
+
 
 /*
 static state_machine_result_t initExitHandler( state_machine_t* const pState )
@@ -727,6 +732,7 @@ static void door2BlinkLedIsrHandler( void )
     setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_RED );
     setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_GREEN );
 }
+
 
 /**
  * @brief Handler for the door 2 open timeout
