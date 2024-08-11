@@ -959,6 +959,12 @@ static void generateEvent( door_control_t* const pDoorControl )
  */
 void setLed( bool enable, door_type_t door, led_color_t color )
 {
+    /* Check if the door is valid */
+    if ( door >= DOOR_TYPE_SIZE )
+    {
+        Log.error( "%s: Invalid door type: %d" CR, __func__, door );
+        return;
+    }
 
     if ( enable )
     {
