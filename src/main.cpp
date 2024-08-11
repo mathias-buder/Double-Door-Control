@@ -145,7 +145,7 @@ typedef enum
 typedef struct {
     void ( *handler )( uint32_t time );   //!< The handler function that is called when the timer expires
     uint32_t timeout;                     //!< The timeout after which the handler is called @unit ms
-    uint32_t timeReference;               //!< The time reference when the timer is started @unit ms
+    uint64_t timeReference;               //!< The time reference when the timer is started @unit ms
 } timer_t;
 
 /**
@@ -1018,7 +1018,7 @@ static void processTimers( door_control_t* const pDoorControl )
     Log.verbose( "%s" CR, __func__ );
 
     /* Get the current time */
-    uint32_t currentTime = millis();
+    uint64_t currentTime = millis();
 
     /* Process the door 1 timer ( if timeout is set ) */
     if (    ( pDoorControl->door1Timer.timeout       != 0 )
