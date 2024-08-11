@@ -83,8 +83,8 @@ typedef enum
  */
 typedef enum
 {
-    LOCK_STATE_LOCKED   = LOW, /*!< The door is closed */
-    LOCK_STATE_UNLOCKED = HIGH /*!< The door is open */
+    LOCK_STATE_UNLOCKED = LOW,  /*!< The door is open */
+    LOCK_STATE_LOCKED   = HIGH  /*!< The door is closed */
 } lock_state_t;
 
 /**
@@ -278,6 +278,10 @@ void setup()
     /* Initialize with log level and log output */
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( LOG_LEVEL_INFO, &Serial );
+
+    /* Initialize the magnetic lock pins */
+    pinMode( DOOR_1_MAGNET, OUTPUT );
+    pinMode( DOOR_2_MAGNET, OUTPUT );
 
     /* Initialize the doorControl */
     init( &doorControl, 0 );
