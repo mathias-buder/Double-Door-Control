@@ -160,6 +160,15 @@ typedef struct
     timer_t         door2Timer;   //!< Timer for the door 2
 } door_control_t;
 
+/**
+ * @brief The pin configuration structure
+ * @details The pin configuration structure is used to hold the pin ID, number, and direction
+ */
+typedef struct
+{
+    uint8_t number;    /*!< The pin number */
+    uint8_t direction; /*!< The direction of the pin */
+} pin_config_t;
 
 /******************************** Function prototype ************************************/
 
@@ -268,6 +277,25 @@ uint16_t sensorDebounceTime[SENSOR_SIZE] = {
     DEBOUNCE_DELAY_DOOR_SWITCH_2      /*!< Switch 2 debounce time @umit ms */
 };
 
+/**
+ * @brief The pin configuration
+ * @details The pin configuration is used to define the pin number and direction
+ */
+pin_config_t pinConfig[] = {
+    /* Pin number,   Direction */
+    { RBG_LED_1_R,   OUTPUT },
+    { RBG_LED_1_G,   OUTPUT },
+    { RBG_LED_1_B,   OUTPUT },
+    { DOOR_1_BUTTON, INPUT  },
+    { DOOR_1_SWITCH, INPUT  },
+    { DOOR_1_MAGNET, OUTPUT },
+    { RBG_LED_2_R,   OUTPUT },
+    { RBG_LED_2_G,   OUTPUT },
+    { RBG_LED_2_B,   OUTPUT },
+    { DOOR_2_BUTTON, INPUT  },
+    { DOOR_2_SWITCH, INPUT  },
+    { DOOR_2_MAGNET, OUTPUT }
+};
 
 /******************************** Function definition ************************************/
 
@@ -280,9 +308,11 @@ void setup()
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( LOG_LEVEL_INFO, &Serial );
 
-    /* Initialize the magnetic lock pins */
-    pinMode( DOOR_1_MAGNET, OUTPUT );
-    pinMode( DOOR_2_MAGNET, OUTPUT );
+    /* Initialize the pins */
+    for ( uint8_t i = 0; i < sizeof( pinConfig ) / sizeof( pinConfig[0] ); i++ )
+    {
+        pinMode( pinConfig[i].number, pinConfig[i].direction );
+    }
 
     /* Initialize the doorControl */
     init( &doorControl, 0 );
