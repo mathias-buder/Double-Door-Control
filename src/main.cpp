@@ -147,7 +147,7 @@ typedef struct
     void ( *handler )( uint32_t time );   //!< The handler function that is called when the timer expires
     uint32_t timeout;                     //!< The timeout after which the handler is called @unit ms
     uint64_t timeReference;               //!< The time reference when the timer is started @unit ms
-} timer_t;
+} door_timer_t;
 
 /**
  * @brief The door control state machine
@@ -156,10 +156,9 @@ typedef struct
 typedef struct
 {
     state_machine_t machine;      //!< Abstract state machine
-    timer_t         door1Timer;   //!< Timer for the door 1
-    timer_t         door2Timer;   //!< Timer for the door 2
+    door_timer_t    door1Timer;   //!< Timer for the door 1
+    door_timer_t    door2Timer;   //!< Timer for the door 2
 } door_control_t;
-
 
 /******************************** Function prototype ************************************/
 
