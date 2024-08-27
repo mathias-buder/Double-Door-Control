@@ -34,20 +34,8 @@
     },
     { "type": "wokwi-relay-module", "id": "relay1", "top": -28.6, "left": 624, "attrs": {} },
     { "type": "wokwi-relay-module", "id": "relay2", "top": 403.4, "left": 614.4, "attrs": {} },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "sw1",
-      "top": -235.6,
-      "left": 617.5,
-      "attrs": { "value": "1" }
-    },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "sw2",
-      "top": 138.8,
-      "left": 617.5,
-      "attrs": { "value": "1" }
-    },
+    { "type": "wokwi-slide-switch", "id": "sw1", "top": -235.6, "left": 617.5, "attrs": { "value": "1" } },
+    { "type": "wokwi-slide-switch", "id": "sw2", "top": 138.8, "left": 617.5, "attrs": { "value": "" } },
     { "type": "wokwi-gnd", "id": "gnd1", "top": 528, "left": 748.2, "attrs": {} },
     {
       "type": "wokwi-resistor",
