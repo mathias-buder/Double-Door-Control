@@ -21,18 +21,18 @@
     {
       "type": "wokwi-pushbutton",
       "id": "btn1",
-      "top": 150.2,
-      "left": 758.4,
+      "top": 409.4,
+      "left": 796.8,
       "attrs": { "color": "green", "label": "Tür1" }
     },
     {
       "type": "wokwi-pushbutton",
       "id": "btn2",
-      "top": -253,
-      "left": 739.2,
+      "top": -32.2,
+      "left": 806.4,
       "attrs": { "color": "green", "label": "Tür2" }
     },
-    { "type": "wokwi-relay-module", "id": "relay1", "top": -28.6, "left": 585.6, "attrs": {} },
+    { "type": "wokwi-relay-module", "id": "relay1", "top": -28.6, "left": 624, "attrs": {} },
     { "type": "wokwi-relay-module", "id": "relay2", "top": 403.4, "left": 614.4, "attrs": {} },
     {
       "type": "wokwi-slide-switch",
@@ -48,16 +48,16 @@
       "left": 617.5,
       "attrs": { "value": "1" }
     },
-    { "type": "wokwi-gnd", "id": "gnd1", "top": 297.6, "left": 729, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd1", "top": 528, "left": 748.2, "attrs": {} },
     {
       "type": "wokwi-resistor",
       "id": "r2",
-      "top": 235.2,
-      "left": 709.85,
+      "top": 484.8,
+      "left": 729.05,
       "rotate": 90,
       "attrs": { "value": "1000" }
     },
-    { "type": "wokwi-vcc", "id": "vcc1", "top": 96.76, "left": 825.6, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc1", "top": 346.36, "left": 892.8, "attrs": {} },
     { "type": "wokwi-vcc", "id": "vcc2", "top": 106.36, "left": 672, "attrs": {} },
     {
       "type": "wokwi-resistor",
@@ -88,8 +88,8 @@
       "rotate": 180,
       "attrs": { "value": "10000" }
     },
-    { "type": "wokwi-vcc", "id": "vcc4", "top": -66.44, "left": 556.8, "attrs": {} },
-    { "type": "wokwi-vcc", "id": "vcc5", "top": -287.24, "left": 825.6, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc4", "top": -66.44, "left": 585.6, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc5", "top": -95.24, "left": 883.2, "attrs": {} },
     { "type": "wokwi-vcc", "id": "vcc6", "top": -268.04, "left": 672, "attrs": {} },
     {
       "type": "wokwi-resistor",
@@ -102,14 +102,14 @@
     {
       "type": "wokwi-resistor",
       "id": "r7",
-      "top": -158.4,
-      "left": 690.65,
+      "top": 43.2,
+      "left": 757.85,
       "rotate": 90,
       "attrs": { "value": "1000" }
     },
-    { "type": "wokwi-gnd", "id": "gnd6", "top": -105.6, "left": 709.8, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd6", "top": 96, "left": 777, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd7", "top": -105.6, "left": 623.4, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd8", "top": 28.8, "left": 556.2, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd8", "top": 28.8, "left": 585, "attrs": {} },
     {
       "type": "wokwi-resistor",
       "id": "r8",
@@ -144,8 +144,8 @@
     [ "rgb1:G", "mega:6", "green", [ "v9.6", "h78.1", "v-268.8" ] ],
     [ "rgb1:R", "mega:7", "green", [ "v19.2", "h76.8", "v-278.4" ] ],
     [ "vcc1:VCC", "btn1:1.r", "red", [ "v0" ] ],
-    [ "mega:2", "btn1:2.l", "green", [ "v-28.8", "h320.9", "v95.8" ] ],
-    [ "r2:1", "btn1:2.l", "green", [ "v-28.8", "h19.2" ] ],
+    [ "mega:2", "btn1:2.l", "green", [ "v-28.8", "h338.6", "v355" ] ],
+    [ "r2:1", "btn1:2.l", "green", [ "v-19.2", "h57.6" ] ],
     [ "rgb2:COM", "r5:1", "green", [ "v0" ] ],
     [ "r5:2", "gnd5:GND", "green", [ "v0", "h-56.4" ] ],
     [ "rgb2:R", "mega:13", "green", [ "v57.6", "h9.2" ] ],
@@ -156,7 +156,7 @@
     [ "vcc5:VCC", "btn2:1.r", "red", [ "v0" ] ],
     [ "r7:2", "gnd6:GND", "green", [ "h0" ] ],
     [ "r7:1", "btn2:2.l", "green", [ "h0", "v-38.4" ] ],
-    [ "btn2:2.l", "mega:10", "green", [ "h-19.2", "v-76.6", "h-384", "v287.6", "h3.3" ] ],
+    [ "btn2:2.l", "mega:10", "green", [ "h-19.2", "v-287.8", "h-441.6", "v67.2", "h-6.3" ] ],
     [ "vcc6:VCC", "sw1:3", "red", [ "v0" ] ],
     [ "r6:1", "sw1:2", "green", [ "h0" ] ],
     [ "r6:2", "gnd7:GND", "green", [ "h0" ] ],
