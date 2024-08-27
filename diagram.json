@@ -32,26 +32,10 @@
       "left": 739.2,
       "attrs": { "color": "green", "label": "Tür2" }
     },
-    {
-      "type": "wokwi-text",
-      "id": "r1",
-      "top": 364.8,
-      "left": -115.2,
-      "attrs": {
-        "text": "Hello \"wokwi-text\".\nThis is not official yet.\n😼 ✅ 🚀 🚲 H₂O\nn = √(x² + y²)\n˙uʍop ǝpısdn sı sıɥʇ 'oןןǝH",
-        "color": "red"
-      }
-    },
     { "type": "wokwi-relay-module", "id": "relay1", "top": -28.6, "left": 585.6, "attrs": {} },
     { "type": "wokwi-relay-module", "id": "relay2", "top": 403.4, "left": 595.2, "attrs": {} },
-    { "type": "wokwi-slide-switch", "id": "sw1", "top": -235.6, "left": 617.5, "attrs": {} },
-    {
-      "type": "wokwi-slide-switch",
-      "id": "sw2",
-      "top": 138.8,
-      "left": 617.5,
-      "attrs": { "text": "" }
-    },
+    { "type": "wokwi-slide-switch", "id": "sw1", "top": -235.6, "left": 617.5, "attrs": { "value":"1" } },
+    { "type": "wokwi-slide-switch", "id": "sw2", "top": 138.8, "left": 617.5, "attrs": { "value":"1" } },
     { "type": "wokwi-gnd", "id": "gnd1", "top": 297.6, "left": 729, "attrs": {} },
     {
       "type": "wokwi-resistor",
