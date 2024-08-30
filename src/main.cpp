@@ -1214,9 +1214,9 @@ static void processTimers( door_control_t* const pDoorControl )
             {
                 /* Call the timer handler */
                 pDoorControl->doorTimer[i].handler( currentTime );
-
                 /* Reset the timer */
                 pDoorControl->doorTimer[i].timeReference = 0;
+                return;
             }
 
             /* Calculate remaining time */
