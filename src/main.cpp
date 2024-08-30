@@ -32,6 +32,7 @@
 #define DEBOUNCE_DELAY_DOOR_BUTTON_2    100     /*!< Debounce delay for the door button @unit ms*/
 #define DEBOUNCE_DELAY_DOOR_SWITCH_1    100     /*!< Debounce delay for the door switch @unit ms*/
 #define DEBOUNCE_DELAY_DOOR_SWITCH_2    100     /*!< Debounce delay for the door switch @unit ms*/
+#define DEBOUNCE_STABLE_TIMEOUT         300     /*!< Timeout for the debounce stable state @unit ms */
 
 #define SERIAL_BAUD_RATE                115200  /*!< Baud rate of the serial communication @unit bps */
 #define LED_BLINK_INTERVAL              500     /*!< Interval of the led blink @unit ms */
@@ -197,7 +198,7 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 static void                   door2BlinkLedIsrHandler( void );
 static void                   door2OpenTimeoutHandler( uint32_t time );
 
-static void           init( door_control_t* const pDoorControl, uint32_t processTime );
+static void           init( door_control_t* const pDoorControl );
 void                  eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                  resultLogger( uint32_t state, state_machine_result_t result );
 static void           setDoorState( const door_type_t door, const lock_state_t state );
@@ -289,17 +290,17 @@ void setup()
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( LOG_LEVEL_INFO, &Serial );
 
+    Log.notice( "Application starting" CR );
+
     /* Initialize the magnetic lock pins */
     pinMode( DOOR_1_MAGNET, OUTPUT );
     pinMode( DOOR_2_MAGNET, OUTPUT );
 
     /* Initialize the doorControl */
-    init( &doorControl, 0 );
+    init( &doorControl );
 
     /* Initialize the led blink timer */
     Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) LED_BLINK_INTERVAL ) );
-
-    Log.notice( "Application started" CR );
 }
 
 
@@ -328,7 +329,7 @@ void loop()
  * @param state - The state to convert
  * @return String - The string representation of the state
  */
-static void init( door_control_t* const pDoorControl, uint32_t processTime )
+static void init( door_control_t* const pDoorControl )
 {
     /* Initialize the door open timers */
     pDoorControl->door1Timer.handler       = door1OpenTimeoutHandler;
@@ -340,27 +341,39 @@ static void init( door_control_t* const pDoorControl, uint32_t processTime )
 
     /* Initialize the state machine */
     pDoorControl->machine.event = NULL;
+
+    /* Switch to the init state */
     switch_state( &pDoorControl->machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
 }
-
 
 static state_machine_result_t initEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
-    /* Check whether door 1 and 2 are open */
-    sensor_debounce_t door1SwitchDebounceState, door2SwitchDebounceState;
-    sensor_state_t door1Switch = getDoorSensorState( SENSOR_SWITCH_1, &door1SwitchDebounceState );
-    sensor_state_t door2Switch = getDoorSensorState( SENSOR_SWITCH_2, &door1SwitchDebounceState );
-
-    /* Check whether the door switches are debouncing. This "waiting" state is only used
-     * for the initialization as the door switches are checked here in an one-shot manner.
+    /* Check whether the door switches are debouncing. This "waiting" mechanism is only used
+     * for the initialization as the door switches are checked here in an one-shot manner. If
+     * the switches are not stable within the timeout, the state machine switches to the fault state.
      */
-    if (    ( door1SwitchDebounceState == SENSOR_DEBOUNCE_UNSTABLE )
-         || ( door2SwitchDebounceState == SENSOR_DEBOUNCE_UNSTABLE ) )
-    {
-        return TRIGGERED_TO_SELF;
+    sensor_debounce_t door1SwitchDebounceState, door2SwitchDebounceState;
+    sensor_state_t    door1Switch, door2Switch;
+    uint64_t          timeReference = millis();
+
+    do {
+        door1Switch = getDoorSensorState( SENSOR_SWITCH_1, &door1SwitchDebounceState );
+        door2Switch = getDoorSensorState( SENSOR_SWITCH_2, &door2SwitchDebounceState );
+
+        if ( ( millis() - timeReference ) >= DEBOUNCE_STABLE_TIMEOUT )
+        {
+            Log.error( "Door switches wheren't stable within %d ms" CR, DEBOUNCE_STABLE_TIMEOUT );
+
+            /* Switch to fault state */
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
+            break;
+        }
     }
+    while (    ( door1SwitchDebounceState == SENSOR_DEBOUNCE_UNSTABLE )
+            && ( door2SwitchDebounceState == SENSOR_DEBOUNCE_UNSTABLE ) );
+    
 
      /* Get pointer to the current event */
     event_t** pCurrentEvent = &pState->event;
@@ -913,10 +926,6 @@ static sensor_state_t getDoorSensorState( const sensor_t sensor, sensor_debounce
         /* reset the debouncing timer */
         lastDebounceTime[sensor] = millis();
         debounce[sensor]    = SENSOR_DEBOUNCE_UNSTABLE;
-    }
-    else
-    {
-        debounce[sensor] = SENSOR_DEBOUNCE_STABLE;
     }
 
     if ( ( millis() - lastDebounceTime[sensor] ) > sensorDebounceTime[sensor] )
