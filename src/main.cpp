@@ -159,10 +159,10 @@ typedef enum
  */
 typedef enum
 {
-    DOOR_TIMER_UNLOCK, /*!< The unlock timer */
-    DOOR_TIMER_OPEN,   /*!< The open timer */
-    DOOR_TIMER_SIZE    /*!< Number of timers */
-} door_timer_t;
+    DOOR_TIMER_TYPE_UNLOCK, /*!< The unlock timer */
+    DOOR_TIMER_TYPE_OPEN,   /*!< The open timer */
+    DOOR_TIMER_TYPE_SIZE    /*!< Number of timers */
+} door_timer_type_t;
 
 /************************************* STRUCTURE **************************************/
 
@@ -192,8 +192,8 @@ typedef struct {
  */
 typedef struct
 {
-    state_machine_t machine;                                    /*!< Abstract state machine */
-    door_timer_t         doorTimer[DOOR_TYPE_SIZE][DOOR_TIMER_SIZE]; /*!< The door timers */
+    state_machine_t machine;                         /*!< Abstract state machine */
+    door_timer_t    doorTimer[DOOR_TIMER_TYPE_SIZE]; /*!< The door timers */
 } door_control_t;
 
 /**
@@ -224,24 +224,24 @@ static void                   faultBlinkLedIsrHandler( void );
 static state_machine_result_t door1UnlockHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
-static void                   door1UnlockTimeoutHandler( uint32_t time );
 
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event );
 static void                   door1BlinkLedIsrHandler( void );
-static void                   door1OpenTimeoutHandler( uint32_t time );
 
 static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
-static void                   door2UnlockTimeoutHandler( uint32_t time );
 
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
 static void                   door2BlinkLedIsrHandler( void );
-static void                   door2OpenTimeoutHandler( uint32_t time );
+
+static void                   doorOpenTimeoutHandler( uint32_t time );
+static void                   doorUnlockTimeoutHandler( uint32_t time );
+
 
 static void            init( door_control_t* const pDoorControl );
 void                   eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
@@ -319,25 +319,12 @@ static const state_t doorControlStates[] = {
  * @details The door control state machine is defined with the state machine and the door timers.
  *          The state machine is initialized with the init-state and no event.
  */
-door_control_t doorControl = {
-    .machine   = { NULL, &doorControlStates[DOOR_CONTROL_STATE_INIT] },
-    .doorTimer = {
-                    {   /* Door 1 */
-                        { door1UnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * (uint32_t) 1000, 0 },
-                        { door1OpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * (uint32_t) 1000, 0 }
-                    },
-                    {   /* Door 2 */
-                        { door2UnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * (uint32_t) 1000, 0 },
-                        { door2OpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * (uint32_t) 1000, 0 }
-                    }
-                }
-};
-
+door_control_t         doorControl;
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl}; /*!< Create and initialize the array of state machines. */
 
 /**
  * @brief The RGB LED pins
- * @details The RGB LED pins are defined as an array of pins for each door
+1 * @details The RGB LED pins are defined as an array of pins for each door
  */
 uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
     {RBG_LED_1_R, RBG_LED_1_G, RBG_LED_1_B},    /*!< RGB LED pins for door 1 */
@@ -432,12 +419,12 @@ void loop()
 static void init( door_control_t* const pDoorControl )
 {
     /* Initialize the door open timers */
-    pDoorControl->door1Timer.handler       = door1OpenTimeoutHandler;
-    pDoorControl->door1Timer.timeout       = ( (uint32_t) DOOR_OPEN_TIMEOUT ) * ( (uint32_t) 1000 );
-    pDoorControl->door1Timer.timeReference = 0;
-    pDoorControl->door2Timer.handler       = door2OpenTimeoutHandler;
-    pDoorControl->door2Timer.timeout       = ( (uint32_t) DOOR_OPEN_TIMEOUT ) * ( (uint32_t) 1000 );
-    pDoorControl->door2Timer.timeReference = 0;
+    pDoorControl->doorTimer[DOOR_TIMER_TYPE_OPEN].handler         = doorOpenTimeoutHandler;
+    pDoorControl->doorTimer[DOOR_TIMER_TYPE_OPEN].timeout         = ( (uint32_t) DOOR_OPEN_TIMEOUT ) * ( (uint32_t) 1000 );
+    pDoorControl->doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference   = 0;
+    pDoorControl->doorTimer[DOOR_TIMER_TYPE_UNLOCK].handler       = doorUnlockTimeoutHandler;
+    pDoorControl->doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeout       = ( (uint32_t) DOOR_UNLOCK_TIMEOUT ) * ( (uint32_t) 1000 );
+    pDoorControl->doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeReference = 0;
 
     /* Initialize the state machine */
     pDoorControl->machine.event = NULL;
@@ -651,12 +638,6 @@ static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pSt
 }
 
 
-static void door1UnlockTimeoutHandler( uint32_t time )
-{
-    Log.verbose("%s: Time: %d" CR, __func__, time );
-}
-
-
 /**
  * @brief Handler for the fault state entry
  * 
@@ -748,7 +729,7 @@ static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pSta
     Timer1.start();
 
     /* Start the door open timer */
-    doorControl.doorTimer[DOOR_TYPE_DOOR_1][DOOR_TIMER_OPEN].timeReference = millis();
+    doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference = millis();
 
     return EVENT_HANDLED;
 }
@@ -801,7 +782,7 @@ static state_machine_result_t door1OpenExitHandler( state_machine_t* const pStat
     setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
 
     /* Reset the door open timer */
-    doorControl.doorTimer[DOOR_TYPE_DOOR_1][DOOR_TIMER_OPEN].timeReference = 0;
+    doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference = 0;
 
     return EVENT_HANDLED;
 }
@@ -817,20 +798,6 @@ static void door1BlinkLedIsrHandler( void )
     setLed( ledState, DOOR_TYPE_DOOR_1, LED_COLOR_GREEN );
     setLed( ledState, DOOR_TYPE_DOOR_2, LED_COLOR_RED );
 }
-
-/**
- * @brief Handler for the door 1 open timeout
- * 
- * @param time - The time
- */
-static void door1OpenTimeoutHandler( uint32_t time )
-{
-    Log.verbose("%s: Time: %d" CR, __func__, time );
-
-    /* Switch to the fault state if the door is not closed in time */
-    switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
-}
-
 
 
 static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event )
@@ -857,12 +824,6 @@ static state_machine_result_t door2UnlockExitHandler( state_machine_t* const pSt
 }
 
 
-static void door2UnlockTimeoutHandler( uint32_t time )
-{
-    Log.verbose("%s: Time: %d" CR, __func__, time );
-}
-
-
 /**
  * @brief Handler for the door 2 open entry
  * 
@@ -881,7 +842,7 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
     Timer1.start();
 
     /* Start the door open timer */
-    doorControl.doorTimer[DOOR_TYPE_DOOR_2][DOOR_TIMER_OPEN].timeReference = millis();
+    doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference = millis();
 
     return EVENT_HANDLED;
 }
@@ -934,7 +895,7 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
     setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
 
     /* Reset the door open timer */
-    doorControl.doorTimer[DOOR_TYPE_DOOR_2][DOOR_TIMER_OPEN].timeReference = 0;
+    doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference = 0;
 
     return EVENT_HANDLED;
 }
@@ -953,11 +914,11 @@ static void door2BlinkLedIsrHandler( void )
 
 
 /**
- * @brief Handler for the door 2 open timeout
+ * @brief Handler for the door 1 open timeout
  * 
  * @param time - The time
  */
-static void door2OpenTimeoutHandler( uint32_t time )
+static void doorOpenTimeoutHandler( uint32_t time )
 {
     Log.verbose("%s: Time: %d" CR, __func__, time );
 
@@ -965,6 +926,11 @@ static void door2OpenTimeoutHandler( uint32_t time )
     switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
 }
 
+
+static void doorUnlockTimeoutHandler( uint32_t time )
+{
+    Log.verbose("%s: Time: %d" CR, __func__, time );
+}
 
 /**
  * @brief Convert the event to string
@@ -1240,21 +1206,22 @@ static void processTimers( door_control_t* const pDoorControl )
     /* Loop through all door timers */
     for ( uint8_t i = 0; i < DOOR_TYPE_SIZE; i++ )
     {
-        for ( uint8_t j = 0; j < DOOR_TIMER_SIZE; j++ )
+        /* Check if the timer is running */
+        if ( pDoorControl->doorTimer[i].timeReference != 0 )
         {
-            /* Process the door 1 timer ( if timeout is set ) */
-            if (    ( pDoorControl->doorTimer[i][j].timeout       != 0 )
-                 && ( pDoorControl->doorTimer[i][j].timeReference != 0 ) )
+            /* Check if the timer has expired */
+            if ( ( currentTime - pDoorControl->doorTimer[i].timeReference ) >= pDoorControl->doorTimer[i].timeout )
             {
-                if ( ( currentTime - pDoorControl->doorTimer[i][j].timeReference ) >= pDoorControl->doorTimer[i][j].timeout )
-                {
-                    pDoorControl->doorTimer[i][j].handler( currentTime );
-                }
+                /* Call the timer handler */
+                pDoorControl->doorTimer[i].handler( currentTime );
 
-                /* Calculate remaining time */
-                String remainingTime = String( ( pDoorControl->doorTimer[i][j].timeout - ( currentTime - pDoorControl->doorTimer[i][j].timeReference ) ) / 1000.0F ).c_str();
-                Log.notice( "Door %d timer %d: %s s" CR, i, j, remainingTime.c_str() );
+                /* Reset the timer */
+                pDoorControl->doorTimer[i].timeReference = 0;
             }
+
+            /* Calculate remaining time */
+            String remainingTime = String( ( pDoorControl->doorTimer[i].timeout - ( currentTime - pDoorControl->doorTimer[i].timeReference ) ) / 1000.0F );
+            Log.notice( "Door %d timer remaining time: %s" CR, i, remainingTime.c_str() );
         }
     }
 }
