@@ -220,7 +220,7 @@ static const state_t doorControlStates[] = {
 
     [DOOR_CONTROL_STATE_INIT] = {
         .Handler = initHandler,
-        .Entry   = NULL,
+        .Entry   = initEntryHandler,
         .Exit    = NULL,
         .Id      = DOOR_CONTROL_STATE_INIT
     },
@@ -339,11 +339,8 @@ static void init( door_control_t* const pDoorControl, uint32_t processTime )
     pDoorControl->door2Timer.timeReference = 0;
 
     /* Initialize the state machine */
-    pDoorControl->machine.State = &doorControlStates[DOOR_CONTROL_STATE_INIT];
     pDoorControl->machine.event = NULL;
-
-    /* Initialize the door control */
-    initEntryHandler( (state_machine_t*) pDoorControl, 0 );
+    switch_state( &pDoorControl->machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
 }
 
 

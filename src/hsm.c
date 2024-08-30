@@ -159,24 +159,28 @@ state_machine_result_t dispatch_event(state_machine_t* const pState_Machine[]
  * \return extern state_machine_result_t          Result of state traversal
  *
  */
-extern state_machine_result_t switch_state(state_machine_t* const pState_Machine,
-                                           const state_t* const pTarget_State)
+extern state_machine_result_t switch_state( state_machine_t* const pState_Machine,
+                                            const state_t* const   pTarget_State )
 {
-  const state_t* const pSource_State = pState_Machine->State;
-  bool triggered_to_self = false;
-  pState_Machine->State = pTarget_State;    // Save the target node
+    const state_t* const pSource_State     = pState_Machine->State;
+    bool                 triggered_to_self = false;
+    pState_Machine->State                  = pTarget_State;   // Save the target node
 
-  // Call Exit function before leaving the Source state.
-    EXECUTE_HANDLER(pSource_State->Exit, triggered_to_self, pState_Machine);
-  // Call entry function before entering the target state.
-    EXECUTE_HANDLER(pTarget_State->Entry, triggered_to_self, pState_Machine);
+    /* Check if pSource_State is valid for initial state handling */
+    if ( pSource_State != NULL )
+    {
+        // Call Exit function before leaving the Source state.
+        EXECUTE_HANDLER( pSource_State->Exit, triggered_to_self, pState_Machine );
+    }
+    // Call entry function before entering the target state.
+    EXECUTE_HANDLER( pTarget_State->Entry, triggered_to_self, pState_Machine );
 
-  if(triggered_to_self == true)
-  {
-    return TRIGGERED_TO_SELF;
-  }
+    if ( triggered_to_self == true )
+    {
+        return TRIGGERED_TO_SELF;
+    }
 
-  return EVENT_HANDLED;
+    return EVENT_HANDLED;
 }
 
 #if HIERARCHICAL_STATES
