@@ -442,13 +442,13 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
      * the switches are not stable within the timeout, the state machine switches to the fault state.
      */
     sensor_status_t   door1SwitchStatus, door2SwitchStatus;
-    uint64_t          timeReference = millis();
+    uint64_t          currentTime = millis();
 
     do {
         door1SwitchStatus = getDoorSensorState( SENSOR_SWITCH_1 );
         door2SwitchStatus = getDoorSensorState( SENSOR_SWITCH_2 );
 
-        if ( ( millis() - timeReference ) >= DEBOUNCE_STABLE_TIMEOUT )
+        if ( ( millis() - currentTime ) >= DEBOUNCE_STABLE_TIMEOUT )
         {
             Log.error( "Door switches wheren't stable within %d ms" CR, DEBOUNCE_STABLE_TIMEOUT );
 
