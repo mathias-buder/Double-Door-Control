@@ -242,7 +242,6 @@ static void                   door2BlinkLedIsrHandler( void );
 static void                   doorOpenTimeoutHandler( uint32_t time );
 static void                   doorUnlockTimeoutHandler( uint32_t time );
 
-
 static void            init( door_control_t* const pDoorControl );
 void                   eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                   resultLogger( uint32_t state, state_machine_result_t result );
@@ -253,6 +252,7 @@ static String          stateToString( door_control_state_t state );
 static String          eventToString( door_control_event_t event );
 static String          resultToString( state_machine_result_t result );
 static String          sensorToString( sensor_t sensor );
+static String          timerTypeToString( door_timer_type_t timerType );
 static void            setLed( bool enable, door_type_t door, led_color_t color );
 static void            processTimers( door_control_t* const pDoorControl );
 
@@ -552,6 +552,22 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
 {
     Log.verbose( "%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
+    /* Process the event */
+    switch ( event )
+    {
+        case DOOR_CONTROL_EVENT_DOOR_1_UNLOCK:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_UNLOCKED] );
+            break;
+        case DOOR_CONTROL_EVENT_DOOR_2_UNLOCK:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_UNLOCKED] );
+            break;
+        case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
+            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
+            break;
+        default:
+            break;
+    }
+
     /* Get the state of the door buttons. The debounce state isn't used here,
      * but it is necessary to call the function.
      */
@@ -562,33 +578,17 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     if (    ( door1Button == SENSOR_STATE_PRESSED )
          && ( door2Button == SENSOR_STATE_RELEASED ) )
     {
-        setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_UNLOCKED );
+        pushEvent( &pState->event, DOOR_CONTROL_EVENT_DOOR_1_UNLOCK );
     }
     else if (    ( door1Button == SENSOR_STATE_RELEASED )
               && ( door2Button == SENSOR_STATE_PRESSED ) )
     {
-        setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_UNLOCKED );
+        pushEvent( &pState->event, DOOR_CONTROL_EVENT_DOOR_2_UNLOCK );
     }
     else
     {
         setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
         setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
-    }
-
-    /* Process the event */
-    switch ( event )
-    {
-        case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_OPEN] );
-            break;
-        case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_OPEN] );
-            break;
-        case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
-            break;
-        default:
-            break;
     }
 
     return EVENT_HANDLED;
@@ -614,28 +614,7 @@ static state_machine_result_t idleExitHandler( state_machine_t* const pState, co
 }
 
 
-static state_machine_result_t door1UnlockHandler( state_machine_t* const pState, const uint32_t event )
-{
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
-    return EVENT_HANDLED;
-}
-
-
-static state_machine_result_t door1UnlockEntryHandler( state_machine_t* const pState, const uint32_t event )
-{
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
-
-    return EVENT_HANDLED;
-}
-
-
-static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pState, const uint32_t event )
-{
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
-
-    return EVENT_HANDLED;
-}
 
 
 /**
@@ -713,6 +692,86 @@ static void faultBlinkLedIsrHandler( void )
 
 
 /**
+ * @brief Handler for the door 1 unlock entry
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
+static state_machine_result_t door1UnlockEntryHandler( state_machine_t* const pState, const uint32_t event )
+{
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Unlock the door and start led blink */
+    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_UNLOCKED );
+    Timer1.attachInterrupt( door1BlinkLedIsrHandler );
+    Timer1.start();
+
+    doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeReference = millis();
+
+    return EVENT_HANDLED;
+}
+
+
+/**
+ * @brief Handler for the door 1 unlock
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
+static state_machine_result_t door1UnlockHandler( state_machine_t* const pState, const uint32_t event )
+{
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    switch ( event )
+    {
+    case DOOR_CONTROL_EVENT_DOOR_1_UNLOCK_TIMEOUT:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_OPEN] );
+        break;
+    default:
+        break;
+    }
+
+    return EVENT_HANDLED;
+}
+
+/**
+ * @brief Handler for the door 1 unlock exit
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
+static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pState, const uint32_t event )
+{
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Only lock the door and disable the led blink if we move back to the idle state */
+    const state_t* pNextState = pState->State;
+    if ( pNextState->Id == DOOR_CONTROL_STATE_IDLE )
+    {
+        /* Lock the door */
+        setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
+
+        /* Stop the led blink and disable leds */
+        Timer1.stop();
+        Timer1.detachInterrupt();
+        setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+        setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+    }
+
+    /* Reset the door unlock timer */
+    doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeReference = 0;
+
+    return EVENT_HANDLED;
+}
+
+
+/**
  * @brief Handler for the door 1 open entry
  * 
  * @param pState - The state machine
@@ -722,11 +781,6 @@ static void faultBlinkLedIsrHandler( void )
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
-
-    /* Unlock the door */
-    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_UNLOCKED );
-    Timer1.attachInterrupt( door1BlinkLedIsrHandler );
-    Timer1.start();
 
     /* Start the door open timer */
     doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference = millis();
@@ -800,25 +854,81 @@ static void door1BlinkLedIsrHandler( void )
 }
 
 
-static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event )
-{
-    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
-
-    return EVENT_HANDLED;
-}
-
-
+/**
+ * @brief Handler for the door 2 unlock entry
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door2UnlockEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
+    /* Unlock the door and start led blink */
+    setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_UNLOCKED );
+    Timer1.attachInterrupt( door2BlinkLedIsrHandler );
+    Timer1.start();
+
+    doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeReference = millis();
+
     return EVENT_HANDLED;
 }
 
 
+/**
+ * @brief Handler for the door 2 unlock
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
+static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event )
+{
+    Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    switch ( event )
+    {
+    case DOOR_CONTROL_EVENT_DOOR_2_UNLOCK_TIMEOUT:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+        break;
+    case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
+        switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_OPEN] );
+        break;
+    default:
+        break;
+    }
+
+    return EVENT_HANDLED;
+}
+
+/**
+ * @brief Handler for the door 2 unlock exit
+ * 
+ * @param pState - The state machine
+ * @param event - The event
+ * @return state_machine_result_t - The result of the handler
+ */
 static state_machine_result_t door2UnlockExitHandler( state_machine_t* const pState, const uint32_t event )
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
+
+    /* Only lock the door and disable the led blink if we move back to the idle state */
+    const state_t* pNextState = pState->State;
+    if ( pNextState->Id == DOOR_CONTROL_STATE_IDLE )
+    {
+        /* Lock the door */
+        setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
+
+        /* Stop the led blink and disable leds */
+        Timer1.stop();
+        Timer1.detachInterrupt();
+        setLed( false, DOOR_TYPE_DOOR_1, LED_COLOR_SIZE );
+        setLed( false, DOOR_TYPE_DOOR_2, LED_COLOR_SIZE );
+    }
+
+    /* Reset the door unlock timer */
+    doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeReference = 0;
 
     return EVENT_HANDLED;
 }
@@ -930,6 +1040,9 @@ static void doorOpenTimeoutHandler( uint32_t time )
 static void doorUnlockTimeoutHandler( uint32_t time )
 {
     Log.verbose("%s: Time: %d" CR, __func__, time );
+
+    /* Switch back to the idle state if the door is not opened in time */
+    switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
 }
 
 /**
@@ -1221,7 +1334,7 @@ static void processTimers( door_control_t* const pDoorControl )
 
             /* Calculate remaining time */
             String remainingTime = String( ( pDoorControl->doorTimer[i].timeout - ( currentTime - pDoorControl->doorTimer[i].timeReference ) ) / 1000.0F );
-            Log.notice( "Door %d timer remaining time: %s" CR, i, remainingTime.c_str() );
+            Log.notice( "%s: %s" CR, timerTypeToString( (door_timer_type_t) i ).c_str(), remainingTime.c_str() );
         }
     }
 }
@@ -1341,6 +1454,19 @@ static String sensorToString( sensor_t sensor )
         return "SENSOR_SWITCH_2";
     case SENSOR_SIZE:
         return "SENSOR_SIZE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+static String timerTypeToString( door_timer_type_t timerType )
+{
+    switch ( timerType )
+    {
+    case DOOR_TIMER_TYPE_OPEN:
+        return "DOOR_TIMER_TYPE_OPEN";
+    case DOOR_TIMER_TYPE_UNLOCK:
+        return "DOOR_TIMER_TYPE_UNLOCK";
     default:
         return "UNKNOWN";
     }
