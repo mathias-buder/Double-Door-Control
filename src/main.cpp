@@ -561,6 +561,8 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
         case DOOR_CONTROL_EVENT_DOOR_2_UNLOCK:
             switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_UNLOCKED] );
             break;
+        case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
+        case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
         case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
             switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
             break;
