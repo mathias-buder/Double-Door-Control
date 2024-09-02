@@ -458,7 +458,7 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
         }
     }
     while (    ( door1SwitchStatus.debounce == SENSOR_DEBOUNCE_UNSTABLE )
-            && ( door2SwitchStatus.debounce == SENSOR_DEBOUNCE_UNSTABLE ) );
+            || ( door2SwitchStatus.debounce == SENSOR_DEBOUNCE_UNSTABLE ) );
     
 
      /* Get pointer to the current event */
