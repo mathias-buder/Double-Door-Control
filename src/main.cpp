@@ -453,8 +453,7 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
             Log.error( "Door switches wheren't stable within %d ms" CR, DEBOUNCE_STABLE_TIMEOUT );
 
             /* Switch to fault state */
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
-            break;
+            return switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
         }
     }
     while (    ( door1SwitchStatus.debounce == SENSOR_DEBOUNCE_UNSTABLE )
