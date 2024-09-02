@@ -1105,24 +1105,22 @@ void resultLogger(uint32_t state, state_machine_result_t result)
 static void setDoorState( const door_type_t door, const lock_state_t state )
 {
     static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED};
+    static uint8_t      pinMap[DOOR_TYPE_SIZE]    = {DOOR_1_MAGNET, DOOR_2_MAGNET};
+
+    /* Check if the door is valid */
+    if ( door >= DOOR_TYPE_SIZE )
+    {
+        Log.error( "%s: Invalid door type: %d" CR, __func__, door );
+        return;
+    }
 
     if ( lastState[door] != state )
     {
         Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_UNLOCKED ) ? "open" : "closed" );
     }
 
-    switch ( door )
-    {
-    case DOOR_TYPE_DOOR_1:
-        digitalWrite( DOOR_1_MAGNET, (uint8_t) state );
-        break;
-    case DOOR_TYPE_DOOR_2:
-        digitalWrite( DOOR_2_MAGNET, (uint8_t) state );
-        break;
-
-    default:
-        break;
-    }
+    /* Set the state of the door */
+    digitalWrite( pinMap[door], state );
 
     lastState[door] = state;
 }
