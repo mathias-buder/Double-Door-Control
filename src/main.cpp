@@ -441,8 +441,8 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
      * for the initialization as the door switches are checked here in an one-shot manner. If
      * the switches are not stable within the timeout, the state machine switches to the fault state.
      */
-    sensor_status_t   door1SwitchStatus, door2SwitchStatus;
-    uint64_t          currentTime = millis();
+    sensor_status_t door1SwitchStatus, door2SwitchStatus;
+    uint64_t        currentTime = millis();
 
     do {
         door1SwitchStatus = getDoorSensorState( SENSOR_SWITCH_1 );
@@ -555,16 +555,13 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     switch ( event )
     {
         case DOOR_CONTROL_EVENT_DOOR_1_UNLOCK:
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_UNLOCKED] );
-            break;
+            return switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_1_UNLOCKED] );
         case DOOR_CONTROL_EVENT_DOOR_2_UNLOCK:
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_UNLOCKED] );
-            break;
+            return switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_DOOR_2_UNLOCKED] );
         case DOOR_CONTROL_EVENT_DOOR_1_OPEN:
         case DOOR_CONTROL_EVENT_DOOR_2_OPEN:
         case DOOR_CONTROL_EVENT_DOOR_1_2_OPEN:
-            switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
-            break;
+            return switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
         default:
             break;
     }
@@ -1104,7 +1101,7 @@ void resultLogger(uint32_t state, state_machine_result_t result)
  */
 static void setDoorState( const door_type_t door, const lock_state_t state )
 {
-    static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED};
+    static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED, LOCK_STATE_LOCKED};
     static uint8_t      pinMap[DOOR_TYPE_SIZE]    = {DOOR_1_MAGNET, DOOR_2_MAGNET};
 
     /* Check if the door is valid */
@@ -1116,7 +1113,7 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
 
     if ( lastState[door] != state )
     {
-        Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_UNLOCKED ) ? "open" : "closed" );
+        Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_UNLOCKED ) ? "unlocked" : "locked" );
     }
 
     /* Set the state of the door */
@@ -1154,6 +1151,7 @@ static sensor_status_t getDoorSensorState( const sensor_t sensor )
         /* reset the debouncing timer */
         lastDebounceTime[sensor] = millis();
         state[sensor].state      = SENSOR_STATE_RELEASED;
+        state[sensor].debounce   = SENSOR_DEBOUNCE_UNSTABLE;
     }
 
     if ( ( millis() - lastDebounceTime[sensor] ) > sensorDebounceTime[sensor] )
