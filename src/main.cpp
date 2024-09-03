@@ -423,6 +423,10 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
 {
     Log.verbose("%s: Event %s" CR, __func__, eventToString( (door_control_event_t) event ).c_str() );
 
+    /* Initialize both doors to locked */
+    setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
+    setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
+
     /* Check whether the door switches are debouncing. This "waiting" mechanism is only used
      * for the initialization as the door switches are checked here in an one-shot manner. If
      * the switches are not stable within the timeout, the state machine switches to the fault state.
