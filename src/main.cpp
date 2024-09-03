@@ -242,7 +242,6 @@ static void                   door2BlinkLedIsrHandler( void );
 static void                   doorOpenTimeoutHandler( uint32_t time );
 static void                   doorUnlockTimeoutHandler( uint32_t time );
 
-static void            init( door_control_t* const pDoorControl );
 void                   eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                   resultLogger( uint32_t state, state_machine_result_t result );
 static void            setDoorState( const door_type_t door, const lock_state_t state );
@@ -319,7 +318,14 @@ static const state_t doorControlStates[] = {
  * @details The door control state machine is defined with the state machine and the door timers.
  *          The state machine is initialized with the init-state and no event.
  */
-door_control_t         doorControl;
+door_control_t doorControl = {
+    .machine = { NULL, NULL },
+    .doorTimer = {
+                    { doorUnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * (uint32_t) 1000, 0 },
+                    { doorOpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * (uint32_t) 1000, 0 }
+                }
+};
+
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl}; /*!< Create and initialize the array of state machines. */
 
 /**
@@ -382,10 +388,12 @@ void setup()
     }
 
     /* Initialize the doorControl */
-    init( &doorControl );
+    // init( &doorControl );
 
     /* Initialize the led blink timer */
     Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) LED_BLINK_INTERVAL ) );
+
+    switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
 
     Log.notice( "... Done" CR );
 }
@@ -410,28 +418,6 @@ void loop()
 }
 
 
-/**
- * @brief Convert the state to string
- * 
- * @param state - The state to convert
- * @return String - The string representation of the state
- */
-static void init( door_control_t* const pDoorControl )
-{
-    /* Initialize the door open timers */
-    pDoorControl->doorTimer[DOOR_TIMER_TYPE_OPEN].handler         = doorOpenTimeoutHandler;
-    pDoorControl->doorTimer[DOOR_TIMER_TYPE_OPEN].timeout         = ( (uint32_t) DOOR_OPEN_TIMEOUT ) * ( (uint32_t) 1000 );
-    pDoorControl->doorTimer[DOOR_TIMER_TYPE_OPEN].timeReference   = 0;
-    pDoorControl->doorTimer[DOOR_TIMER_TYPE_UNLOCK].handler       = doorUnlockTimeoutHandler;
-    pDoorControl->doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeout       = ( (uint32_t) DOOR_UNLOCK_TIMEOUT ) * ( (uint32_t) 1000 );
-    pDoorControl->doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeReference = 0;
-
-    /* Initialize the state machine */
-    pDoorControl->machine.event = NULL;
-
-    /* Switch to the init state */
-    switch_state( &pDoorControl->machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
-}
 
 static state_machine_result_t initEntryHandler( state_machine_t* const pState, const uint32_t event )
 {
