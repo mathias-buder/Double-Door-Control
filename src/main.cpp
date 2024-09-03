@@ -373,7 +373,7 @@ void setup()
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( LOG_LEVEL_INFO, &Serial );
 
-    Log.notice( "Application starting" CR );
+    Log.notice( "Starting ... " CR );
 
     /* Initialize the pins */
     for ( uint8_t i = 0; i < sizeof( pinConfig ) / sizeof( pinConfig[0] ); i++ )
@@ -387,7 +387,7 @@ void setup()
     /* Initialize the led blink timer */
     Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) LED_BLINK_INTERVAL ) );
 
-    Log.notice( "Initialization done" CR );
+    Log.notice( "... Done" CR );
 }
 
 
