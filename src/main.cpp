@@ -613,8 +613,6 @@ static state_machine_result_t idleExitHandler( state_machine_t* const pState, co
 
 
 
-
-
 /**
  * @brief Handler for the fault state entry
  * 
@@ -1040,7 +1038,8 @@ static void doorUnlockTimeoutHandler( uint32_t time )
     Log.verbose("%s: Time: %d" CR, __func__, time );
 
     /* Switch back to the idle state if the door is not opened in time */
-    switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_IDLE] );
+    pushEvent( &doorControl.machine.event, DOOR_CONTROL_EVENT_DOOR_1_UNLOCK_TIMEOUT );
+    pushEvent( &doorControl.machine.event, DOOR_CONTROL_EVENT_DOOR_2_UNLOCK_TIMEOUT );
 }
 
 /**
