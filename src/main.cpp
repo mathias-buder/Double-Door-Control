@@ -93,8 +93,8 @@ typedef enum
  */
 typedef enum
 {
-    LOCK_STATE_UNLOCKED = LOW,  /*!< The door is open */
-    LOCK_STATE_LOCKED   = HIGH  /*!< The door is closed */
+    LOCK_STATE_UNLOCKED, /*!< The door is open */
+    LOCK_STATE_LOCKED    /*!< The door is closed */
 } lock_state_t;
 
 /**
@@ -103,12 +103,23 @@ typedef enum
  */
 typedef enum
 {
-    SENSOR_BUTTON_1, /*!< The button of the door 1 */
-    SENSOR_BUTTON_2, /*!< The button of the door 2 */
-    SENSOR_SWITCH_1, /*!< The switch of the door 1 */
-    SENSOR_SWITCH_2, /*!< The switch of the door 2 */
-    SENSOR_SIZE      /*!< Number of door sensors */
-} sensor_t;
+    /* Inputs */
+    IO_BUTTON_1,   /*!< The button of the door 1 */
+    IO_BUTTON_2,   /*!< The button of the door 2 */
+    IO_SWITCH_1,   /*!< The switch of the door 1 */
+    IO_SWITCH_2,   /*!< The switch of the door 2 */
+    IO_INPUT_SIZE, /*!< Number of inputs */
+
+    /* Outputs */
+    IO_MAGNET_1,   /*!< The magnet of the door 1 */
+    IO_MAGNET_2,   /*!< The magnet of the door 2 */
+    IO_LED_1_R,    /*!< The red LED of the door 1 */
+    IO_LED_1_G,    /*!< The green LED of the door 1 */
+    IO_LED_1_B,    /*!< The blue LED of the door 1 */
+    IO_LED_2_R,    /*!< The red LED of the door 2 */
+    IO_LED_2_G,    /*!< The green LED of the door 2 */
+    IO_LED_2_B     /*!< The blue LED of the door 2 */
+} io_t;
 
 /**
  * @brief Enumeration of the button state
@@ -126,8 +137,8 @@ typedef enum
  */
 typedef enum
 {
-    SENSOR_DEBOUNCE_UNSTABLE = 0, /*!< The sensor is under debouncing */
-    SENSOR_DEBOUNCE_STABLE        /*!< The sensor is debounced */
+    SENSOR_DEBOUNCE_UNSTABLE, /*!< The sensor is under debouncing */
+    SENSOR_DEBOUNCE_STABLE    /*!< The sensor is debounced */
 } sensor_debounce_t;
 
 /**
@@ -204,9 +215,11 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t pinNumber;   /*!< The pin number */
-    uint8_t direction; /*!< The direction of the pin */
-    uint8_t activeState; /*!< The active state of the pin */
+    io_t     io;            /*!< The input/output */
+    uint8_t  pinNumber;     /*!< The pin number */
+    uint8_t  direction;     /*!< The direction of the pin */
+    uint8_t  activeState;   /*!< The active state of the pin */
+    uint16_t debounceDelay; /*!< The debounce delay of the pin */
 } io_config_t;
 
 /******************************** Function prototype ************************************/
@@ -246,12 +259,12 @@ static void                   doorUnlockTimeoutHandler( uint32_t time );
 void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                          resultLogger( uint32_t state, state_machine_result_t result );
 static void                   setDoorState( const door_type_t door, const lock_state_t state );
-static sensor_status_t        getDoorSensorState( const sensor_t sensor );
+static sensor_status_t        getDoorIoState( const io_t sensor );
 static void                   generateEvent( door_control_t* const pDoorControl );
 static String                 stateToString( door_control_state_t state );
 static String                 eventToString( door_control_event_t event );
 static String                 resultToString( state_machine_result_t result );
-static String                 sensorToString( sensor_t sensor );
+static String                 ioToString( io_t io );
 static String                 timerTypeToString( door_timer_type_t timerType );
 static void                   setLed( bool enable, door_type_t door, led_color_t color );
 static void                   processTimers( door_control_t* const pDoorControl );
@@ -343,34 +356,25 @@ uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
 };
 
 /**
- * @brief The debounce time for the door sensor
- * @details The debounce time is used to filter out the noise of each sensor
- */
-uint16_t sensorDebounceTime[SENSOR_SIZE] = {
-    DEBOUNCE_DELAY_DOOR_BUTTON_1,     /*!< Button 1 debounce time @umit ms */
-    DEBOUNCE_DELAY_DOOR_BUTTON_2,     /*!< Button 2 debounce time @umit ms */
-    DEBOUNCE_DELAY_DOOR_SWITCH_1,     /*!< Switch 1 debounce time @umit ms */
-    DEBOUNCE_DELAY_DOOR_SWITCH_2      /*!< Switch 2 debounce time @umit ms */
-};
-
-/**
  * @brief The pin configuration
  * @details The pin configuration is used to define the pin number and direction
  */
-pin_config_t pinConfig[] = {
-    /* Pin number,      Direction */
-    { RBG_LED_1_R,      OUTPUT },
-    { RBG_LED_1_G,      OUTPUT },
-    { RBG_LED_1_B,      OUTPUT },
-    { DOOR_1_BUTTON,    INPUT  },
-    { DOOR_1_SWITCH,    INPUT  },
-    { DOOR_1_MAGNET,    OUTPUT },
-    { RBG_LED_2_R,      OUTPUT },
-    { RBG_LED_2_G,      OUTPUT },
-    { RBG_LED_2_B,      OUTPUT },
-    { DOOR_2_BUTTON,    INPUT  },
-    { DOOR_2_SWITCH,    INPUT  },
-    { DOOR_2_MAGNET,    OUTPUT }
+io_config_t ioConfig[] = {
+    /* Inputs */
+    { IO_BUTTON_1, DOOR_1_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_1 }, /*!< Button 1 */
+    { IO_BUTTON_2, DOOR_2_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_2 }, /*!< Button 2 */
+    { IO_SWITCH_1, DOOR_1_SWITCH, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_SWITCH_1 }, /*!< Switch 1 */
+    { IO_SWITCH_2, DOOR_2_SWITCH, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_SWITCH_2 }, /*!< Switch 2 */
+
+    /* Outputs */
+    { IO_MAGNET_1, DOOR_1_MAGNET, OUTPUT, LOW,  0                            }, /*!< Magnet 1 */
+    { IO_MAGNET_2, DOOR_2_MAGNET, OUTPUT, LOW,  0                            }, /*!< Magnet 2 */
+    { IO_LED_1_R,  RBG_LED_1_R,   OUTPUT, LOW,  0                            }, /*!< Red LED 1 */
+    { IO_LED_1_G,  RBG_LED_1_G,   OUTPUT, LOW,  0                            }, /*!< Green LED 1 */
+    { IO_LED_1_B,  RBG_LED_1_B,   OUTPUT, LOW,  0                            }, /*!< Blue LED 1 */
+    { IO_LED_2_R,  RBG_LED_2_R,   OUTPUT, LOW,  0                            }, /*!< Red LED 2 */
+    { IO_LED_2_G,  RBG_LED_2_G,   OUTPUT, LOW,  0                            }, /*!< Green LED 2 */
+    { IO_LED_2_B,  RBG_LED_2_B,   OUTPUT, LOW,  0                            }  /*!< Blue LED 2 */
 };
 
 /******************************** Function definition ************************************/
@@ -387,9 +391,9 @@ void setup()
     Log.notice( "Starting ... " CR );
 
     /* Initialize the pins */
-    for ( uint8_t i = 0; i < sizeof( pinConfig ) / sizeof( pinConfig[0] ); i++ )
+    for ( uint8_t i = 0; i < sizeof( ioConfig ) / sizeof( ioConfig[0] ); i++ )
     {
-        pinMode( pinConfig[i].number, pinConfig[i].direction );
+        pinMode( ioConfig[i].pinNumber, ioConfig[i].direction );
     }
 
     /* Initialize the led blink timer */
@@ -444,8 +448,8 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
     uint64_t        currentTime = millis();
 
     do {
-        door1SwitchStatus = getDoorSensorState( SENSOR_SWITCH_1 );
-        door2SwitchStatus = getDoorSensorState( SENSOR_SWITCH_2 );
+        door1SwitchStatus = getDoorIoState( IO_SWITCH_1 );
+        door2SwitchStatus = getDoorIoState( IO_SWITCH_2 );
 
         if ( ( millis() - currentTime ) >= DEBOUNCE_STABLE_TIMEOUT )
         {
@@ -568,8 +572,8 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     /* Get the state of the door buttons. The debounce state isn't used here,
      * but it is necessary to call the function.
      */
-    sensor_state_t door1Button = getDoorSensorState( SENSOR_BUTTON_1 ).state;
-    sensor_state_t door2Button = getDoorSensorState( SENSOR_BUTTON_2 ).state;
+    sensor_state_t door1Button = getDoorIoState( IO_BUTTON_1 ).state;
+    sensor_state_t door2Button = getDoorIoState( IO_BUTTON_2 ).state;
 
     /* XOR-logic to allow only one door to be open */
     if (    ( door1Button == SENSOR_STATE_PRESSED )
@@ -1128,58 +1132,57 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
  * @param debounceState 
  * @return sensor_state_t 
  */
-static sensor_status_t getDoorSensorState( const sensor_t sensor )
+static sensor_status_t getDoorIoState( const io_t input )
 {
-    uint8_t                  sensorPinMap[SENSOR_SIZE]     = {DOOR_1_BUTTON, DOOR_2_BUTTON, DOOR_1_SWITCH, DOOR_2_SWITCH};
-    static uint8_t           sensorState[SENSOR_SIZE]      = {0};
-    static uint8_t           lastSensorState[SENSOR_SIZE]  = {0};
-    static uint32_t          lastDebounceTime[SENSOR_SIZE] = {0};
-    static sensor_status_t   state[SENSOR_SIZE]            = {SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE};
+    static uint8_t           sensorState[IO_INPUT_SIZE]      = {0};
+    static uint8_t           lastSensorState[IO_INPUT_SIZE]  = {0};
+    static uint32_t          lastDebounceTime[IO_INPUT_SIZE] = {0};
+    static sensor_status_t   state[IO_INPUT_SIZE]            = {SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE};
 
     /* Read the state of the switch into a local variable */
-    uint8_t reading = digitalRead( sensorPinMap[sensor] );
+    uint8_t reading = digitalRead( ioConfig[input].pinNumber );
 
-    /* check to see if you just pressed the sensor
+    /* check to see if you just pressed the input
      * (i.e. the input went from LOW to HIGH), and you've waited long enough
      * since the last press to ignore any noise: */
 
     /* If the switch changed, due to noise or pressing: */
-    if ( reading != lastSensorState[sensor] )
+    if ( reading != lastSensorState[input] )
     {
         /* reset the debouncing timer */
-        lastDebounceTime[sensor] = millis();
-        state[sensor].state      = SENSOR_STATE_RELEASED;
-        state[sensor].debounce   = SENSOR_DEBOUNCE_UNSTABLE;
+        lastDebounceTime[input] = millis();
+        state[input].state      = SENSOR_STATE_RELEASED;
+        state[input].debounce   = SENSOR_DEBOUNCE_UNSTABLE;
     }
 
-    if ( ( millis() - lastDebounceTime[sensor] ) > sensorDebounceTime[sensor] )
+    if ( ( millis() - lastDebounceTime[input] ) > ioConfig[input].debounceDelay )
     {
         /* whatever the reading is at, it's been there for longer than the debounce
          * delay, so take it as the actual current state: */
-        state[sensor].debounce = SENSOR_DEBOUNCE_STABLE;
+        state[input].debounce = SENSOR_DEBOUNCE_STABLE;
 
-        /* if the sensor state has changed: */
-        if ( reading != sensorState[sensor] )
+        /* if the input state has changed: */
+        if ( reading != sensorState[input] )
         {
-            sensorState[sensor] = reading;
+            sensorState[input] = reading;
 
-            if ( sensorState[sensor] == HIGH )
+            if ( sensorState[input] == HIGH )
             {
-                state[sensor].state = SENSOR_STATE_PRESSED;
-                Log.notice( "%s: %s is pressed" CR, __func__, sensorToString( sensor ).c_str() );
+                state[input].state = SENSOR_STATE_PRESSED;
+                Log.notice( "%s: %s is pressed" CR, __func__, ioToString( input ).c_str() );
             }
             else
             {
-                state[sensor].state = SENSOR_STATE_RELEASED;
-                Log.notice( "%s: %s is released" CR, __func__, sensorToString( sensor ).c_str() );
+                state[input].state = SENSOR_STATE_RELEASED;
+                Log.notice( "%s: %s is released" CR, __func__, ioToString( input ).c_str() );
             }
         }
     }
 
     /* save the reading. Next time through the loop, it'll be the lastSensorState: */
-    lastSensorState[sensor] = reading;
+    lastSensorState[input] = reading;
 
-    return state[sensor];
+    return state[input];
 }
 
 /**
@@ -1190,8 +1193,8 @@ static sensor_status_t getDoorSensorState( const sensor_t sensor )
 static void generateEvent( door_control_t* const pDoorControl )
 {
     /* Read the state of both door switches */
-    sensor_state_t door1Switch = getDoorSensorState( SENSOR_SWITCH_1 ).state;
-    sensor_state_t door2Switch = getDoorSensorState( SENSOR_SWITCH_2 ).state;
+    sensor_state_t door1Switch = getDoorIoState( IO_SWITCH_1 ).state;
+    sensor_state_t door2Switch = getDoorIoState( IO_SWITCH_2 ).state;
 
     /* Get pointer to the current event */
     event_t** pCurrentEvent = &pDoorControl->machine.event;
@@ -1430,30 +1433,51 @@ static String resultToString( state_machine_result_t result )
 
 
 /**
- * @brief Convert the sensor to string
+ * @brief Convert the input/output to string
  * 
- * @param sensor - The sensor to convert
- * @return String - The string representation of the sensor
+ * @param sensor - The input/output to convert
+ * @return String - The string representation of the input/output
  */
-static String sensorToString( sensor_t sensor )
+static String ioToString( io_t io )
 {
-    switch ( sensor )
+    switch ( io )
     {
-    case SENSOR_BUTTON_1:
-        return "SENSOR_BUTTON_1";
-    case SENSOR_BUTTON_2:
-        return "SENSOR_BUTTON_2";
-    case SENSOR_SWITCH_1:
-        return "SENSOR_SWITCH_1";
-    case SENSOR_SWITCH_2:
-        return "SENSOR_SWITCH_2";
-    case SENSOR_SIZE:
-        return "SENSOR_SIZE";
+    case IO_BUTTON_1:
+        return "IO_BUTTON_1";
+    case IO_BUTTON_2:
+        return "IO_BUTTON_2";
+    case IO_SWITCH_1:
+        return "IO_SWITCH_1";
+    case IO_SWITCH_2:
+        return "IO_SWITCH_2";
+    case IO_MAGNET_1:
+        return "IO_MAGNET_1";
+    case IO_MAGNET_2:
+        return "IO_MAGNET_2";
+    case IO_LED_1_R:
+        return "IO_LED_1_R";
+    case IO_LED_1_G:
+        return "IO_LED_1_G";
+    case IO_LED_1_B:
+        return "IO_LED_1_B";
+    case IO_LED_2_R:
+        return "IO_LED_2_R";
+    case IO_LED_2_G:
+        return "IO_LED_2_G";
+    case IO_LED_2_B:
+        return "IO_LED_2_B";
     default:
         return "UNKNOWN";
     }
 }
 
+
+/**
+ * @brief Convert the timer type to string
+ * 
+ * @param timerType - The timer type to convert
+ * @return String - The string representation of the timer type
+ */
 static String timerTypeToString( door_timer_type_t timerType )
 {
     switch ( timerType )
