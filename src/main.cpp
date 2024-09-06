@@ -268,6 +268,7 @@ static String                 ioToString( io_t io );
 static String                 timerTypeToString( door_timer_type_t timerType );
 static void                   setLed( bool enable, door_type_t door, led_color_t color );
 static void                   processTimers( door_control_t* const pDoorControl );
+static io_config_t*           getIoConfig( io_t io );
 
 /******************************** Global variables ************************************/
 
@@ -363,8 +364,8 @@ io_config_t ioConfig[] = {
     /* Inputs */
     { IO_BUTTON_1, DOOR_1_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_1 }, /*!< Button 1 */
     { IO_BUTTON_2, DOOR_2_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_2 }, /*!< Button 2 */
-    { IO_SWITCH_1, DOOR_1_SWITCH, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_SWITCH_1 }, /*!< Switch 1 */
-    { IO_SWITCH_2, DOOR_2_SWITCH, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_SWITCH_2 }, /*!< Switch 2 */
+    { IO_SWITCH_1, DOOR_1_SWITCH, INPUT,  LOW,  DEBOUNCE_DELAY_DOOR_SWITCH_1 }, /*!< Switch 1 */
+    { IO_SWITCH_2, DOOR_2_SWITCH, INPUT,  LOW,  DEBOUNCE_DELAY_DOOR_SWITCH_2 }, /*!< Switch 2 */
 
     /* Outputs */
     { IO_MAGNET_1, DOOR_1_MAGNET, OUTPUT, LOW,  0                            }, /*!< Magnet 1 */
@@ -1139,8 +1140,16 @@ static sensor_status_t getDoorIoState( const io_t input )
     static uint32_t          lastDebounceTime[IO_INPUT_SIZE] = {0};
     static sensor_status_t   state[IO_INPUT_SIZE]            = {SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE};
 
+    io_config_t* pIoConfig = getIoConfig( input );
+
+    if ( pIoConfig == NULL )
+    {
+        Log.error( "%s: Invalid input: %d" CR, __func__, input );
+        return state[input];
+    }
+
     /* Read the state of the switch into a local variable */
-    uint8_t reading = digitalRead( ioConfig[input].pinNumber );
+    uint8_t reading = digitalRead( pIoConfig->pinNumber );
 
     /* check to see if you just pressed the input
      * (i.e. the input went from LOW to HIGH), and you've waited long enough
@@ -1155,7 +1164,7 @@ static sensor_status_t getDoorIoState( const io_t input )
         state[input].debounce   = SENSOR_DEBOUNCE_UNSTABLE;
     }
 
-    if ( ( millis() - lastDebounceTime[input] ) > ioConfig[input].debounceDelay )
+    if ( ( millis() - lastDebounceTime[input] ) > pIoConfig->debounceDelay )
     {
         /* whatever the reading is at, it's been there for longer than the debounce
          * delay, so take it as the actual current state: */
@@ -1166,7 +1175,7 @@ static sensor_status_t getDoorIoState( const io_t input )
         {
             sensorState[input] = reading;
 
-            if ( sensorState[input] == HIGH )
+            if ( sensorState[input] == pIoConfig->activeState )
             {
                 state[input].state = SENSOR_STATE_PRESSED;
                 Log.notice( "%s: %s is pressed" CR, __func__, ioToString( input ).c_str() );
@@ -1335,6 +1344,26 @@ static void processTimers( door_control_t* const pDoorControl )
             Log.notice( "%s: %s" CR, timerTypeToString( (door_timer_type_t) i ).c_str(), remainingTime.c_str() );
         }
     }
+}
+
+
+/**
+ * @brief Get the IO configuration
+ * 
+ * @param io - The IO
+ * @return io_config_t* - The IO configuration
+ */
+static io_config_t* getIoConfig( io_t io )
+{
+    for ( uint8_t i = 0; i < sizeof( ioConfig ) / sizeof( io_config_t ); i++ )
+    {
+        if ( ioConfig[i].io == io )
+        {
+            return &ioConfig[i];
+        }
+    }
+
+    return NULL;
 }
 
 
