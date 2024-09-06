@@ -204,9 +204,10 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t number;    /*!< The pin number */
+    uint8_t pinNumber;   /*!< The pin number */
     uint8_t direction; /*!< The direction of the pin */
-} pin_config_t;
+    uint8_t activeState; /*!< The active state of the pin */
+} io_config_t;
 
 /******************************** Function prototype ************************************/
 
@@ -226,7 +227,6 @@ static void                   faultBlinkLedIsrHandler( void );
 static state_machine_result_t door1UnlockHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
-
 static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event );
@@ -235,7 +235,6 @@ static void                   door1BlinkLedIsrHandler( void );
 static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
-
 static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
@@ -244,18 +243,18 @@ static void                   door2BlinkLedIsrHandler( void );
 static void                   doorOpenTimeoutHandler( uint32_t time );
 static void                   doorUnlockTimeoutHandler( uint32_t time );
 
-void                   eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
-void                   resultLogger( uint32_t state, state_machine_result_t result );
-static void            setDoorState( const door_type_t door, const lock_state_t state );
-static sensor_status_t getDoorSensorState( const sensor_t sensor );
-static void            generateEvent( door_control_t* const pDoorControl );
-static String          stateToString( door_control_state_t state );
-static String          eventToString( door_control_event_t event );
-static String          resultToString( state_machine_result_t result );
-static String          sensorToString( sensor_t sensor );
-static String          timerTypeToString( door_timer_type_t timerType );
-static void            setLed( bool enable, door_type_t door, led_color_t color );
-static void            processTimers( door_control_t* const pDoorControl );
+void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void                          resultLogger( uint32_t state, state_machine_result_t result );
+static void                   setDoorState( const door_type_t door, const lock_state_t state );
+static sensor_status_t        getDoorSensorState( const sensor_t sensor );
+static void                   generateEvent( door_control_t* const pDoorControl );
+static String                 stateToString( door_control_state_t state );
+static String                 eventToString( door_control_event_t event );
+static String                 resultToString( state_machine_result_t result );
+static String                 sensorToString( sensor_t sensor );
+static String                 timerTypeToString( door_timer_type_t timerType );
+static void                   setLed( bool enable, door_type_t door, led_color_t color );
+static void                   processTimers( door_control_t* const pDoorControl );
 
 /******************************** Global variables ************************************/
 
