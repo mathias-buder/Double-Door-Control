@@ -268,7 +268,6 @@ static String                 ioToString( io_t io );
 static String                 timerTypeToString( door_timer_type_t timerType );
 static void                   setLed( bool enable, door_type_t door, led_color_t color );
 static void                   processTimers( door_control_t* const pDoorControl );
-static io_config_t*           getIoConfig( io_t io );
 
 /******************************** Global variables ************************************/
 
@@ -347,36 +346,34 @@ door_control_t doorControl = {
  */
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl};
 
-/**
- * @brief The RGB LED pins
-1 * @details The RGB LED pins are defined as an array of pins for each door
- */
-uint8_t ledPins[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
-    {RBG_LED_1_R, RBG_LED_1_G, RBG_LED_1_B},    /*!< RGB LED pins for door 1 */
-    {RBG_LED_2_R, RBG_LED_2_G, RBG_LED_2_B}     /*!< RGB LED pins for door 2 */
-};
 
-/**
- * @brief The pin configuration
- * @details The pin configuration is used to define the pin number and direction
- */
-io_config_t ioConfig[] = {
-    /* Inputs */
+static const io_config_t buttonSwitchIoConfig[] = {
     { IO_BUTTON_1, DOOR_1_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_1 }, /*!< Button 1 */
     { IO_BUTTON_2, DOOR_2_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_2 }, /*!< Button 2 */
     { IO_SWITCH_1, DOOR_1_SWITCH, INPUT,  LOW,  DEBOUNCE_DELAY_DOOR_SWITCH_1 }, /*!< Switch 1 */
     { IO_SWITCH_2, DOOR_2_SWITCH, INPUT,  LOW,  DEBOUNCE_DELAY_DOOR_SWITCH_2 }, /*!< Switch 2 */
-
-    /* Outputs */
-    { IO_MAGNET_1, DOOR_1_MAGNET, OUTPUT, LOW,  0                            }, /*!< Magnet 1 */
-    { IO_MAGNET_2, DOOR_2_MAGNET, OUTPUT, LOW,  0                            }, /*!< Magnet 2 */
-    { IO_LED_1_R,  RBG_LED_1_R,   OUTPUT, LOW,  0                            }, /*!< Red LED 1 */
-    { IO_LED_1_G,  RBG_LED_1_G,   OUTPUT, LOW,  0                            }, /*!< Green LED 1 */
-    { IO_LED_1_B,  RBG_LED_1_B,   OUTPUT, LOW,  0                            }, /*!< Blue LED 1 */
-    { IO_LED_2_R,  RBG_LED_2_R,   OUTPUT, LOW,  0                            }, /*!< Red LED 2 */
-    { IO_LED_2_G,  RBG_LED_2_G,   OUTPUT, LOW,  0                            }, /*!< Green LED 2 */
-    { IO_LED_2_B,  RBG_LED_2_B,   OUTPUT, LOW,  0                            }  /*!< Blue LED 2 */
 };
+
+
+static const io_config_t magnetIoConfig[] = {
+    { IO_MAGNET_1, DOOR_1_MAGNET, OUTPUT, LOW,  0 }, /*!< Magnet 1 */
+    { IO_MAGNET_2, DOOR_2_MAGNET, OUTPUT, LOW,  0 }, /*!< Magnet 2 */
+};
+
+
+static const io_config_t ledIoConfig[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
+    {
+        { IO_LED_1_R, RBG_LED_1_R, OUTPUT, HIGH,  0 }, /*!< Red LED 1 */
+        { IO_LED_1_G, RBG_LED_1_G, OUTPUT, HIGH,  0 }, /*!< Green LED 1 */
+        { IO_LED_1_B, RBG_LED_1_B, OUTPUT, HIGH,  0 }  /*!< Blue LED 1 */
+    },
+    {
+        { IO_LED_2_R, RBG_LED_2_R, OUTPUT, HIGH,  0 }, /*!< Red LED 2 */
+        { IO_LED_2_G, RBG_LED_2_G, OUTPUT, HIGH,  0 }, /*!< Green LED 2 */
+        { IO_LED_2_B, RBG_LED_2_B, OUTPUT, HIGH,  0 }  /*!< Blue LED 2 */
+    }
+};
+
 
 /******************************** Function definition ************************************/
 
@@ -391,10 +388,23 @@ void setup()
 
     Log.notice( "Starting ... " CR );
 
-    /* Initialize the pins */
-    for ( uint8_t i = 0; i < sizeof( ioConfig ) / sizeof( ioConfig[0] ); i++ )
+    /* Initialize the IOs */
+    for ( uint8_t i = 0; i < sizeof( buttonSwitchIoConfig ) / sizeof( buttonSwitchIoConfig[0] ); i++ )
     {
-        pinMode( ioConfig[i].pinNumber, ioConfig[i].direction );
+        pinMode( buttonSwitchIoConfig[i].pinNumber, buttonSwitchIoConfig[i].direction );
+    }
+
+    for ( uint8_t i = 0; i < sizeof( magnetIoConfig ) / sizeof( magnetIoConfig[0] ); i++ )
+    {
+        pinMode( magnetIoConfig[i].pinNumber, magnetIoConfig[i].direction );
+    }
+
+    for ( uint8_t i = 0; i < DOOR_TYPE_SIZE; i++ )
+    {
+        for ( uint8_t j = 0; j < RGB_LED_PIN_SIZE; j++ )
+        {
+            pinMode( ledIoConfig[i][j].pinNumber, ledIoConfig[i][j].direction );
+        }
     }
 
     /* Initialize the led blink timer */
@@ -1127,11 +1137,10 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
 
 
 /**
- * @brief Get the Door Sensor State object
- * 
- * @param sensor 
- * @param debounceState 
- * @return sensor_state_t 
+ * @brief Get the state of the door
+ *
+ * @param door - The door type
+ * @return lock_state_t - The state of the door
  */
 static sensor_status_t getDoorIoState( const io_t input )
 {
@@ -1140,16 +1149,14 @@ static sensor_status_t getDoorIoState( const io_t input )
     static uint32_t          lastDebounceTime[IO_INPUT_SIZE] = {0};
     static sensor_status_t   state[IO_INPUT_SIZE]            = {SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE};
 
-    io_config_t* pIoConfig = getIoConfig( input );
-
-    if ( pIoConfig == NULL )
+    if ( input >= IO_INPUT_SIZE )
     {
         Log.error( "%s: Invalid input: %d" CR, __func__, input );
-        return state[input];
+        return ( ( sensor_status_t ){SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE} );
     }
 
     /* Read the state of the switch into a local variable */
-    uint8_t reading = digitalRead( pIoConfig->pinNumber );
+    uint8_t reading = digitalRead( buttonSwitchIoConfig[input].pinNumber );
 
     /* check to see if you just pressed the input
      * (i.e. the input went from LOW to HIGH), and you've waited long enough
@@ -1164,7 +1171,7 @@ static sensor_status_t getDoorIoState( const io_t input )
         state[input].debounce   = SENSOR_DEBOUNCE_UNSTABLE;
     }
 
-    if ( ( millis() - lastDebounceTime[input] ) > pIoConfig->debounceDelay )
+    if ( ( millis() - lastDebounceTime[input] ) > buttonSwitchIoConfig[input].debounceDelay )
     {
         /* whatever the reading is at, it's been there for longer than the debounce
          * delay, so take it as the actual current state: */
@@ -1175,7 +1182,7 @@ static sensor_status_t getDoorIoState( const io_t input )
         {
             sensorState[input] = reading;
 
-            if ( sensorState[input] == pIoConfig->activeState )
+            if ( sensorState[input] == buttonSwitchIoConfig[input].activeState )
             {
                 state[input].state = SENSOR_STATE_PRESSED;
                 Log.notice( "%s: %s is pressed" CR, __func__, ioToString( input ).c_str() );
@@ -1264,39 +1271,39 @@ void setLed( bool enable, door_type_t door, led_color_t color )
         switch ( color )
         {
             case LED_COLOR_RED:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber,  ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber, !ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber, !ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             case LED_COLOR_GREEN:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber, !ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber,  ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber, !ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             case LED_COLOR_BLUE:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber, !ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber, !ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber,  ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             case LED_COLOR_YELLOW:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber,  ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber,  ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber, !ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             case LED_COLOR_MAGENTA:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber,  ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber, !ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber,  ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             case LED_COLOR_CYAN:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber, !ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber,  ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber,  ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             case LED_COLOR_WHITE:
-                digitalWrite( ledPins[door][RGB_LED_PIN_R], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_G], HIGH );
-                digitalWrite( ledPins[door][RGB_LED_PIN_B], HIGH );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber,  ledIoConfig[door][RGB_LED_PIN_R].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber,  ledIoConfig[door][RGB_LED_PIN_G].activeState );
+                digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber,  ledIoConfig[door][RGB_LED_PIN_B].activeState );
                 break;
             default:
                 break;
@@ -1304,9 +1311,9 @@ void setLed( bool enable, door_type_t door, led_color_t color )
     }
     else
     {
-        digitalWrite( ledPins[door][RGB_LED_PIN_R], LOW );
-        digitalWrite( ledPins[door][RGB_LED_PIN_G], LOW );
-        digitalWrite( ledPins[door][RGB_LED_PIN_B], LOW );
+        digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber, !ledIoConfig[door][RGB_LED_PIN_R].activeState );
+        digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber, !ledIoConfig[door][RGB_LED_PIN_G].activeState );
+        digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber, !ledIoConfig[door][RGB_LED_PIN_B].activeState );
     }
 }
 
@@ -1344,26 +1351,6 @@ static void processTimers( door_control_t* const pDoorControl )
             Log.notice( "%s: %s" CR, timerTypeToString( (door_timer_type_t) i ).c_str(), remainingTime.c_str() );
         }
     }
-}
-
-
-/**
- * @brief Get the IO configuration
- * 
- * @param io - The IO
- * @return io_config_t* - The IO configuration
- */
-static io_config_t* getIoConfig( io_t io )
-{
-    for ( uint8_t i = 0; i < sizeof( ioConfig ) / sizeof( io_config_t ); i++ )
-    {
-        if ( ioConfig[i].io == io )
-        {
-            return &ioConfig[i];
-        }
-    }
-
-    return NULL;
 }
 
 
