@@ -127,9 +127,9 @@ typedef enum
  */
 typedef enum
 {
-    SENSOR_STATE_RELEASED, /*!< The button is released */
-    SENSOR_STATE_PRESSED   /*!< The button is pressed */
-} sensor_state_t;
+    INPUT_STATE_INACTIVE, /*!< The input is not active */
+    INPUT_STATE_ACTIVE      /*!< The input is active */
+} input_state_t;
 
 /**
  * @brief Enumeration of the sensor debounce state
@@ -137,9 +137,9 @@ typedef enum
  */
 typedef enum
 {
-    SENSOR_DEBOUNCE_UNSTABLE, /*!< The sensor is under debouncing */
-    SENSOR_DEBOUNCE_STABLE    /*!< The sensor is debounced */
-} sensor_debounce_t;
+    INPUT_DEBOUNCE_UNSTABLE, /*!< The input is under debouncing */
+    INPUT_DEBOUNCE_STABLE    /*!< The input is debounced */
+} input_debounce_t;
 
 /**
  * @brief Enumeration of the RGB LED pin
@@ -195,9 +195,9 @@ typedef struct
  * @details The sensor status structure is used to hold the state and the debounce state of the sensor
  */
 typedef struct {
-    sensor_state_t    state;      //!< The state of the sensor
-    sensor_debounce_t debounce;   //!< The debounce state of the sensor
-} sensor_status_t;
+    input_state_t    state;      //!< The state of the input
+    input_debounce_t debounce;   //!< The debounce state of the input
+} input_status_t;
 
 /**
  * @brief The door control state machine
@@ -259,7 +259,7 @@ static void                   doorUnlockTimeoutHandler( uint32_t time );
 void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                          resultLogger( uint32_t state, state_machine_result_t result );
 static void                   setDoorState( const door_type_t door, const lock_state_t state );
-static sensor_status_t        getDoorIoState( const io_t sensor );
+static input_status_t         getDoorIoState( const io_t sensor );
 static void                   generateEvent( door_control_t* const pDoorControl );
 static String                 stateToString( door_control_state_t state );
 static String                 eventToString( door_control_event_t event );
@@ -455,7 +455,7 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
      * for the initialization as the door switches are checked here in an one-shot manner. If
      * the switches are not stable within the timeout, the state machine switches to the fault state.
      */
-    sensor_status_t door1SwitchStatus, door2SwitchStatus;
+    input_status_t door1SwitchStatus, door2SwitchStatus;
     uint64_t        currentTime = millis();
 
     do {
@@ -470,25 +470,25 @@ static state_machine_result_t initEntryHandler( state_machine_t* const pState, c
             return switch_state( pState, &doorControlStates[DOOR_CONTROL_STATE_FAULT] );
         }
     }
-    while (    ( door1SwitchStatus.debounce == SENSOR_DEBOUNCE_UNSTABLE )
-            || ( door2SwitchStatus.debounce == SENSOR_DEBOUNCE_UNSTABLE ) );
+    while (    ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_UNSTABLE )
+            || ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_UNSTABLE ) );
     
 
      /* Get pointer to the current event */
     event_t** pCurrentEvent = &pState->event;
 
-    if (    ( door1SwitchStatus.state == SENSOR_STATE_PRESSED )
-         && ( door2SwitchStatus.state == SENSOR_STATE_PRESSED) )
+    if (    ( door1SwitchStatus.state == INPUT_STATE_ACTIVE )
+         && ( door2SwitchStatus.state == INPUT_STATE_ACTIVE) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
     }
 
-    if ( door1SwitchStatus.state == SENSOR_STATE_RELEASED )
+    if ( door1SwitchStatus.state == INPUT_STATE_INACTIVE )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
     }
 
-    if ( door2SwitchStatus.state == SENSOR_STATE_RELEASED )
+    if ( door2SwitchStatus.state == INPUT_STATE_INACTIVE )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_2_OPEN );
     }
@@ -583,17 +583,17 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     /* Get the state of the door buttons. The debounce state isn't used here,
      * but it is necessary to call the function.
      */
-    sensor_state_t door1Button = getDoorIoState( IO_BUTTON_1 ).state;
-    sensor_state_t door2Button = getDoorIoState( IO_BUTTON_2 ).state;
+    input_state_t door1Button = getDoorIoState( IO_BUTTON_1 ).state;
+    input_state_t door2Button = getDoorIoState( IO_BUTTON_2 ).state;
 
     /* XOR-logic to allow only one door to be open */
-    if (    ( door1Button == SENSOR_STATE_PRESSED )
-         && ( door2Button == SENSOR_STATE_RELEASED ) )
+    if (    ( door1Button == INPUT_STATE_ACTIVE )
+         && ( door2Button == INPUT_STATE_INACTIVE ) )
     {
         pushEvent( &pState->event, DOOR_CONTROL_EVENT_DOOR_1_UNLOCK );
     }
-    else if (    ( door1Button == SENSOR_STATE_RELEASED )
-              && ( door2Button == SENSOR_STATE_PRESSED ) )
+    else if (    ( door1Button == INPUT_STATE_INACTIVE )
+              && ( door2Button == INPUT_STATE_ACTIVE ) )
     {
         pushEvent( &pState->event, DOOR_CONTROL_EVENT_DOOR_2_UNLOCK );
     }
@@ -1142,17 +1142,17 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
  * @param door - The door type
  * @return lock_state_t - The state of the door
  */
-static sensor_status_t getDoorIoState( const io_t input )
+static input_status_t getDoorIoState( const io_t input )
 {
     static uint8_t           sensorState[IO_INPUT_SIZE]      = {0};
     static uint8_t           lastSensorState[IO_INPUT_SIZE]  = {0};
     static uint32_t          lastDebounceTime[IO_INPUT_SIZE] = {0};
-    static sensor_status_t   state[IO_INPUT_SIZE]            = {SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE};
+    static input_status_t   state[IO_INPUT_SIZE]            = {INPUT_STATE_INACTIVE, INPUT_DEBOUNCE_UNSTABLE};
 
     if ( input >= IO_INPUT_SIZE )
     {
         Log.error( "%s: Invalid input: %d" CR, __func__, input );
-        return ( ( sensor_status_t ){SENSOR_STATE_RELEASED, SENSOR_DEBOUNCE_UNSTABLE} );
+        return ( ( input_status_t ){INPUT_STATE_INACTIVE, INPUT_DEBOUNCE_UNSTABLE} );
     }
 
     /* Read the state of the switch into a local variable */
@@ -1167,15 +1167,15 @@ static sensor_status_t getDoorIoState( const io_t input )
     {
         /* reset the debouncing timer */
         lastDebounceTime[input] = millis();
-        state[input].state      = SENSOR_STATE_RELEASED;
-        state[input].debounce   = SENSOR_DEBOUNCE_UNSTABLE;
+        state[input].state      = INPUT_STATE_INACTIVE;
+        state[input].debounce   = INPUT_DEBOUNCE_UNSTABLE;
     }
 
     if ( ( millis() - lastDebounceTime[input] ) > buttonSwitchIoConfig[input].debounceDelay )
     {
         /* whatever the reading is at, it's been there for longer than the debounce
          * delay, so take it as the actual current state: */
-        state[input].debounce = SENSOR_DEBOUNCE_STABLE;
+        state[input].debounce = INPUT_DEBOUNCE_STABLE;
 
         /* if the input state has changed: */
         if ( reading != sensorState[input] )
@@ -1184,13 +1184,13 @@ static sensor_status_t getDoorIoState( const io_t input )
 
             if ( sensorState[input] == buttonSwitchIoConfig[input].activeState )
             {
-                state[input].state = SENSOR_STATE_PRESSED;
-                Log.notice( "%s: %s is pressed" CR, __func__, ioToString( input ).c_str() );
+                state[input].state = INPUT_STATE_ACTIVE;
+                Log.notice( "%s: %s is active" CR, __func__, ioToString( input ).c_str() );
             }
             else
             {
-                state[input].state = SENSOR_STATE_RELEASED;
-                Log.notice( "%s: %s is released" CR, __func__, ioToString( input ).c_str() );
+                state[input].state = INPUT_STATE_INACTIVE;
+                Log.notice( "%s: %s is inactive" CR, __func__, ioToString( input ).c_str() );
             }
         }
     }
@@ -1209,41 +1209,41 @@ static sensor_status_t getDoorIoState( const io_t input )
 static void generateEvent( door_control_t* const pDoorControl )
 {
     /* Read the state of both door switches */
-    sensor_state_t door1Switch = getDoorIoState( IO_SWITCH_1 ).state;
-    sensor_state_t door2Switch = getDoorIoState( IO_SWITCH_2 ).state;
+    input_state_t door1Switch = getDoorIoState( IO_SWITCH_1 ).state;
+    input_state_t door2Switch = getDoorIoState( IO_SWITCH_2 ).state;
 
     /* Get pointer to the current event */
     event_t** pCurrentEvent = &pDoorControl->machine.event;
 
     /* Generate the event */
-    if (    ( door1Switch == SENSOR_STATE_RELEASED )
-         && ( door2Switch == SENSOR_STATE_RELEASED ) )
+    if (    ( door1Switch == INPUT_STATE_INACTIVE )
+         && ( door2Switch == INPUT_STATE_INACTIVE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_OPEN );
     }
 
-    if (    ( door1Switch == SENSOR_STATE_PRESSED )
-         && ( door2Switch == SENSOR_STATE_PRESSED ) )
+    if (    ( door1Switch == INPUT_STATE_ACTIVE )
+         && ( door2Switch == INPUT_STATE_ACTIVE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
     }
 
-    if ( door1Switch == SENSOR_STATE_PRESSED )
+    if ( door1Switch == INPUT_STATE_ACTIVE )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_CLOSE );
     }
 
-    if ( door1Switch == SENSOR_STATE_RELEASED )
+    if ( door1Switch == INPUT_STATE_INACTIVE )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
     }
 
-    if ( door2Switch == SENSOR_STATE_PRESSED )
+    if ( door2Switch == INPUT_STATE_ACTIVE )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_2_CLOSE );
     }
 
-    if ( door2Switch == SENSOR_STATE_RELEASED )
+    if ( door2Switch == INPUT_STATE_INACTIVE )
     {
         pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_2_OPEN );
     }
