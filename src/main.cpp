@@ -1144,10 +1144,11 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
  */
 static input_status_t getDoorIoState( const io_t input )
 {
-    static uint8_t           sensorState[IO_INPUT_SIZE]      = {0};
-    static uint8_t           lastSensorState[IO_INPUT_SIZE]  = {0};
-    static uint32_t          lastDebounceTime[IO_INPUT_SIZE] = {0};
-    static input_status_t   state[IO_INPUT_SIZE]            = {INPUT_STATE_INACTIVE, INPUT_DEBOUNCE_UNSTABLE};
+    static bool           initialReadingDone[IO_INPUT_SIZE] = {0};
+    static uint8_t        ioState[IO_INPUT_SIZE]            = {0};
+    static uint8_t        lastIoState[IO_INPUT_SIZE]        = {0};
+    static uint32_t       lastDebounceTime[IO_INPUT_SIZE]   = {0};
+    static input_status_t state[IO_INPUT_SIZE]              = {INPUT_STATE_INACTIVE, INPUT_DEBOUNCE_UNSTABLE};
 
     if ( input >= IO_INPUT_SIZE )
     {
@@ -1163,7 +1164,7 @@ static input_status_t getDoorIoState( const io_t input )
      * since the last press to ignore any noise: */
 
     /* If the switch changed, due to noise or pressing: */
-    if ( reading != lastSensorState[input] )
+    if ( reading != lastIoState[input] )
     {
         /* reset the debouncing timer */
         lastDebounceTime[input] = millis();
@@ -1177,12 +1178,12 @@ static input_status_t getDoorIoState( const io_t input )
          * delay, so take it as the actual current state: */
         state[input].debounce = INPUT_DEBOUNCE_STABLE;
 
-        /* if the input state has changed: */
-        if ( reading != sensorState[input] )
+        /* if the input state has changed or it's the first reading */
+        if ( ( reading != ioState[input] ) || !initialReadingDone[input] )
         {
-            sensorState[input] = reading;
+            ioState[input] = reading;
 
-            if ( sensorState[input] == buttonSwitchIoConfig[input].activeState )
+            if ( ioState[input] == buttonSwitchIoConfig[input].activeState )
             {
                 state[input].state = INPUT_STATE_ACTIVE;
                 Log.notice( "%s: %s is active" CR, __func__, ioToString( input ).c_str() );
@@ -1192,11 +1193,17 @@ static input_status_t getDoorIoState( const io_t input )
                 state[input].state = INPUT_STATE_INACTIVE;
                 Log.notice( "%s: %s is inactive" CR, __func__, ioToString( input ).c_str() );
             }
+
+            /* Set the first reading done flag */
+            if ( !initialReadingDone[input] )
+            {
+                initialReadingDone[input] = true;
+            }
         }
     }
 
-    /* save the reading. Next time through the loop, it'll be the lastSensorState: */
-    lastSensorState[input] = reading;
+    /* save the reading. Next time through the loop, it'll be the lastIoState: */
+    lastIoState[input] = reading;
 
     return state[input];
 }
