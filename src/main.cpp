@@ -1123,9 +1123,9 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
         return;
     }
 
-    /* Set the state of the door */
+    /* Set the lock state ( The magnet is active low ) */
     digitalWrite(  magnetIoConfig[door].pinNumber, 
-                 ( state == LOCK_STATE_LOCKED ) ? magnetIoConfig[door].activeState : !magnetIoConfig[door].activeState );
+                 ( state == LOCK_STATE_LOCKED ) ? !magnetIoConfig[door].activeState : magnetIoConfig[door].activeState );
 
     if ( lastState[door] != state )
     {
