@@ -355,7 +355,7 @@ static const io_config_t buttonSwitchIoConfig[] = {
 };
 
 
-static const io_config_t magnetIoConfig[] = {
+static const io_config_t magnetIoConfig[DOOR_TYPE_SIZE] = {
     { IO_MAGNET_1, DOOR_1_MAGNET, OUTPUT, LOW,  0 }, /*!< Magnet 1 */
     { IO_MAGNET_2, DOOR_2_MAGNET, OUTPUT, LOW,  0 }, /*!< Magnet 2 */
 };
@@ -1115,7 +1115,6 @@ void resultLogger(uint32_t state, state_machine_result_t result)
 static void setDoorState( const door_type_t door, const lock_state_t state )
 {
     static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED, LOCK_STATE_LOCKED};
-    static uint8_t      pinMap[DOOR_TYPE_SIZE]    = {DOOR_1_MAGNET, DOOR_2_MAGNET};
 
     /* Check if the door is valid */
     if ( door >= DOOR_TYPE_SIZE )
@@ -1124,13 +1123,14 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
         return;
     }
 
+    /* Set the state of the door */
+    digitalWrite(  magnetIoConfig[door].pinNumber, 
+                 ( state == LOCK_STATE_LOCKED ) ? magnetIoConfig[door].activeState : !magnetIoConfig[door].activeState );
+
     if ( lastState[door] != state )
     {
         Log.notice( "%s: Door %d is %s" CR, __func__, door, ( state == LOCK_STATE_UNLOCKED ) ? "unlocked" : "locked" );
     }
-
-    /* Set the state of the door */
-    digitalWrite( pinMap[door], state );
 
     lastState[door] = state;
 }
