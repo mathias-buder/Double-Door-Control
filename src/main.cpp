@@ -35,7 +35,7 @@
 #define DEBOUNCE_STABLE_TIMEOUT         300            /*!< Timeout for the debounce stable state @unit ms */
 
 #define SERIAL_BAUD_RATE                115200         /*!< Baud rate of the serial communication @unit bps */
-#define DEFAULT_LOG_LEVEL               LOG_LEVEL_VERBOSE /*!< Default log level */
+#define DEFAULT_LOG_LEVEL               LOG_LEVEL_INFO /*!< Default log level */
 
 #define LED_BLINK_INTERVAL              500            /*!< Interval of the led blink @unit ms */
 #define DOOR_UNLOCK_TIMEOUT             5              /*!< Timeout for the door unlock ( 0 = disabled ) @unit s */
@@ -387,6 +387,7 @@ void setup()
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( DEFAULT_LOG_LEVEL, &Serial );
 
+    Log.noticeln( "Door control application v%s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
 
     /* Initialize the IOs */
