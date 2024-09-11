@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoLog.h>
 #include <TimerOne.h>
+#include <SimpleCLI.h>
 
 #include "hsm.h"
 
@@ -267,6 +268,7 @@ static String                 eventToString( door_control_event_t event );
 static String                 resultToString( state_machine_result_t result );
 static String                 ioToString( io_t io );
 static String                 timerTypeToString( door_timer_type_t timerType );
+static String                 logLevelToString( uint8_t level );
 static void                   setLed( bool enable, door_type_t door, led_color_t color );
 static void                   processTimers( door_control_t* const pDoorControl );
 
@@ -376,6 +378,17 @@ static const io_config_t ledIoConfig[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
 };
 
 
+
+SimpleCLI cli;  /*!< The command line interface */
+Command cliCmdGetInfo;
+Command cliCmdSetLogLevel;
+Command cliCmdGetLogLevel;
+
+void cliCmdGetInfoCb( cmd* pCommand );
+void cliCmdSetLogLevelCb( cmd* pCommand );
+void cliCmdGetLogLevelCb( cmd* pCommand );
+
+
 /******************************** Function definition ************************************/
 
 /**
@@ -386,9 +399,22 @@ void setup()
     /* Initialize with log level and log output */
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( DEFAULT_LOG_LEVEL, &Serial );
-
     Log.noticeln( "Door control application v%s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
+
+
+    /* Initialize the command line interface */
+
+    cliCmdGetInfo = cli.addCommand( "a", cliCmdGetInfoCb ); // getInfo
+    cliCmdSetLogLevel = cli.addCommand( "setLogLevel", cliCmdSetLogLevelCb );
+
+
+
+
+
+
+
+
 
     /* Initialize the IOs */
     for ( uint8_t i = 0; i < sizeof( buttonSwitchIoConfig ) / sizeof( buttonSwitchIoConfig[0] ); i++ )
@@ -424,6 +450,12 @@ void setup()
  */
 void loop()
 {
+    /* Process the command line interface */
+    if ( Serial.available() )
+    {
+        cli.parse( Serial.readStringUntil( '\n' ) );
+    }
+
     /* Generate/Process events */
     generateEvent( &doorControl );
 
@@ -1371,6 +1403,42 @@ static void processTimers( door_control_t* const pDoorControl )
 }
 
 
+
+
+void cliCmdGetInfoCb( cmd* pCommand )
+{
+    Serial.println( "--------------------------------------------" );
+
+    /* Output software version string */
+    Log.noticeln( "Version: v%s", GIT_VERSION_STRING );
+
+    /* Output the build date and time */
+    Log.noticeln( "Build date: %s %s", __DATE__, __TIME__ );
+
+    /* Output current log level */
+    Log.noticeln( "Log level: %s", logLevelToString( Log.getLevel() ).c_str() );
+
+    /* Output the all times and timeouts */
+    Log.noticeln( "Door unlock timeout: %d s", DOOR_UNLOCK_TIMEOUT );
+    Log.noticeln( "Door open timeout: %s min", String( DOOR_OPEN_TIMEOUT / 60.0F ).c_str() );
+    Log.noticeln( "Led blink interval: %d ms", LED_BLINK_INTERVAL );
+
+    Serial.println( "--------------------------------------------" );
+}
+
+
+void cliCmdSetLogLevelCb( cmd* pCommand )
+{
+    // Command cmd( pCommand );
+
+    // Argument argName = cmd.getArgument( "name" );
+
+}
+
+
+
+
+
 /**
  * @brief Convert the state to string
  * 
@@ -1549,6 +1617,32 @@ static String inputStateToString( input_state_t state )
         return "INPUT_STATE_INACTIVE";
     case INPUT_STATE_ACTIVE:
         return "INPUT_STATE_ACTIVE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+
+static String logLevelToString( uint8_t level )
+{
+    Log.verboseln( "%s: Level: %d", __func__, level );
+
+    switch ( level )
+    {
+    case LOG_LEVEL_SILENT:
+        return "LOG_LEVEL_SILENT";
+    case LOG_LEVEL_FATAL:
+        return "LOG_LEVEL_FATAL";
+    case LOG_LEVEL_ERROR:
+        return "LOG_LEVEL_ERROR";
+    case LOG_LEVEL_WARNING:
+        return "LOG_LEVEL_WARNING";
+    case LOG_LEVEL_NOTICE:
+        return "LOG_LEVEL_NOTICE";
+    case LOG_LEVEL_TRACE:
+        return "LOG_LEVEL_TRACE";
+    case LOG_LEVEL_VERBOSE:
+        return "LOG_LEVEL_VERBOSE";
     default:
         return "UNKNOWN";
     }
