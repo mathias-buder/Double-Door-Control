@@ -424,7 +424,7 @@ void setup()
     cliCmdSetTimer.addArg( "o", String( DOOR_OPEN_TIMEOUT ).c_str() );     /*!< Open timeout */
     cliCmdSetTimer.addArg( "b", String( LED_BLINK_INTERVAL ).c_str() );    /*!< LED blink interval */
 
-    cli.setErrorCallback( cliErrorCb );
+    cli.setOnError( cliErrorCb );
 
     /* Initialize the IOs */
     for ( uint8_t i = 0; i < sizeof( buttonSwitchIoConfig ) / sizeof( buttonSwitchIoConfig[0] ); i++ )
@@ -1486,7 +1486,7 @@ static void cliErrorCb( cmd_error* pError )
 {
     CommandError error( pError );
 
-    Log.noticeln( "Error: %s", error.toString().c_str() );
+    Log.noticeln( "%s: %s", __func__, error.toString().c_str() );
 
     if ( error.hasCommand() )
     {
@@ -1494,7 +1494,8 @@ static void cliErrorCb( cmd_error* pError )
     }
     else
     {
-        Log.noticeln( cli.toString().c_str() );
+        Log.noticeln( "Available commands:" );
+        Serial.println( cli.toString() );
     }
 }
 
