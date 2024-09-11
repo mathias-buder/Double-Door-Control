@@ -1443,6 +1443,12 @@ static void cliCmdGetInfoCb( cmd* pCommand )
     Serial.println( "--------------------------------------------" );
 }
 
+
+/**
+ * @brief CLI command callback for setting the log level
+ * 
+ * @param pCommand - The command
+ */
 static void cliCmdSetLogLevelCb( cmd* pCommand )
 {
     Command cmd( pCommand );
@@ -1453,6 +1459,11 @@ static void cliCmdSetLogLevelCb( cmd* pCommand )
 }
 
 
+/**
+ * @brief CLI command callback for setting the timer values
+ * 
+ * @param pCommand - The command
+ */
 static void cliCmdSetTimerCb( cmd* pCommand )
 {
     Command  cmd( pCommand );
@@ -1482,6 +1493,12 @@ static void cliCmdSetTimerCb( cmd* pCommand )
     }
 }
 
+
+/**
+ * @brief CLI error callback
+ * 
+ * @param pError - The error
+ */
 static void cliErrorCb( cmd_error* pError )
 {
     CommandError error( pError );
@@ -1498,6 +1515,7 @@ static void cliErrorCb( cmd_error* pError )
         Serial.println( cli.toString() );
     }
 }
+
 
 /**
  * @brief Convert the state to string
