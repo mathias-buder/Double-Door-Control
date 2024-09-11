@@ -1434,7 +1434,7 @@ static void cliCmdGetInfoCb( cmd* pCommand )
 
     /* Output the all times and timeouts */
     Log.noticeln( "Door unlock timeout: %d s", settings.doorUnlockTimeout );
-    Log.noticeln( "Door open timeout: %s min", String( settings.doorOpenTimeout / 60 ).c_str() );
+    Log.noticeln( "Door open timeout: %s min", String( settings.doorOpenTimeout ).c_str() );
     Log.noticeln( "Led blink interval: %d ms", settings.ledBlinkInterval );
 
     Serial.println( "--------------------------------------------" );
@@ -1466,7 +1466,7 @@ static void cliCmdSetTimerCb( cmd* pCommand )
     if ( argOpen.isSet() )
     {
         settings.doorOpenTimeout = argOpen.getValue().toInt();
-        doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeout = ( (uint32_t) settings.doorOpenTimeout ) * 60 * 1000;
+        doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeout = ( (uint32_t) settings.doorOpenTimeout ) * 60000;
         Log.noticeln( "%s: Door open timeout set to %d min", __func__, settings.doorOpenTimeout );
     }
 
