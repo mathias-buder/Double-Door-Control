@@ -216,18 +216,19 @@ typedef struct
  */
 typedef struct
 {
-    io_t     io;            /*!< The input/output */
-    uint8_t  pinNumber;     /*!< The pin number */
-    uint8_t  direction;     /*!< The direction of the pin */
-    uint8_t  activeState;   /*!< The active state of the pin */
-    uint16_t debounceDelay; /*!< The debounce delay of the pin */
+    const io_t    io;            /*!< The input/output */
+    const uint8_t pinNumber;     /*!< The pin number */
+    const uint8_t direction;     /*!< The direction of the pin */
+    const uint8_t activeState;   /*!< The active state of the pin */
+    uint16_t      debounceDelay; /*!< The debounce delay of the pin */
 } io_config_t;
 
 typedef struct
 {
-    uint8_t doorUnlockTimeout; /*!< The door unlock timeout */
-    uint16_t doorOpenTimeout;   /*!< The door open timeout */
-    uint16_t ledBlinkInterval;  /*!< The led blink interval */
+    uint8_t  doorUnlockTimeout;            /*!< The door unlock timeout */
+    uint16_t doorOpenTimeout;              /*!< The door open timeout */
+    uint16_t ledBlinkInterval;             /*!< The led blink interval */
+    uint16_t debounceDelay[IO_INPUT_SIZE]; /*!< The debounce delay of the inputs */
 } settings_t;
 
 /******************************** Function prototype ************************************/
@@ -357,7 +358,7 @@ door_control_t doorControl = {
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl};
 
 
-static const io_config_t buttonSwitchIoConfig[] = {
+static io_config_t buttonSwitchIoConfig[] = {
     { IO_BUTTON_1, DOOR_1_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_1 }, /*!< Button 1 */
     { IO_BUTTON_2, DOOR_2_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_2 }, /*!< Button 2 */
     { IO_SWITCH_1, DOOR_1_SWITCH, INPUT,  LOW,  DEBOUNCE_DELAY_DOOR_SWITCH_1 }, /*!< Switch 1 */
@@ -387,7 +388,13 @@ static const io_config_t ledIoConfig[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
 static settings_t settings = {
     .doorUnlockTimeout = DOOR_UNLOCK_TIMEOUT,
     .doorOpenTimeout   = DOOR_OPEN_TIMEOUT,
-    .ledBlinkInterval  = LED_BLINK_INTERVAL
+    .ledBlinkInterval  = LED_BLINK_INTERVAL,
+    .debounceDelay     = {
+                            DEBOUNCE_DELAY_DOOR_BUTTON_1,
+                            DEBOUNCE_DELAY_DOOR_BUTTON_2,
+                            DEBOUNCE_DELAY_DOOR_SWITCH_1,
+                            DEBOUNCE_DELAY_DOOR_SWITCH_2
+                        }
 };
 
 
@@ -395,10 +402,13 @@ static SimpleCLI cli;  /*!< The command line interface */
 static Command cliCmdGetInfo;
 static Command cliCmdSetLogLevel;
 static Command cliCmdSetTimer;
+static Command cliCmdSetDebounceDelay;
 
 static void cliCmdGetInfoCb( cmd* pCommand );
 static void cliCmdSetLogLevelCb( cmd* pCommand );
 static void cliCmdSetTimerCb( cmd* pCommand );
+static void cliCmdSetDebounceDelayCb( cmd* pCommand );
+
 static void cliErrorCb( cmd_error* pError );
 
 
@@ -423,6 +433,10 @@ void setup()
     cliCmdSetTimer.addArg( "u", String( DOOR_UNLOCK_TIMEOUT ).c_str() );   /*!< Unlock timeout */
     cliCmdSetTimer.addArg( "o", String( DOOR_OPEN_TIMEOUT ).c_str() );     /*!< Open timeout */
     cliCmdSetTimer.addArg( "b", String( LED_BLINK_INTERVAL ).c_str() );    /*!< LED blink interval */
+
+    cliCmdSetDebounceDelay = cli.addCmd( "dbc", cliCmdSetDebounceDelayCb ); /*!< Set debounce time */
+    cliCmdSetDebounceDelay.addArg( "i" );                                    /*!< Input index */
+    cliCmdSetDebounceDelay.addArg( "t" );                                    /*!< Debounce time @unit ms */
 
     cli.setOnError( cliErrorCb );
 
@@ -464,13 +478,22 @@ void loop()
     if ( Serial.available() )
     {
         String input = Serial.readStringUntil( '\n' );
-        cli.parse( input);
+        // cli.parse( input);
 
         // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
-        // String testCommand( "info" );
         // String testCommand( "log" );
-        // String testCommand( "timer -u 10 -o 15 -b 100" );
-        // cli.parse( testCommand);
+        // String testCommand1( "timer -u 30 -o 18 -b 180" );
+        // cli.parse( testCommand1);
+        // String testCommand2( "info" );
+        // cli.parse( testCommand2);
+        // String testCommand3( "time -f" );
+        // cli.parse( testCommand3);
+        String testCommand4( "dbc -i 3 -t 300" );
+        cli.parse( testCommand4);
+        String testCommand5( "dbc -t 300" );
+        cli.parse( testCommand5);
+        String testCommand6( "dbc -t 300" );
+        cli.parse( testCommand6);
     }
 
     /* Generate/Process events */
@@ -1493,6 +1516,30 @@ static void cliCmdSetTimerCb( cmd* pCommand )
     }
 }
 
+
+/**
+ * @brief CLI command callback for setting the debounce delay
+ * 
+ * @param pCommand - The command
+ */
+static void cliCmdSetDebounceDelayCb( cmd* pCommand )
+{
+    Command cmd( pCommand );
+
+    Argument argInputIdx = cmd.getArgument( "i" );
+    uint8_t  inputIdx    = argInputIdx.getValue().toInt();
+
+    if ( inputIdx < IO_INPUT_SIZE )
+    {
+        settings.debounceDelay[inputIdx]             = cmd.getArgument( "t" ).getValue().toInt();
+        buttonSwitchIoConfig[inputIdx].debounceDelay = settings.debounceDelay[inputIdx];
+        Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, ioToString( (io_t) inputIdx ).c_str(), settings.debounceDelay[inputIdx] );
+    }
+    else
+    {
+        Log.errorln( "%s: Invalid input index: %d", __func__, inputIdx );
+    }
+}
 
 /**
  * @brief CLI error callback
