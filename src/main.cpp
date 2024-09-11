@@ -223,6 +223,13 @@ typedef struct
     uint16_t debounceDelay; /*!< The debounce delay of the pin */
 } io_config_t;
 
+typedef struct
+{
+    uint8_t doorUnlockTimeout; /*!< The door unlock timeout */
+    uint16_t doorOpenTimeout;   /*!< The door open timeout */
+    uint16_t ledBlinkInterval;  /*!< The led blink interval */
+} settings_t;
+
 /******************************** Function prototype ************************************/
 
 static state_machine_result_t initHandler( state_machine_t* const pState, const uint32_t event );
@@ -338,8 +345,8 @@ static const state_t doorControlStates[] = {
 door_control_t doorControl = {
     .machine = { NULL, NULL },
     .doorTimer = {
-                    { doorUnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * (uint32_t) 1000, 0 },
-                    { doorOpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * (uint32_t) 1000, 0 }
+                    { doorUnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * 1000, 0 },
+                    { doorOpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * 1000, 0 }
                 }
 };
 
@@ -377,16 +384,21 @@ static const io_config_t ledIoConfig[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
     }
 };
 
+static settings_t settings = {
+    .doorUnlockTimeout = DOOR_UNLOCK_TIMEOUT,
+    .doorOpenTimeout   = DOOR_OPEN_TIMEOUT,
+    .ledBlinkInterval  = LED_BLINK_INTERVAL
+};
 
 
-SimpleCLI cli;  /*!< The command line interface */
-Command cliCmdGetInfo;
-Command cliCmdSetLogLevel;
-Command cliCmdGetLogLevel;
+static SimpleCLI cli;  /*!< The command line interface */
+static Command cliCmdGetInfo;
+static Command cliCmdSetLogLevel;
+static Command cliCmdSetTimer;
 
-void cliCmdGetInfoCb( cmd* pCommand );
-void cliCmdSetLogLevelCb( cmd* pCommand );
-void cliCmdGetLogLevelCb( cmd* pCommand );
+static void cliCmdGetInfoCb( cmd* pCommand );
+static void cliCmdSetLogLevelCb( cmd* pCommand );
+static void cliCmdSetTimerCb( cmd* pCommand );
 
 
 /******************************** Function definition ************************************/
@@ -399,22 +411,17 @@ void setup()
     /* Initialize with log level and log output */
     Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( DEFAULT_LOG_LEVEL, &Serial );
-    Log.noticeln( "Door control application v%s", GIT_VERSION_STRING );
+    Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
 
-
     /* Initialize the command line interface */
+    cliCmdGetInfo     = cli.addSingleArgCmd( "info", cliCmdGetInfoCb );    /*!< Get software information */
+    cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb ); /*!< Set log level */
 
-    cliCmdGetInfo = cli.addCommand( "a", cliCmdGetInfoCb ); // getInfo
-    cliCmdSetLogLevel = cli.addCommand( "setLogLevel", cliCmdSetLogLevelCb );
-
-
-
-
-
-
-
-
+    cliCmdSetTimer    = cli.addCmd( "timer", cliCmdSetTimerCb );           /*!< Set timer */
+    cliCmdSetTimer.addArg( "u", String( DOOR_UNLOCK_TIMEOUT ).c_str() );   /*!< Unlock timeout */
+    cliCmdSetTimer.addArg( "o", String( DOOR_OPEN_TIMEOUT ).c_str() );     /*!< Open timeout */
+    cliCmdSetTimer.addArg( "b", String( LED_BLINK_INTERVAL ).c_str() );    /*!< LED blink interval */
 
     /* Initialize the IOs */
     for ( uint8_t i = 0; i < sizeof( buttonSwitchIoConfig ) / sizeof( buttonSwitchIoConfig[0] ); i++ )
@@ -436,7 +443,7 @@ void setup()
     }
 
     /* Initialize the led blink timer */
-    Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) LED_BLINK_INTERVAL ) );
+    Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) settings.ledBlinkInterval ) );
 
     /* Switch to the init state */
     switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
@@ -453,7 +460,14 @@ void loop()
     /* Process the command line interface */
     if ( Serial.available() )
     {
-        cli.parse( Serial.readStringUntil( '\n' ) );
+        String input = Serial.readStringUntil( '\n' );
+        cli.parse( input);
+
+        // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
+        // String testCommand( "info" );
+        // String testCommand( "log" );
+        // String testCommand( "timer -u 10 -o 15 -b 100" );
+        // cli.parse( testCommand);
     }
 
     /* Generate/Process events */
@@ -1405,12 +1419,12 @@ static void processTimers( door_control_t* const pDoorControl )
 
 
 
-void cliCmdGetInfoCb( cmd* pCommand )
+static void cliCmdGetInfoCb( cmd* pCommand )
 {
     Serial.println( "--------------------------------------------" );
 
     /* Output software version string */
-    Log.noticeln( "Version: v%s", GIT_VERSION_STRING );
+    Log.noticeln( "Version: %s", GIT_VERSION_STRING );
 
     /* Output the build date and time */
     Log.noticeln( "Build date: %s %s", __DATE__, __TIME__ );
@@ -1419,24 +1433,51 @@ void cliCmdGetInfoCb( cmd* pCommand )
     Log.noticeln( "Log level: %s", logLevelToString( Log.getLevel() ).c_str() );
 
     /* Output the all times and timeouts */
-    Log.noticeln( "Door unlock timeout: %d s", DOOR_UNLOCK_TIMEOUT );
-    Log.noticeln( "Door open timeout: %s min", String( DOOR_OPEN_TIMEOUT / 60.0F ).c_str() );
-    Log.noticeln( "Led blink interval: %d ms", LED_BLINK_INTERVAL );
+    Log.noticeln( "Door unlock timeout: %d s", settings.doorUnlockTimeout );
+    Log.noticeln( "Door open timeout: %s min", String( settings.doorOpenTimeout / 60 ).c_str() );
+    Log.noticeln( "Led blink interval: %d ms", settings.ledBlinkInterval );
 
     Serial.println( "--------------------------------------------" );
 }
 
-
-void cliCmdSetLogLevelCb( cmd* pCommand )
+static void cliCmdSetLogLevelCb( cmd* pCommand )
 {
-    // Command cmd( pCommand );
-
-    // Argument argName = cmd.getArgument( "name" );
-
+    Command cmd( pCommand );
+    Argument arg = cmd.getArgument();
+    Log.noticeln( "Current log level: %s", arg.getValue().c_str() );
+    Log.setLevel( arg.getValue().toInt() );
+    Log.noticeln( "New log level: %s", logLevelToString( Log.getLevel() ).c_str() );
 }
 
 
+static void cliCmdSetTimerCb( cmd* pCommand )
+{
+    Command  cmd( pCommand );
 
+    Argument argUnlock = cmd.getArgument( "u" );
+    if ( argUnlock.isSet() )
+    {
+        settings.doorUnlockTimeout = argUnlock.getValue().toInt();
+        doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeout = settings.doorUnlockTimeout * 1000;
+        Log.noticeln( "%s: Door unlock timeout set to %d s", __func__, settings.doorUnlockTimeout );
+    }
+
+    Argument argOpen = cmd.getArgument( "o" );
+    if ( argOpen.isSet() )
+    {
+        settings.doorOpenTimeout = argOpen.getValue().toInt();
+        doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeout = ( (uint32_t) settings.doorOpenTimeout ) * 60 * 1000;
+        Log.noticeln( "%s: Door open timeout set to %d min", __func__, settings.doorOpenTimeout );
+    }
+
+    Argument argBlink = cmd.getArgument( "b" );
+    if ( argBlink.isSet() )
+    {
+        settings.ledBlinkInterval = argBlink.getValue().toInt();
+        Timer1.setPeriod( ( (uint32_t) 2000 ) * ( (uint32_t) settings.ledBlinkInterval ) );
+        Log.noticeln( "%s: Led blink interval set to %d ms", __func__, settings.ledBlinkInterval );
+    }
+}
 
 
 /**
