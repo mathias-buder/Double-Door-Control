@@ -40,7 +40,6 @@
 #define LED_BLINK_INTERVAL              500            /*!< Interval of the led blink @unit ms */
 #define DOOR_UNLOCK_TIMEOUT             5              /*!< Timeout for the door unlock ( 0 = disabled ) @unit s */
 #define DOOR_OPEN_TIMEOUT               600            /*!< Timeout for the door open ( 0 = disabled ) @unit s */
-#define SET_LOG_LEVEL_TIMEOUT           2              /*!< Timeout for setting the log level @unit s */
 
 /********************************************** ENUMERATION ****************************************/
 
@@ -568,10 +567,6 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
 {
     Log.verboseln( "%s: Event %s", __func__, eventToString( (door_control_event_t) event ).c_str() );
 
-    static input_state_t lastDoor1Button = INPUT_STATE_INACTIVE;
-    static input_state_t lastDoor2Button = INPUT_STATE_INACTIVE;
-    static uint64_t setLogLevelTime = 0;
-
     /* Process the event */
     switch ( event )
     {
@@ -594,33 +589,21 @@ static state_machine_result_t idleHandler( state_machine_t* const pState, const 
     input_state_t door2Button = getDoorIoState( IO_BUTTON_2 ).state;
 
     /* XOR-logic to allow only one door to be open */
-    if (    ( lastDoor1Button == INPUT_STATE_ACTIVE   )
-         && ( door1Button     == INPUT_STATE_INACTIVE ) )
+    if (    ( door1Button == INPUT_STATE_ACTIVE )
+         && ( door2Button == INPUT_STATE_INACTIVE ) )
     {
         pushEvent( &pState->event, DOOR_CONTROL_EVENT_DOOR_1_UNLOCK );
     }
-    else if (    ( lastDoor2Button == INPUT_STATE_ACTIVE   )
-              && ( door2Button     == INPUT_STATE_INACTIVE ) )
+    else if (    ( door1Button == INPUT_STATE_INACTIVE )
+              && ( door2Button == INPUT_STATE_ACTIVE ) )
     {
         pushEvent( &pState->event, DOOR_CONTROL_EVENT_DOOR_2_UNLOCK );
-    }
-    else if (    ( lastDoor1Button == INPUT_STATE_ACTIVE )
-              && ( door1Button     == INPUT_STATE_ACTIVE ) )
-    {
-       Log.noticeln( "Log level timer" );
     }
     else
     {
         setDoorState( DOOR_TYPE_DOOR_1, LOCK_STATE_LOCKED );
         setDoorState( DOOR_TYPE_DOOR_2, LOCK_STATE_LOCKED );
     }
-
-
-    // Log.setLevel( LOG_LEVEL_VERBOSE );
-
-    /* Store the last state of the door buttons */
-    lastDoor1Button = door1Button;
-    lastDoor2Button = door2Button;
 
     return EVENT_HANDLED;
 }
