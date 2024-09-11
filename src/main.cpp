@@ -6,6 +6,12 @@
 #include "hsm.h"
 
 /***************************************************************************************************/
+/*                                           MACRO DEFINITIONS                                      */
+/***************************************************************************************************/
+#define AUX( x ) #x
+#define STRINGIFY( x ) AUX( x )
+
+/***************************************************************************************************/
 /*                                           PIN CONFIGURATION                                     */
 /***************************************************************************************************/
 /* DOOR 1 */
@@ -426,18 +432,18 @@ void setup()
     Log.noticeln( "Starting ... " );
 
     /* Initialize the command line interface */
-    cliCmdGetInfo     = cli.addSingleArgCmd( "info", cliCmdGetInfoCb );    /*!< Get software information */
-    cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb ); /*!< Set log level */
+    cliCmdGetInfo     = cli.addSingleArgCmd( "info", cliCmdGetInfoCb );     /*!< Get software information */
+    cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb );  /*!< Set log level */
+    cliCmdSetTimer    = cli.addCmd( "timer", cliCmdSetTimerCb );            /*!< Set timer */
 
     cliCmdSetTimer    = cli.addCmd( "timer", cliCmdSetTimerCb );           /*!< Set timer */
-    cliCmdSetTimer.addArg( "u", String( DOOR_UNLOCK_TIMEOUT ).c_str() );   /*!< Unlock timeout */
-    cliCmdSetTimer.addArg( "o", String( DOOR_OPEN_TIMEOUT ).c_str() );     /*!< Open timeout */
-    cliCmdSetTimer.addArg( "b", String( LED_BLINK_INTERVAL ).c_str() );    /*!< LED blink interval */
+    cliCmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) );   /*!< Unlock timeout */
+    cliCmdSetTimer.addArg( "o", STRINGIFY( DOOR_OPEN_TIMEOUT ) );     /*!< Open timeout */
+    cliCmdSetTimer.addArg( "b", STRINGIFY( LED_BLINK_INTERVAL ) );    /*!< LED blink interval */
 
     cliCmdSetDebounceDelay = cli.addCmd( "dbc", cliCmdSetDebounceDelayCb ); /*!< Set debounce time */
-    cliCmdSetDebounceDelay.addArg( "i" );                                    /*!< Input index */
-    cliCmdSetDebounceDelay.addArg( "t" );                                    /*!< Debounce time @unit ms */
-
+    cliCmdSetDebounceDelay.addArg( "i" );                                   /*!< Input index */
+    cliCmdSetDebounceDelay.addArg( "t" );                                   /*!< Debounce time @unit ms */
     cli.setOnError( cliErrorCb );
 
     /* Initialize the IOs */
@@ -487,8 +493,8 @@ void loop()
         // String testCommand2( "info" );
         // cli.parse( testCommand2);
         // String testCommand3( "time -f" );
-        // cli.parse( testCommand3);
-        String testCommand4( "dbc -i 3 -t 300" );
+        // cli.parse( testCommand3 );
+        String testCommand4( "dbc -i 3 -t 128" );
         cli.parse( testCommand4);
         String testCommand5( "dbc -t 300" );
         cli.parse( testCommand5);
@@ -1540,6 +1546,7 @@ static void cliCmdSetDebounceDelayCb( cmd* pCommand )
         Log.errorln( "%s: Invalid input index: %d", __func__, inputIdx );
     }
 }
+
 
 /**
  * @brief CLI error callback
