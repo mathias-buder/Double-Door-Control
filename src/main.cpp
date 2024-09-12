@@ -1471,6 +1471,11 @@ static void cliCmdGetInfoCb( cmd* pCommand )
     Serial.println( "Door open timeout: " + String( settings.doorOpenTimeout ) + " min" );
     Serial.println( "Led blink interval: " + String( settings.ledBlinkInterval ) + " ms" );
 
+    for ( uint8_t i = 0; i < IO_INPUT_SIZE; i++ )
+    {
+        Serial.println( "Debounce delay " + ioToString( (io_t) i ) + ": " + String( settings.debounceDelay[i] ) + " ms" );
+    }
+
     Serial.println( "----------------------------------" );
 }
 
