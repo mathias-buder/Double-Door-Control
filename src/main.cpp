@@ -409,11 +409,13 @@ static Command cliCmdGetInfo;
 static Command cliCmdSetLogLevel;
 static Command cliCmdSetTimer;
 static Command cliCmdSetDebounceDelay;
+static Command cliCmdHelp;
 
 static void cliCmdGetInfoCb( cmd* pCommand );
 static void cliCmdSetLogLevelCb( cmd* pCommand );
 static void cliCmdSetTimerCb( cmd* pCommand );
 static void cliCmdSetDebounceDelayCb( cmd* pCommand );
+static void cliCmdHelpCb( cmd* pCommand );
 
 static void cliErrorCb( cmd_error* pError );
 
@@ -449,6 +451,8 @@ void setup()
     cliCmdSetDebounceDelay.addArg( "t" );                                   /*!< Debounce time @unit ms */
     cliCmdSetDebounceDelay.setDescription( "Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>" );
 
+    cliCmdHelp = cli.addCmd( "help", cliCmdHelpCb ); /*!< Help */
+    cliCmdHelp.setDescription( "Show the help" );
 
     cli.setOnError( cliErrorCb );
 
@@ -1495,9 +1499,14 @@ static void cliCmdSetLogLevelCb( cmd* pCommand )
 {
     Command cmd( pCommand );
     Argument arg = cmd.getArgument();
-    Log.noticeln( "Current log level: %s", arg.getValue().c_str() );
+    if ( !arg.isSet() )
+    {
+        Log.errorln( "%s: No log level specified, remaining at %s.", __func__, logLevelToString( Log.getLevel() ).c_str() );
+        return;
+    }
+
+    Log.noticeln( "Setting log level from %s to %s", logLevelToString( Log.getLevel() ).c_str(), logLevelToString( arg.getValue().toInt() ).c_str() );
     Log.setLevel( arg.getValue().toInt() );
-    Log.noticeln( "New log level: %s", logLevelToString( Log.getLevel() ).c_str() );
 }
 
 
@@ -1558,6 +1567,19 @@ static void cliCmdSetDebounceDelayCb( cmd* pCommand )
     {
         Log.errorln( "%s: Invalid input index: %d", __func__, inputIdx );
     }
+}
+
+
+/**
+ * @brief CLI command callback for printing help
+ * 
+ * @param pCommand - The command
+ */
+static void cliCmdHelpCb( cmd* pCommand )
+{
+    Serial.println( "Help:" );
+    Serial.println( "--------------------------------------------" );
+    Serial.println( cli.toString() );
 }
 
 
