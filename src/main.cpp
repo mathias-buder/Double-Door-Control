@@ -433,17 +433,23 @@ void setup()
 
     /* Initialize the command line interface */
     cliCmdGetInfo     = cli.addSingleArgCmd( "info", cliCmdGetInfoCb );     /*!< Get software information */
+    cliCmdGetInfo.setDescription( "Get software information" );
+
     cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb );  /*!< Set log level */
-    cliCmdSetTimer    = cli.addCmd( "timer", cliCmdSetTimerCb );            /*!< Set timer */
+    cliCmdSetLogLevel.setDescription( "Set the log level: log <level (0..6)>" );
 
     cliCmdSetTimer    = cli.addCmd( "timer", cliCmdSetTimerCb );           /*!< Set timer */
     cliCmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) );   /*!< Unlock timeout */
     cliCmdSetTimer.addArg( "o", STRINGIFY( DOOR_OPEN_TIMEOUT ) );     /*!< Open timeout */
     cliCmdSetTimer.addArg( "b", STRINGIFY( LED_BLINK_INTERVAL ) );    /*!< LED blink interval */
+    cliCmdSetTimer.setDescription( "Set the timer. timer -u <unlock timeout (s)> -o <open timeout (min)> -b <blink interval (ms)>" );
 
     cliCmdSetDebounceDelay = cli.addCmd( "dbc", cliCmdSetDebounceDelayCb ); /*!< Set debounce time */
     cliCmdSetDebounceDelay.addArg( "i" );                                   /*!< Input index */
     cliCmdSetDebounceDelay.addArg( "t" );                                   /*!< Debounce time @unit ms */
+    cliCmdSetDebounceDelay.setDescription( "Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>" );
+
+
     cli.setOnError( cliErrorCb );
 
     /* Initialize the IOs */
@@ -1573,7 +1579,7 @@ static void cliErrorCb( cmd_error* pError )
     else
     {
         Log.noticeln( "Available commands:" );
-        Serial.println( cli.toString() );
+        Serial.println( "\n" + cli.toString() );
     }
 }
 
