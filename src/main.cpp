@@ -409,6 +409,7 @@ static Command cliCmdGetInfo;
 static Command cliCmdSetLogLevel;
 static Command cliCmdSetTimer;
 static Command cliCmdSetDebounceDelay;
+static Command cliCmdGetInputState;
 static Command cliCmdHelp;
 
 static void cliCmdGetInfoCb( cmd* pCommand );
@@ -416,6 +417,7 @@ static void cliCmdSetLogLevelCb( cmd* pCommand );
 static void cliCmdSetTimerCb( cmd* pCommand );
 static void cliCmdSetDebounceDelayCb( cmd* pCommand );
 static void cliCmdHelpCb( cmd* pCommand );
+static void cliCmdGetInputStateCb( cmd* pCommand );
 
 static void cliErrorCb( cmd_error* pError );
 
@@ -434,22 +436,25 @@ void setup()
     Log.noticeln( "Starting ... " );
 
     /* Initialize the command line interface */
-    cliCmdGetInfo     = cli.addSingleArgCmd( "info", cliCmdGetInfoCb );     /*!< Get software information */
+    cliCmdGetInfo = cli.addSingleArgCmd( "info", cliCmdGetInfoCb ); /*!< Get software information */
     cliCmdGetInfo.setDescription( "Get software information" );
 
-    cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb );  /*!< Set log level */
+    cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb ); /*!< Set log level */
     cliCmdSetLogLevel.setDescription( "Set the log level: log <level (0..6)>" );
 
-    cliCmdSetTimer    = cli.addCmd( "timer", cliCmdSetTimerCb );           /*!< Set timer */
-    cliCmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) );   /*!< Unlock timeout */
-    cliCmdSetTimer.addArg( "o", STRINGIFY( DOOR_OPEN_TIMEOUT ) );     /*!< Open timeout */
-    cliCmdSetTimer.addArg( "b", STRINGIFY( LED_BLINK_INTERVAL ) );    /*!< LED blink interval */
+    cliCmdSetTimer = cli.addCmd( "timer", cliCmdSetTimerCb );       /*!< Set timer */
+    cliCmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) ); /*!< Unlock timeout */
+    cliCmdSetTimer.addArg( "o", STRINGIFY( DOOR_OPEN_TIMEOUT ) );   /*!< Open timeout */
+    cliCmdSetTimer.addArg( "b", STRINGIFY( LED_BLINK_INTERVAL ) );  /*!< LED blink interval */
     cliCmdSetTimer.setDescription( "Set the timer. timer -u <unlock timeout (s)> -o <open timeout (min)> -b <blink interval (ms)>" );
 
     cliCmdSetDebounceDelay = cli.addCmd( "dbc", cliCmdSetDebounceDelayCb ); /*!< Set debounce time */
     cliCmdSetDebounceDelay.addArg( "i" );                                   /*!< Input index */
     cliCmdSetDebounceDelay.addArg( "t" );                                   /*!< Debounce time @unit ms */
     cliCmdSetDebounceDelay.setDescription( "Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>" );
+
+    cliCmdGetInputState = cli.addSingleArgCmd( "inputs", cliCmdGetInputStateCb ); /*!< Get the input state */
+    cliCmdGetInputState.setDescription( "Get the input state of all buttons and switches" );
 
     cliCmdHelp = cli.addCmd( "help", cliCmdHelpCb ); /*!< Help */
     cliCmdHelp.setDescription( "Show the help" );
@@ -1567,6 +1572,27 @@ static void cliCmdSetDebounceDelayCb( cmd* pCommand )
     {
         Log.errorln( "%s: Invalid input index: %d", __func__, inputIdx );
     }
+}
+
+
+/**
+ * @brief CLI command callback for getting the input state
+ * 
+ * @param pCommand - The command
+ */
+static void cliCmdGetInputStateCb( cmd* pCommand )
+{
+    Serial.println( "----------------------------------" );
+    Serial.println( "Input State" );
+    Serial.println( "----------------------------------" );
+
+    for ( uint8_t i = 0; i < IO_INPUT_SIZE; i++ )
+    {
+        input_status_t inputState = getDoorIoState( (io_t) i );
+        Serial.println( ioToString( (io_t) i ) + ": " + inputStateToString( inputState.state ) );
+    }
+
+    Serial.println( "----------------------------------" );
 }
 
 
