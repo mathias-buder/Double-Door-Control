@@ -484,7 +484,7 @@ void loop()
     if ( Serial.available() )
     {
         String input = Serial.readStringUntil( '\n' );
-        // cli.parse( input);
+        cli.parse( input );
 
         // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
         // String testCommand( "log" );
@@ -494,12 +494,12 @@ void loop()
         // cli.parse( testCommand2);
         // String testCommand3( "time -f" );
         // cli.parse( testCommand3 );
-        String testCommand4( "dbc -i 3 -t 128" );
-        cli.parse( testCommand4);
-        String testCommand5( "dbc -t 300" );
-        cli.parse( testCommand5);
-        String testCommand6( "dbc -t 300" );
-        cli.parse( testCommand6);
+        // String testCommand4( "dbc -i 3 -t 128" );
+        // cli.parse( testCommand4);
+        // String testCommand5( "dbc -t 300" );
+        // cli.parse( testCommand5);
+        // String testCommand6( "dbc -t 300" );
+        // cli.parse( testCommand6);
     }
 
     /* Generate/Process events */
@@ -1453,23 +1453,25 @@ static void processTimers( door_control_t* const pDoorControl )
 
 static void cliCmdGetInfoCb( cmd* pCommand )
 {
-    Serial.println( "--------------------------------------------" );
+    Serial.println( "----------------------------------" );
+    Serial.println( "Door Control System Information   " );
+    Serial.println( "----------------------------------" );
 
     /* Output software version string */
-    Log.noticeln( "Version: %s", GIT_VERSION_STRING );
+    Serial.println( "Version: " + String( GIT_VERSION_STRING ) );
 
     /* Output the build date and time */
-    Log.noticeln( "Build date: %s %s", __DATE__, __TIME__ );
+    Serial.println( "Build date: " + String( __DATE__ ) + " " + String( __TIME__ ) );
 
     /* Output current log level */
-    Log.noticeln( "Log level: %s", logLevelToString( Log.getLevel() ).c_str() );
+    Serial.println( "Log level: " + logLevelToString( Log.getLevel() ) );
 
     /* Output the all times and timeouts */
-    Log.noticeln( "Door unlock timeout: %d s", settings.doorUnlockTimeout );
-    Log.noticeln( "Door open timeout: %s min", String( settings.doorOpenTimeout ).c_str() );
-    Log.noticeln( "Led blink interval: %d ms", settings.ledBlinkInterval );
+    Serial.println( "Door unlock timeout: " + String( settings.doorUnlockTimeout ) + " s" );
+    Serial.println( "Door open timeout: " + String( settings.doorOpenTimeout ) + " min" );
+    Serial.println( "Led blink interval: " + String( settings.ledBlinkInterval ) + " ms" );
 
-    Serial.println( "--------------------------------------------" );
+    Serial.println( "----------------------------------" );
 }
 
 
