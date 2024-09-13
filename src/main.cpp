@@ -6,29 +6,20 @@
 #include "logging.h"
 
 
-/********************************************** ENUMERATION ****************************************/
-
-/************************************* STRUCTURE **************************************/
-
-
-/******************************** Function prototype ************************************/
-
 
 /**
  * @brief Setup the application
  */
 void setup()
 {
-    /* Initialize with log level and log output */
+    /* Initialize serial communication and logging */
     Serial.begin( SERIAL_BAUD_RATE );
-
     logging_setup();
-
     Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
 
+    /* Initialize command line interface, input/output management and state management */
     comLineIf_setup();
-
     ioMan_Setup();
     stateMan_setup();
 
@@ -41,6 +32,7 @@ void setup()
  */
 void loop()
 {
+    /* Process the command line interface, and state management */
     comLineIf_process();
     stateMan_process();
 }
