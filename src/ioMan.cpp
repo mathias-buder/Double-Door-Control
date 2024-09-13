@@ -73,7 +73,7 @@ void ioMan_Setup( void )
  * @param door - The door type
  * @param state - The state of the door
  */
-static void setDoorState( const door_type_t door, const lock_state_t state )
+static void ioMan_setDoorState( const door_type_t door, const lock_state_t state )
 {
     static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED, LOCK_STATE_LOCKED};
 
@@ -103,7 +103,7 @@ static void setDoorState( const door_type_t door, const lock_state_t state )
  * @param door - The door type
  * @return lock_state_t - The state of the door
  */
-static input_status_t getDoorIoState( const io_t input )
+static input_status_t ioMan_getDoorState( const io_t input )
 {
     Log.verboseln( "%s: input: %s", __func__, ioToString( input ).c_str() );
 
@@ -178,7 +178,7 @@ static input_status_t getDoorIoState( const io_t input )
  * @param door - The type of door.
  * @param color - The color of the LED.
  */
-void setLed( bool enable, door_type_t door, led_color_t color )
+void ioMan_setLed( bool enable, door_type_t door, led_color_t color )
 {
     Log.verboseln( "%s: Enable: %d, Door: %d, Color: %d", __func__, enable, door, color );
 
@@ -237,41 +237,5 @@ void setLed( bool enable, door_type_t door, led_color_t color )
         digitalWrite( ledIoConfig[door][RGB_LED_PIN_R].pinNumber, !ledIoConfig[door][RGB_LED_PIN_R].activeState );
         digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber, !ledIoConfig[door][RGB_LED_PIN_G].activeState );
         digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber, !ledIoConfig[door][RGB_LED_PIN_B].activeState );
-    }
-}
-
-
-/**
- * @brief Process the door open timers
- * 
- * @param pDoorControl - Pointer to the door control
- */
-static void ioMan_processTimers( door_control_t* const pDoorControl )
-{
-    Log.verboseln( "%s", __func__ );
-
-    /* Get the current time */
-    uint64_t currentTime = millis();
-
-    /* Loop through all door timers */
-    for ( uint8_t i = 0; i < DOOR_TYPE_SIZE; i++ )
-    {
-        /* Check if the timer is running */
-        if ( pDoorControl->doorTimer[i].timeReference != 0 )
-        {
-            /* Check if the timer has expired */
-            if ( ( currentTime - pDoorControl->doorTimer[i].timeReference ) >= pDoorControl->doorTimer[i].timeout )
-            {
-                /* Call the timer handler */
-                pDoorControl->doorTimer[i].handler( currentTime );
-                /* Reset the timer */
-                pDoorControl->doorTimer[i].timeReference = 0;
-                return;
-            }
-
-            /* Calculate remaining time */
-            String remainingTime = String( ( pDoorControl->doorTimer[i].timeout - ( currentTime - pDoorControl->doorTimer[i].timeReference ) ) / 1000.0F );
-            Log.noticeln( "%s: %s", timerTypeToString( (door_timer_type_t) i ).c_str(), remainingTime.c_str() );
-        }
     }
 }

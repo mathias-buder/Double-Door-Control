@@ -144,7 +144,7 @@ typedef struct
 
 void           ioMan_Setup( void );
 void           ioMan_setDoorState( const door_type_t door, const lock_state_t state );
-input_status_t ioMan_getDoorIoState( const io_t sensor );
+input_status_t ioMan_getDoorState( const io_t sensor );
 void           ioMan_setLed( bool enable, door_type_t door, led_color_t color );
 
 #endif  // IO_MANAGEMENT_H

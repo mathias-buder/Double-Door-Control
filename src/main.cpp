@@ -25,8 +25,9 @@ void setup()
     Log.begin( DEFAULT_LOG_LEVEL, &Serial );
     Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
+
     /* Switch to the init state */
-    switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
+    stateMan_setup();
 
     Log.noticeln( "... Done" );
 }
@@ -41,7 +42,7 @@ void loop()
     if ( Serial.available() )
     {
         String input = Serial.readStringUntil( '\n' );
-        cli.parse( input );
+        // cli.parse( input );
 
         // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
         // String testCommand( "log" );
@@ -59,15 +60,6 @@ void loop()
         // cli.parse( testCommand6);
     }
 
-    /* Generate/Process events */
-    generateEvent( &doorControl );
+    stateMan_process();
 
-    /* Process door open timers */
-    processTimers( &doorControl );
-
-    /* Dispatch the event to the state machine */
-    if ( dispatch_event( stateMachines, 1, eventLogger, resultLogger ) == EVENT_UN_HANDLED )
-    {
-        Log.errorln( "Event is not handled" );
-    }
 }

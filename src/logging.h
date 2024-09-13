@@ -17,15 +17,14 @@
 #include "hsm.h"
 #include "stateMan.h"
 
-void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
-void resultLogger(uint32_t state, state_machine_result_t result);
-
-String stateToString( door_control_state_t state );
-String inputStateToString( input_state_t state );
-String eventToString( door_control_event_t event );
-String resultToString( state_machine_result_t result );
-String ioToString( io_t io );
-String timerTypeToString( door_timer_type_t timerType );
-String logLevelToString( uint8_t level );
+void   logging_eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void   logging_resultLogger( uint32_t state, state_machine_result_t result );
+String logging_stateToString( door_control_state_t state );
+String logging_inputStateToString( input_state_t state );
+String logging_eventToString( door_control_event_t event );
+String logging_resultToString( state_machine_result_t result );
+String logging_ioToString( io_t io );
+String logging_timerTypeToString( door_timer_type_t timerType );
+String logging_logLevelToString( uint8_t level );
 
 #endif  // LOGGING_H
