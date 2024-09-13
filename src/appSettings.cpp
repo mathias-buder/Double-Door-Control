@@ -39,7 +39,8 @@ static settings_t appSettings = {
                             DEBOUNCE_DELAY_DOOR_BUTTON_2,
                             DEBOUNCE_DELAY_DOOR_SWITCH_1,
                             DEBOUNCE_DELAY_DOOR_SWITCH_2
-                        }
+                        },
+    .logLevel          = DEFAULT_LOG_LEVEL
 };
 
 
@@ -63,7 +64,7 @@ void appSettings_setup( void )
 
     if ( crcFromEeprom == EEPROM_EMPTY_CRC )
     {
-        Log.noticeln( "%s: No settings found in EEPROM. Using default settings.", __func__ );
+        Serial.println( String( __func__ ) + " : No settings found in EEPROM. Using default settings." );
         return;
     }
     else
@@ -80,17 +81,16 @@ void appSettings_setup( void )
         /* Check if the CRC value in the EEPROM matches the calculated CRC value */
         if ( crcFromEeprom != crc )
         {
-            Log.warningln( "%s: CRC mismatch. Using default settings.", __func__ );
+            Serial.println( String( __func__ ) + " : CRC mismatch. Using default settings." );
         }
         else
         {
             /* Copy the settings to the global variable */
             appSettings = settings;
-            Log.noticeln( "%s: Settings loaded from EEPROM.", __func__ );
+            Serial.println( String( __func__ ) + " : Settings loaded from EEPROM." );
         }
     }
 }
-
 
 /**
  * @brief Retrieves the application settings.

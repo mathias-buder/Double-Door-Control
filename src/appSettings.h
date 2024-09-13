@@ -71,6 +71,7 @@ typedef struct
     uint16_t doorOpenTimeout;              /*!< The door open timeout */
     uint16_t ledBlinkInterval;             /*!< The led blink interval */
     uint16_t debounceDelay[IO_INPUT_SIZE]; /*!< The debounce delay of the inputs */
+    uint8_t  logLevel;                     /*!< The log level */
 } settings_t;
 
 

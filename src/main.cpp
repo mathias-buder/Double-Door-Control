@@ -22,12 +22,15 @@ void setup()
 {
     /* Initialize serial communication and logging */
     Serial.begin( SERIAL_BAUD_RATE );
+
+    /* Initialize application settings */
+    appSettings_setup();
+
+    /* Initialize logging */
     logging_setup();
     Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
 
-    /* Initialize application settings */
-    appSettings_setup();
 
     /* Initialize command line interface, input/output management and state management */
     comLineIf_setup();

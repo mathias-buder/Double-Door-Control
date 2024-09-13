@@ -174,18 +174,23 @@ static void comLineIf_cmdGetInfoCb( cmd* pCommand )
  */
 static void comLineIf_cmdSetLogLevelCb( cmd* pCommand )
 {
-    Command cmd( pCommand );
-    Argument arg = cmd.getArgument();
+    Command     cmd( pCommand );
+    Argument    arg      = cmd.getArgument();
+    settings_t* settings = appSettings_getSettings();
+
     if ( !arg.isSet() )
     {
-        Log.errorln( "%s: No log level specified, remaining at %s.", __func__, logging_logLevelToString( Log.getLevel() ).c_str() );
+        Log.errorln( "%s: No log level specified, remaining at %s.", __func__, logging_logLevelToString( settings->logLevel ).c_str() );
         return;
     }
 
-    Log.noticeln( "Setting log level from %s to %s", logging_logLevelToString( Log.getLevel() ).c_str(), logging_logLevelToString( arg.getValue().toInt() ).c_str() );
-    Log.setLevel( arg.getValue().toInt() );
-}
+    Log.noticeln( "Setting log level from %s to %s", logging_logLevelToString( settings->logLevel ).c_str(), logging_logLevelToString( arg.getValue().toInt() ).c_str() );
+    settings->logLevel = arg.getValue().toInt();
+    Log.setLevel( settings->logLevel );
 
+    /* Save the settings to the EEPROM */
+    appSettings_saveSettings();
+}
 
 /**
  * @brief Callback function to set various timers based on command arguments.
