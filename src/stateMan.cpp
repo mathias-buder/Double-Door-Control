@@ -133,6 +133,9 @@ static void stateMan_processTimers( door_control_t* const pDoorControl );
 
 void stateMan_setup( void )
 {
+    /* Initialize the led blink timer */
+    Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) settings.ledBlinkInterval ) );
+
     /* Initialize the state machine */
     switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
 }

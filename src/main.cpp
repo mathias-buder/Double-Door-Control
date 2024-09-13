@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include "stateMan.h"
+#include "ioMan.h"
 #include "comLineIf.h"
 #include "logging.h"
 
@@ -28,6 +29,7 @@ void setup()
 
     comLineIf_setup();
 
+    ioMan_Setup();
     stateMan_setup();
 
     Log.noticeln( "... Done" );

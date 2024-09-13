@@ -61,9 +61,6 @@ void ioMan_Setup( void )
             pinMode( ledIoConfig[i][j].pinNumber, ledIoConfig[i][j].direction );
         }
     }
-
-    /* Initialize the led blink timer */
-    Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) settings.ledBlinkInterval ) );
 }
 
 
