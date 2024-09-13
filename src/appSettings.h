@@ -78,7 +78,6 @@ typedef struct
 
 void        appSettings_setup( void );
 settings_t* appSettings_getSettings( void );
-void        appSettings_loadSettings( settings_t* settings );
-void        appSettings_saveSettings( settings_t* settings );
+void        appSettings_saveSettings( void );
 
 #endif  // APPSETTINGS_H

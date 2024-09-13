@@ -26,6 +26,7 @@
 static uint64_t appSettings_calculateCrc( settings_t* settings );
 static void     appSettings_writeCrc( settings_t* settings );
 static uint64_t appSettings_readCrc( void );
+static void     appSettings_loadSettings( settings_t* settings );
 
 /******************************** Global variables **************************************/
 
@@ -100,6 +101,7 @@ void appSettings_setup( void )
  */
 settings_t* appSettings_getSettings( void )
 {
+    Log.verboseln( "%s: Settings fetched", __func__ );
     return &appSettings;
 }
 
@@ -114,7 +116,7 @@ settings_t* appSettings_getSettings( void )
  * @param settings Pointer to the settings structure where the loaded data will be stored.
  *                 If this pointer is NULL, the function logs an error and returns immediately.
  */
-void appSettings_loadSettings( settings_t* settings )
+static void appSettings_loadSettings( settings_t* settings )
 {
     if ( settings == NULL )
     {
@@ -131,6 +133,8 @@ void appSettings_loadSettings( settings_t* settings )
         ptr++;
         address++;
     }
+
+    Log.verboseln( "%s: Settings fetched from EEPROM", __func__ );
 }
 
 
@@ -145,16 +149,10 @@ void appSettings_loadSettings( settings_t* settings )
  *                 pointer is NULL, the function logs an error and returns
  *                 without performing any operation.
  */
-void appSettings_saveSettings( settings_t* settings )
+void appSettings_saveSettings( void )
 {
-    if ( settings == NULL )
-    {
-        Log.error( "%s: settings is NULL", __func__ );
-        return;
-    }
-
     uint16_t address = EEPROM_SETTINGS_ADDRESS;
-    uint8_t* ptr     = (uint8_t*) settings;
+    uint8_t* ptr     = (uint8_t*) &appSettings;
 
     for ( uint8_t i = 0; i < sizeof( settings_t ); i++ )
     {
@@ -164,7 +162,9 @@ void appSettings_saveSettings( settings_t* settings )
     }
 
     /* Update the CRC value in the EEPROM */
-    appSettings_writeCrc( settings );
+    appSettings_writeCrc( &appSettings );
+
+    Log.noticeln( "%s: Settings saved to EEPROM", __func__ );
 }
 
 /**
@@ -198,6 +198,8 @@ static uint64_t appSettings_calculateCrc( settings_t* settings )
         ptr++;
     }
 
+    Log.verboseln( "%s: CRC %l calculated", __func__, crc );
+
     return crc;
 }
 
@@ -219,6 +221,8 @@ static void appSettings_writeCrc( settings_t* settings )
     /* Write the CRC value to the end of the EEPROM memory */
     uint16_t address = EEPROM.length() - sizeof( uint64_t ) - 1;
     EEPROM.put( address, crc );
+
+    Log.verboseln( "%s: CRC %l written to EEPROM", __func__, crc );
 }
 
 
@@ -238,6 +242,8 @@ static uint64_t appSettings_readCrc( void )
     /* Read the CRC value from the end of the EEPROM memory */
     uint16_t address = EEPROM.length() - sizeof( uint64_t ) - 1;
     EEPROM.get( address, crc );
+
+    Log.verboseln( "%s: CRC %l read from EEPROM", __func__, crc );
 
     return crc;
 }
