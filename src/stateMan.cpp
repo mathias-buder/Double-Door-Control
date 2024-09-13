@@ -15,7 +15,7 @@
 #include "logging.h"
 
 
-/******************************** Function prototype ************************************/
+/**************************** Static Function prototype *********************************/
 
 static state_machine_result_t initHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t initEntryHandler( state_machine_t* const pState, const uint32_t event );
@@ -128,7 +128,7 @@ door_control_t doorControl = {
  */
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl};
 
-/******************************** Static Function prototype ************************************/
+/**************************** Static Function prototype *********************************/
 
 static void stateMan_generateEvent( door_control_t* const pDoorControl );
 static void stateMan_processTimers( door_control_t* const pDoorControl );

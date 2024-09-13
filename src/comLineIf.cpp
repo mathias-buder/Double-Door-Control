@@ -18,13 +18,7 @@
 #include "ioMan.h"
 
 
-static void comLineIf_cmdGetInfoCb( cmd* pCommand );
-static void comLineIf_cmdSetLogLevelCb( cmd* pCommand );
-static void comLineIf_cmdSetTimerCb( cmd* pCommand );
-static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand );
-static void comLineIf_cmdHelpCb( cmd* pCommand );
-static void comLineIf_cmdGetInputStateCb( cmd* pCommand );
-static void comLineIf_cmdErrorCb( cmd_error* pError );
+/******************************** Global variables ************************************/
 
 static SimpleCLI cli;                 /*!< The command line interface */
 static Command   cmdGetInfo;          /*!< Get software information */
@@ -34,6 +28,32 @@ static Command   cmdSetDebounceDelay; /*!< Setall debounce delays */
 static Command   cmdGetInputState;    /*!< Get the state of all inputs */
 static Command   cmdHelp;             /*!< Pint the help */
 
+/**************************** Static Function prototype *********************************/
+
+static void comLineIf_cmdGetInfoCb( cmd* pCommand );
+static void comLineIf_cmdSetLogLevelCb( cmd* pCommand );
+static void comLineIf_cmdSetTimerCb( cmd* pCommand );
+static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand );
+static void comLineIf_cmdHelpCb( cmd* pCommand );
+static void comLineIf_cmdGetInputStateCb( cmd* pCommand );
+static void comLineIf_cmdErrorCb( cmd_error* pError );
+
+/******************************** Function definition ************************************/
+
+
+/**
+ * @brief Sets up the command line interface with various commands.
+ * 
+ * This function initializes the command line interface by adding several commands:
+ * - "info": Retrieves software information.
+ * - "log": Sets the log level.
+ * - "timer": Configures the timer with unlock timeout, open timeout, and LED blink interval.
+ * - "dbc": Sets the debounce time for inputs.
+ * - "inputs": Retrieves the state of all buttons and switches.
+ * - "help": Displays the help information.
+ * 
+ * It also sets the error callback for the command line interface.
+ */
 void comLineIf_setup( void )
 {
     Log.noticeln( "%s: Setting up the command line interface", __func__ );
@@ -66,6 +86,19 @@ void comLineIf_setup( void )
 }
 
 
+/**
+ * @brief Processes incoming serial commands.
+ *
+ * This function checks if there is any data available on the serial port.
+ * If data is available, it reads the input string until a newline character
+ * is encountered and then parses the input using the command line interface (CLI) parser.
+ *
+ * The function also contains commented-out test commands that can be used
+ * for debugging or testing purposes.
+ *
+ * @note The function assumes that the `Serial` object and `cli` parser are
+ * properly initialized and configured elsewhere in the code.
+ */
 void comLineIf_process( void )
 {
     if ( Serial.available() )
@@ -91,7 +124,21 @@ void comLineIf_process( void )
 }
 
 
-
+/**
+ * @brief Callback function to handle the 'Get Info' command.
+ *
+ * This function outputs various information about the Door Control System
+ * to the serial interface. The information includes:
+ * - Software version string
+ * - Build date and time
+ * - Current log level
+ * - Door unlock timeout
+ * - Door open timeout
+ * - LED blink interval
+ * - Debounce delays for each input
+ *
+ * @param pCommand Pointer to the command structure.
+ */
 static void comLineIf_cmdGetInfoCb( cmd* pCommand )
 {
     Serial.println( "----------------------------------" );
@@ -122,9 +169,13 @@ static void comLineIf_cmdGetInfoCb( cmd* pCommand )
 
 
 /**
- * @brief CLI command callback for setting the log level
- * 
- * @param pCommand - The command
+ * @brief Callback function to set the log level.
+ *
+ * This function is called to change the current log level based on the provided command argument.
+ * If no log level is specified in the argument, it logs an error message and retains the current log level.
+ * Otherwise, it updates the log level to the specified value and logs the change.
+ *
+ * @param pCommand Pointer to the command containing the log level argument.
  */
 static void comLineIf_cmdSetLogLevelCb( cmd* pCommand )
 {
@@ -142,9 +193,23 @@ static void comLineIf_cmdSetLogLevelCb( cmd* pCommand )
 
 
 /**
- * @brief CLI command callback for setting the timer values
- * 
- * @param pCommand - The command
+ * @brief Callback function to set various timers based on command arguments.
+ *
+ * This function processes a command to set the door unlock timeout, door open timeout,
+ * and LED blink interval. It retrieves the respective arguments from the command and
+ * updates the corresponding settings and timers.
+ *
+ * @param pCommand Pointer to the command structure containing the arguments.
+ *
+ * The following command arguments are processed:
+ * - "u": Sets the door unlock timeout in seconds.
+ * - "o": Sets the door open timeout in minutes.
+ * - "b": Sets the LED blink interval in milliseconds.
+ *
+ * Example usage:
+ * - To set the door unlock timeout to 10 seconds: `cmd -u 10`
+ * - To set the door open timeout to 5 minutes: `cmd -o 5`
+ * - To set the LED blink interval to 500 milliseconds: `cmd -b 500`
  */
 static void comLineIf_cmdSetTimerCb( cmd* pCommand )
 {
@@ -176,10 +241,24 @@ static void comLineIf_cmdSetTimerCb( cmd* pCommand )
 }
 
 
+
 /**
- * @brief CLI command callback for setting the debounce delay
- * 
- * @param pCommand - The command
+ * @brief Callback function to set the debounce delay for a specified input.
+ *
+ * This function is called to set the debounce delay for a specific input index.
+ * It retrieves the input index and debounce delay from the command arguments,
+ * validates the input index, and updates the debounce delay setting if the index
+ * is valid. It also logs the operation result.
+ *
+ * @param pCommand Pointer to the command structure containing the arguments.
+ *
+ * Command Arguments:
+ * - "i": Input index (uint8_t)
+ * - "t": Debounce delay time in milliseconds (int)
+ *
+ * Logs:
+ * - Success: Logs the debounce delay set for the specified input.
+ * - Error: Logs an error if the input index is invalid.
  */
 static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand )
 {
@@ -202,9 +281,13 @@ static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand )
 
 
 /**
- * @brief CLI command callback for getting the input state
- * 
- * @param pCommand - The command
+ * @brief Callback function to get and print the input state.
+ *
+ * This function prints the state of each input to the serial output.
+ * It iterates over all inputs, retrieves their state, and prints the
+ * corresponding state as a string.
+ *
+ * @param pCommand Pointer to the command structure.
  */
 static void comLineIf_cmdGetInputStateCb( cmd* pCommand )
 {
@@ -223,9 +306,12 @@ static void comLineIf_cmdGetInputStateCb( cmd* pCommand )
 
 
 /**
- * @brief CLI command callback for printing help
- * 
- * @param pCommand - The command
+ * @brief Callback function to display help information for commands.
+ *
+ * This function prints out a help message to the serial output, including
+ * a header and the string representation of the command line interface.
+ *
+ * @param pCommand Pointer to the command structure.
  */
 static void comLineIf_cmdHelpCb( cmd* pCommand )
 {
@@ -235,10 +321,16 @@ static void comLineIf_cmdHelpCb( cmd* pCommand )
 }
 
 
+
 /**
- * @brief CLI error callback
- * 
- * @param pError - The error
+ * @brief Callback function to handle command errors.
+ *
+ * This function is called when a command error occurs. It logs the error
+ * message and, if a command is associated with the error, suggests the
+ * correct command. If no command is associated with the error, it lists
+ * all available commands.
+ *
+ * @param pError Pointer to the cmd_error structure containing error details.
  */
 static void comLineIf_cmdErrorCb( cmd_error* pError )
 {

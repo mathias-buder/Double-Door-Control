@@ -15,6 +15,11 @@
 #include "appSettings.h"
 
 
+/**************************** Static Function prototype *********************************/
+
+
+/******************************** Global variables ************************************/
+
 static io_config_t buttonSwitchIoConfig[] = {
     { IO_BUTTON_1, DOOR_1_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_1 }, /*!< Button 1 */
     { IO_BUTTON_2, DOOR_2_BUTTON, INPUT,  HIGH, DEBOUNCE_DELAY_DOOR_BUTTON_2 }, /*!< Button 2 */
@@ -42,6 +47,24 @@ static const io_config_t ledIoConfig[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
     }
 };
 
+
+/******************************** Function definition ************************************/
+
+
+
+/**
+ * @brief Sets up the input/output management for the system.
+ *
+ * This function initializes the pin modes for various input/output configurations
+ * including button switches, magnets, and RGB LEDs. It iterates through the 
+ * configuration arrays and sets the pin modes accordingly.
+ *
+ * The function performs the following steps:
+ * 1. Logs the start of the setup process.
+ * 2. Configures the pin modes for button switches.
+ * 3. Configures the pin modes for magnets.
+ * 4. Configures the pin modes for RGB LEDs for each door type.
+ */
 void ioMan_Setup( void )
 {
     Log.noticeln( "%s: Setting up the input/output management", __func__ );
@@ -96,11 +119,25 @@ void ioMan_setDoorState( const door_type_t door, const lock_state_t state )
 }
 
 
+
 /**
- * @brief Get the state of the door
+ * @brief Get the current state of the door input.
  *
- * @param door - The door type
- * @return lock_state_t - The state of the door
+ * This function reads the state of a specified input and determines if it is active or inactive,
+ * taking into account debounce logic to filter out noise. It logs the state changes and returns
+ * the current state of the input.
+ *
+ * @param input The input to check the state of.
+ * @return input_status_t The current state of the input, including its activity state and debounce stability.
+ *
+ * The function performs the following steps:
+ * 1. Logs the input being checked.
+ * 2. Checks if the input index is valid.
+ * 3. Reads the current state of the input pin.
+ * 4. If the state has changed, resets the debounce timer and marks the state as unstable.
+ * 5. If the debounce delay has passed, updates the state to stable and checks if the input state has changed or if it's the first reading.
+ * 6. Logs the new state if it has changed.
+ * 7. Saves the current reading for future comparisons.
  */
 input_status_t ioMan_getDoorState( const io_t input )
 {
@@ -170,12 +207,28 @@ input_status_t ioMan_getDoorState( const io_t input )
     return state[input];
 }
 
+
 /**
- * @brief Set the LED state and color
+ * @brief Sets the LED state for a specified door.
  *
- * @param enable - Whether to enable or disable the LED.
- * @param door - The type of door.
- * @param color - The color of the LED.
+ * This function controls the LED color and state (on/off) for a given door.
+ * It logs the operation and checks for valid door types before proceeding.
+ *
+ * @param enable Boolean value to enable (true) or disable (false) the LED.
+ * @param door The door type for which the LED state is being set.
+ * @param color The color to set the LED to, if enabling.
+ *
+ * The function supports the following LED colors:
+ * - LED_COLOR_RED
+ * - LED_COLOR_GREEN
+ * - LED_COLOR_BLUE
+ * - LED_COLOR_YELLOW
+ * - LED_COLOR_MAGENTA
+ * - LED_COLOR_CYAN
+ * - LED_COLOR_WHITE
+ *
+ * If the door type is invalid, an error is logged and the function returns without making changes.
+ * When disabling the LED, all color pins are set to their inactive state.
  */
 void ioMan_setLed( bool enable, door_type_t door, led_color_t color )
 {
@@ -239,6 +292,21 @@ void ioMan_setLed( bool enable, door_type_t door, led_color_t color )
     }
 }
 
+
+/**
+ * @brief Sets the debounce delay for a specified input.
+ *
+ * This function configures the debounce delay for a given input pin.
+ * Debouncing is used to ensure that only a single signal is registered
+ * when a button is pressed or released, preventing multiple signals
+ * caused by mechanical noise.
+ *
+ * @param io The input pin identifier. Must be less than IO_INPUT_SIZE.
+ * @param delay The debounce delay in milliseconds.
+ *
+ * @note If the input pin identifier is invalid (greater than or equal to IO_INPUT_SIZE),
+ *       an error message is logged and the function returns without making any changes.
+ */
 void ioMan_setDebounceDelay( const io_t io, const uint16_t delay )
 {
     if ( io >= IO_INPUT_SIZE )

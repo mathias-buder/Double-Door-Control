@@ -6,9 +6,16 @@
 #include "logging.h"
 
 
-
 /**
- * @brief Setup the application
+ * @brief Initializes the door control application.
+ * 
+ * This function sets up the necessary components for the door control application.
+ * It performs the following tasks:
+ * - Initializes serial communication and logging.
+ * - Logs the application version and startup message.
+ * - Initializes the command line interface.
+ * - Sets up input/output management.
+ * - Initializes state management.
  */
 void setup()
 {
@@ -27,8 +34,13 @@ void setup()
 }
 
 
+
 /**
- * @brief The main loop of the application
+ * @brief Main loop function that processes the command line interface and state management.
+ * 
+ * This function is called repeatedly and is responsible for:
+ * - Processing the command line interface using `comLineIf_process()`.
+ * - Managing the state using `stateMan_process()`.
  */
 void loop()
 {

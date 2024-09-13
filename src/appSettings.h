@@ -59,6 +59,12 @@
 
 
 
+/************************************ ENUMERATION *************************************/
+
+
+
+/************************************* STRUCTURE **************************************/
+
 typedef struct
 {
     uint8_t  doorUnlockTimeout;            /*!< The door unlock timeout */
@@ -68,6 +74,10 @@ typedef struct
 } settings_t;
 
 
+/******************************** Function prototype ************************************/
+
+
 extern settings_t settings;
+
 
 #endif  // APPSETTINGS_H

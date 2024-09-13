@@ -12,7 +12,8 @@
 #define IO_MANAGEMENT_H
 
 #include <Arduino.h>
-// #include "hsm.h"
+
+/************************************ ENUMERATION *************************************/
 
 /**
  * @brief Enumeration of the door type

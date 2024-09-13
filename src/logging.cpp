@@ -12,7 +12,20 @@
 #include "logging.h"
 
 
+/**************************** Static Function prototype *********************************/
 
+
+/******************************** Global variables ************************************/
+
+/******************************** Function definition ************************************/
+
+
+/**
+ * @brief Sets up the logging system.
+ *
+ * This function initializes the logging system with the default log level
+ * and directs the log output to the serial interface.
+ */
 void logging_setup( void )
 {
     /* Initialize with log level and log output */
@@ -278,4 +291,3 @@ String logging_logLevelToString( uint8_t level )
         return "UNKNOWN";
     }
 }
-

@@ -11,6 +11,13 @@
 #include <ArduinoLog.h>
 #include "logging.h"
 
+/******************************** Function prototype ************************************/
+
+
+/**************************** Static Function prototype *********************************/
+
+
+/******************************** Global variables **************************************/
 
 settings_t settings = {
     .doorUnlockTimeout = DOOR_UNLOCK_TIMEOUT,
@@ -23,3 +30,6 @@ settings_t settings = {
                             DEBOUNCE_DELAY_DOOR_SWITCH_2
                         }
 };
+
+
+/******************************** Function definition ************************************/

@@ -11,6 +11,13 @@
 #ifndef COMMAND_LINE_INTERFACE_H
 #define COMMAND_LINE_INTERFACE_H
 
+
+/************************************ ENUMERATION *************************************/
+
+/************************************* STRUCTURE **************************************/
+
+/******************************** Function prototype ************************************/
+
 void comLineIf_setup( void );
 void comLineIf_process( void );
 

@@ -16,7 +16,7 @@
 #include "appSettings.h"
 #include "ioMan.h"
 
-/********************************************** ENUMERATION ****************************************/
+/************************************ ENUMERATION *************************************/
 
 /**
  * @brief Enumeration of the door control state
