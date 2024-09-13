@@ -73,7 +73,7 @@ void ioMan_Setup( void )
  * @param door - The door type
  * @param state - The state of the door
  */
-static void ioMan_setDoorState( const door_type_t door, const lock_state_t state )
+void ioMan_setDoorState( const door_type_t door, const lock_state_t state )
 {
     static lock_state_t lastState[DOOR_TYPE_SIZE] = {LOCK_STATE_LOCKED, LOCK_STATE_LOCKED};
 
@@ -103,7 +103,7 @@ static void ioMan_setDoorState( const door_type_t door, const lock_state_t state
  * @param door - The door type
  * @return lock_state_t - The state of the door
  */
-static input_status_t ioMan_getDoorState( const io_t input )
+input_status_t ioMan_getDoorState( const io_t input )
 {
     Log.verboseln( "%s: input: %s", __func__, logging_ioToString( input ).c_str() );
 
