@@ -285,6 +285,13 @@ static String                 timerTypeToString( door_timer_type_t timerType );
 static String                 logLevelToString( uint8_t level );
 static void                   setLed( bool enable, door_type_t door, led_color_t color );
 static void                   processTimers( door_control_t* const pDoorControl );
+static void                   cliCmdGetInfoCb( cmd* pCommand );
+static void                   cliCmdSetLogLevelCb( cmd* pCommand );
+static void                   cliCmdSetTimerCb( cmd* pCommand );
+static void                   cliCmdSetDebounceDelayCb( cmd* pCommand );
+static void                   cliCmdHelpCb( cmd* pCommand );
+static void                   cliCmdGetInputStateCb( cmd* pCommand );
+static void                   cliErrorCb( cmd_error* pError );
 
 /******************************** Global variables ************************************/
 
@@ -403,23 +410,13 @@ static settings_t settings = {
                         }
 };
 
-
-static SimpleCLI cli;  /*!< The command line interface */
-static Command cliCmdGetInfo;
-static Command cliCmdSetLogLevel;
-static Command cliCmdSetTimer;
-static Command cliCmdSetDebounceDelay;
-static Command cliCmdGetInputState;
-static Command cliCmdHelp;
-
-static void cliCmdGetInfoCb( cmd* pCommand );
-static void cliCmdSetLogLevelCb( cmd* pCommand );
-static void cliCmdSetTimerCb( cmd* pCommand );
-static void cliCmdSetDebounceDelayCb( cmd* pCommand );
-static void cliCmdHelpCb( cmd* pCommand );
-static void cliCmdGetInputStateCb( cmd* pCommand );
-
-static void cliErrorCb( cmd_error* pError );
+static SimpleCLI cli;                    /*!< The command line interface */
+static Command   cliCmdGetInfo;          /*!< Get software information */
+static Command   cliCmdSetLogLevel;      /*!< Set log level */
+static Command   cliCmdSetTimer;         /*!< Set all timers */
+static Command   cliCmdSetDebounceDelay; /*!< Setall debounce delays */
+static Command   cliCmdGetInputState;    /*!< Get the state of all inputs */
+static Command   cliCmdHelp;             /*!< Pint the help */
 
 
 /******************************** Function definition ************************************/
