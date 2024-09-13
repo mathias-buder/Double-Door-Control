@@ -3,86 +3,16 @@
 #include <TimerOne.h>
 #include <SimpleCLI.h>
 
-#include "hsm.h"
+#include "appSettings.h"
+#include "stateManagement.h"
+#include "logging.h"
+#include "storage.h"
 
-/***************************************************************************************************/
-/*                                           MACRO DEFINITIONS                                      */
-/***************************************************************************************************/
-#define AUX( x ) #x
-#define STRINGIFY( x ) AUX( x )
 
-/***************************************************************************************************/
-/*                                           PIN CONFIGURATION                                     */
-/***************************************************************************************************/
-/* DOOR 1 */
-/***************************************************************************************************/
-#define RBG_LED_1_R                     7              /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_1_G                     6              /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_1_B                     5              /*!< Pin for the blue LED of the RGB-LED */
-#define DOOR_1_BUTTON                   2              /*!< Pin for the button of the door */
-#define DOOR_1_SWITCH                   3              /*!< Pin for the switch of the door */
-#define DOOR_1_MAGNET                   4              /*!< Pin for the magnet of the door */
-
-/***************************************************************************************************/
-/* DOOR 2 */
-/***************************************************************************************************/
-#define RBG_LED_2_R                     13             /*!< Pin for the red LED of the RGB-LED */
-#define RBG_LED_2_G                     12             /*!< Pin for the green LED of the RGB-LED */
-#define RBG_LED_2_B                     11             /*!< Pin for the blue LED of the RGB-LED */
-#define DOOR_2_BUTTON                   10             /*!< Pin for the button of the door */
-#define DOOR_2_SWITCH                   9              /*!< Pin for the switch of the door */
-#define DOOR_2_MAGNET                   8              /*!< Pin for the magnet of the door */
-/***************************************************************************************************/
-/*                                        GENERAL CONFIGURATION                                    */
-/***************************************************************************************************/
-#define DEBOUNCE_DELAY_DOOR_BUTTON_1    100            /*!< Debounce delay for the door button @unit ms*/
-#define DEBOUNCE_DELAY_DOOR_BUTTON_2    100            /*!< Debounce delay for the door button @unit ms*/
-#define DEBOUNCE_DELAY_DOOR_SWITCH_1    100            /*!< Debounce delay for the door switch @unit ms*/
-#define DEBOUNCE_DELAY_DOOR_SWITCH_2    100            /*!< Debounce delay for the door switch @unit ms*/
-#define DEBOUNCE_STABLE_TIMEOUT         300            /*!< Timeout for the debounce stable state @unit ms */
-
-#define SERIAL_BAUD_RATE                115200         /*!< Baud rate of the serial communication @unit bps */
-#define DEFAULT_LOG_LEVEL               LOG_LEVEL_INFO /*!< Default log level */
-
-#define LED_BLINK_INTERVAL              500            /*!< Interval of the led blink @unit ms */
-#define DOOR_UNLOCK_TIMEOUT             5              /*!< Timeout for the door unlock ( 0 = disabled ) @unit s */
-#define DOOR_OPEN_TIMEOUT               600            /*!< Timeout for the door open ( 0 = disabled ) @unit s */
 
 /********************************************** ENUMERATION ****************************************/
 
-/**
- * @brief Enumeration of the door control state
- */
-typedef enum
-{
-    DOOR_CONTROL_STATE_INIT,            /*!< Initializing the state machine */
-    DOOR_CONTROL_STATE_IDLE,            /*!< The state machine is in idle state */
-    DOOR_CONTROL_STATE_FAULT,           /*!< The state machine is in fault state */
-    DOOR_CONTROL_STATE_DOOR_1_UNLOCKED, /*!< The door 1 is unlocked */
-    DOOR_CONTROL_STATE_DOOR_1_OPEN,     /*!< The door 1 is open */
-    DOOR_CONTROL_STATE_DOOR_2_UNLOCKED, /*!< The door 2 is unlocked */
-    DOOR_CONTROL_STATE_DOOR_2_OPEN      /*!< The door 2 is open */
-} door_control_state_t;
 
-/**
- * @brief Enumeration of the door control event
- */
-typedef enum
-{
-    DOOR_CONTROL_EVENT_INIT_DONE = 1,         /*!< The initialization is done successfully */
-    DOOR_CONTROL_EVENT_DOOR_1_UNLOCK,         /*!< The door 1 is unlocked */
-    DOOR_CONTROL_EVENT_DOOR_1_UNLOCK_TIMEOUT, /*!< The door 1 is unlocked timeout */
-    DOOR_CONTROL_EVENT_DOOR_1_OPEN,           /*!< The door 1 is open */
-    DOOR_CONTROL_EVENT_DOOR_1_CLOSE,          /*!< The door 1 is closed */
-    DOOR_CONTROL_EVENT_DOOR_1_OPEN_TIMEOUT,   /*!< The door 1 is open timeout */
-    DOOR_CONTROL_EVENT_DOOR_2_UNLOCK,         /*!< The door 2 is unlocked */
-    DOOR_CONTROL_EVENT_DOOR_2_UNLOCK_TIMEOUT, /*!< The door 2 is unlocked timeout */
-    DOOR_CONTROL_EVENT_DOOR_2_OPEN,           /*!< The door 2 is open */
-    DOOR_CONTROL_EVENT_DOOR_2_CLOSE,          /*!< The door 2 is closed */
-    DOOR_CONTROL_EVENT_DOOR_2_OPEN_TIMEOUT,   /*!< The door 2 is open timeout */
-    DOOR_CONTROL_EVENT_DOOR_1_2_OPEN,         /*!< The door 1 and 2 are open */
-    DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE         /*!< The door 1 and 2 are closed */
-} door_control_event_t;
 
 /**
  * @brief Enumeration of the door type
@@ -206,15 +136,7 @@ typedef struct {
     input_debounce_t debounce;   //!< The debounce state of the input
 } input_status_t;
 
-/**
- * @brief The door control state machine
- * @details The door control state machine is used to control the door 1 and 2
- */
-typedef struct
-{
-    state_machine_t machine;                         /*!< Abstract state machine */
-    door_timer_t    doorTimer[DOOR_TIMER_TYPE_SIZE]; /*!< The door timers */
-} door_control_t;
+
 
 /**
  * @brief The pin configuration structure
@@ -239,43 +161,19 @@ typedef struct
 
 /******************************** Function prototype ************************************/
 
-static state_machine_result_t initHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t initEntryHandler( state_machine_t* const pState, const uint32_t event );
-/* static state_machine_result_t initExitHandler( state_machine_t* const pState, const uint32_t event ); */
 
-static state_machine_result_t idleHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t idleEntryHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t idleExitHandler( state_machine_t* const pState, const uint32_t event );
 
-static state_machine_result_t faultHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t faultEntryHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event );
-static void                   faultBlinkLedIsrHandler( void );
 
-static state_machine_result_t door1UnlockHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door1UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event );
-static void                   door1BlinkLedIsrHandler( void );
 
-static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door2UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door2UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
-static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
-static void                   door2BlinkLedIsrHandler( void );
+
+
 
 static void                   doorOpenTimeoutHandler( uint32_t time );
 static void                   doorUnlockTimeoutHandler( uint32_t time );
-
 void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void                          resultLogger( uint32_t state, state_machine_result_t result );
 static void                   setDoorState( const door_type_t door, const lock_state_t state );
 static input_status_t         getDoorIoState( const io_t sensor );
-static void                   generateEvent( door_control_t* const pDoorControl );
 static String                 stateToString( door_control_state_t state );
 static String                 inputStateToString( input_state_t state );
 static String                 eventToString( door_control_event_t event );
@@ -284,7 +182,7 @@ static String                 ioToString( io_t io );
 static String                 timerTypeToString( door_timer_type_t timerType );
 static String                 logLevelToString( uint8_t level );
 static void                   setLed( bool enable, door_type_t door, led_color_t color );
-static void                   processTimers( door_control_t* const pDoorControl );
+
 static void                   cliCmdGetInfoCb( cmd* pCommand );
 static void                   cliCmdSetLogLevelCb( cmd* pCommand );
 static void                   cliCmdSetTimerCb( cmd* pCommand );
@@ -295,80 +193,7 @@ static void                   cliErrorCb( cmd_error* pError );
 
 /******************************** Global variables ************************************/
 
-/**
- * @brief The state machine for the door control
- * @details The state machine is defined as an array of states and its handlers
- */
-static const state_t doorControlStates[] = {
 
-    [DOOR_CONTROL_STATE_INIT] = {
-        .Handler = initHandler,
-        .Entry   = initEntryHandler,
-        .Exit    = NULL,
-        .Id      = DOOR_CONTROL_STATE_INIT
-    },
-
-    [DOOR_CONTROL_STATE_IDLE] = {
-        .Handler = idleHandler,
-        .Entry   = idleEntryHandler,
-        .Exit    = idleExitHandler,
-        .Id      = DOOR_CONTROL_STATE_IDLE
-    },
-
-    [DOOR_CONTROL_STATE_FAULT] = {
-        .Handler = faultHandler,
-        .Entry   = faultEntryHandler,
-        .Exit    = faultExitHandler,
-        .Id      = DOOR_CONTROL_STATE_FAULT
-    },
-
-    [DOOR_CONTROL_STATE_DOOR_1_UNLOCKED] = {
-        .Handler = door1UnlockHandler,
-        .Entry   = door1UnlockEntryHandler,
-        .Exit    = door1UnlockExitHandler,
-        .Id      = DOOR_CONTROL_STATE_DOOR_1_UNLOCKED
-    },
-
-    [DOOR_CONTROL_STATE_DOOR_1_OPEN] = {
-        .Handler = door1OpenHandler,
-        .Entry   = door1OpenEntryHandler,
-        .Exit    = door1OpenExitHandler,
-        .Id      = DOOR_CONTROL_STATE_DOOR_1_OPEN
-    },
-
-    [DOOR_CONTROL_STATE_DOOR_2_UNLOCKED] = {
-        .Handler = door2UnlockHandler,
-        .Entry   = door2UnlockEntryHandler,
-        .Exit    = door2UnlockExitHandler,
-        .Id      = DOOR_CONTROL_STATE_DOOR_2_UNLOCKED
-    },
-
-    [DOOR_CONTROL_STATE_DOOR_2_OPEN] = {
-        .Handler = door2OpenHandler,
-        .Entry   = door2OpenEntryHandler,
-        .Exit    = door2OpenExitHandler,
-        .Id      = DOOR_CONTROL_STATE_DOOR_2_OPEN
-    }
-};
-
-/**
- * @brief The door control state machine
- * @details The door control state machine is defined with the state machine and the door timers.
- *          The state machine is initialized with the init-state and no event.
- */
-door_control_t doorControl = {
-    .machine = { NULL, NULL },
-    .doorTimer = {
-                    { doorUnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * 1000, 0 },
-                    { doorOpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * 1000, 0 }
-                }
-};
-
-/**
- * @brief The array of state machines
- * @details The array of state machines is used to dispatch the event to the state machines.
- */
-state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl};
 
 
 static io_config_t buttonSwitchIoConfig[] = {
