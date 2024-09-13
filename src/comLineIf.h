@@ -11,6 +11,7 @@
 #ifndef COMMAND_LINE_INTERFACE_H
 #define COMMAND_LINE_INTERFACE_H
 
-void cliSetup( void );
+void comLineIf_setup( void );
+void comLineIf_process( void );
 
 #endif  // COMMAND_LINE_INTERFACE_H

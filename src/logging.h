@@ -17,6 +17,7 @@
 #include "hsm.h"
 #include "stateMan.h"
 
+void   logging_setup( void );
 void   logging_eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
 void   logging_resultLogger( uint32_t state, state_machine_result_t result );
 String logging_stateToString( door_control_state_t state );

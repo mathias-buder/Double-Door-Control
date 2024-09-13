@@ -16,10 +16,7 @@
 void logging_setup( void )
 {
     /* Initialize with log level and log output */
-    Serial.begin( SERIAL_BAUD_RATE );
     Log.begin( DEFAULT_LOG_LEVEL, &Serial );
-    Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
-    Log.noticeln( "Starting ... " );
 }
 
 

@@ -5,6 +5,7 @@
 #include "ioMan.h"
 #include "logging.h"
 #include "storage.h"
+#include "comLineIf.h"
 
 
 /********************************************** ENUMERATION ****************************************/
@@ -22,11 +23,14 @@ void setup()
 {
     /* Initialize with log level and log output */
     Serial.begin( SERIAL_BAUD_RATE );
-    Log.begin( DEFAULT_LOG_LEVEL, &Serial );
+
+    logging_setup();
+
     Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
 
-    /* Switch to the init state */
+    comLineIf_setup();
+
     stateMan_setup();
 
     Log.noticeln( "... Done" );
@@ -38,28 +42,6 @@ void setup()
  */
 void loop()
 {
-    /* Process the command line interface */
-    if ( Serial.available() )
-    {
-        String input = Serial.readStringUntil( '\n' );
-        // cli.parse( input );
-
-        // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
-        // String testCommand( "log" );
-        // String testCommand1( "timer -u 30 -o 18 -b 180" );
-        // cli.parse( testCommand1);
-        // String testCommand2( "info" );
-        // cli.parse( testCommand2);
-        // String testCommand3( "time -f" );
-        // cli.parse( testCommand3 );
-        // String testCommand4( "dbc -i 3 -t 128" );
-        // cli.parse( testCommand4);
-        // String testCommand5( "dbc -t 300" );
-        // cli.parse( testCommand5);
-        // String testCommand6( "dbc -t 300" );
-        // cli.parse( testCommand6);
-    }
-
+    comLineIf_process();
     stateMan_process();
-
 }

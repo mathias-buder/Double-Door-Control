@@ -18,58 +18,80 @@
 #include "ioMan.h"
 
 
-static void cliCmdGetInfoCb( cmd* pCommand );
-static void cliCmdSetLogLevelCb( cmd* pCommand );
-static void cliCmdSetTimerCb( cmd* pCommand );
-static void cliCmdSetDebounceDelayCb( cmd* pCommand );
-static void cliCmdHelpCb( cmd* pCommand );
-static void cliCmdGetInputStateCb( cmd* pCommand );
-static void cliErrorCb( cmd_error* pError );
+static void comLineIf_cmdGetInfoCb( cmd* pCommand );
+static void comLineIf_cmdSetLogLevelCb( cmd* pCommand );
+static void comLineIf_cmdSetTimerCb( cmd* pCommand );
+static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand );
+static void comLineIf_cmdHelpCb( cmd* pCommand );
+static void comLineIf_cmdGetInputStateCb( cmd* pCommand );
+static void comLineIf_cmdErrorCb( cmd_error* pError );
 
+static SimpleCLI cli;                 /*!< The command line interface */
+static Command   cmdGetInfo;          /*!< Get software information */
+static Command   cmdSetLogLevel;      /*!< Set log level */
+static Command   cmdSetTimer;         /*!< Set all timers */
+static Command   cmdSetDebounceDelay; /*!< Setall debounce delays */
+static Command   cmdGetInputState;    /*!< Get the state of all inputs */
+static Command   cmdHelp;             /*!< Pint the help */
 
-
-static SimpleCLI cli;                    /*!< The command line interface */
-static Command   cliCmdGetInfo;          /*!< Get software information */
-static Command   cliCmdSetLogLevel;      /*!< Set log level */
-static Command   cliCmdSetTimer;         /*!< Set all timers */
-static Command   cliCmdSetDebounceDelay; /*!< Setall debounce delays */
-static Command   cliCmdGetInputState;    /*!< Get the state of all inputs */
-static Command   cliCmdHelp;             /*!< Pint the help */
-
-
-void cliSetup( void )
+void comLineIf_setup( void )
 {
     /* Initialize the command line interface */
-    cliCmdGetInfo = cli.addSingleArgCmd( "info", cliCmdGetInfoCb ); /*!< Get software information */
-    cliCmdGetInfo.setDescription( "Get software information" );
+    cmdGetInfo = cli.addSingleArgCmd( "info", comLineIf_cmdGetInfoCb ); /*!< Get software information */
+    cmdGetInfo.setDescription( "Get software information" );
 
-    cliCmdSetLogLevel = cli.addSingleArgCmd( "log", cliCmdSetLogLevelCb ); /*!< Set log level */
-    cliCmdSetLogLevel.setDescription( "Set the log level: log <level (0..6)>" );
+    cmdSetLogLevel = cli.addSingleArgCmd( "log", comLineIf_cmdSetLogLevelCb ); /*!< Set log level */
+    cmdSetLogLevel.setDescription( "Set the log level: log <level (0..6)>" );
 
-    cliCmdSetTimer = cli.addCmd( "timer", cliCmdSetTimerCb );       /*!< Set timer */
-    cliCmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) ); /*!< Unlock timeout */
-    cliCmdSetTimer.addArg( "o", STRINGIFY( DOOR_OPEN_TIMEOUT ) );   /*!< Open timeout */
-    cliCmdSetTimer.addArg( "b", STRINGIFY( LED_BLINK_INTERVAL ) );  /*!< LED blink interval */
-    cliCmdSetTimer.setDescription( "Set the timer. timer -u <unlock timeout (s)> -o <open timeout (min)> -b <blink interval (ms)>" );
+    cmdSetTimer = cli.addCmd( "timer", comLineIf_cmdSetTimerCb );       /*!< Set timer */
+    cmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) ); /*!< Unlock timeout */
+    cmdSetTimer.addArg( "o", STRINGIFY( DOOR_OPEN_TIMEOUT ) );   /*!< Open timeout */
+    cmdSetTimer.addArg( "b", STRINGIFY( LED_BLINK_INTERVAL ) );  /*!< LED blink interval */
+    cmdSetTimer.setDescription( "Set the timer. timer -u <unlock timeout (s)> -o <open timeout (min)> -b <blink interval (ms)>" );
 
-    cliCmdSetDebounceDelay = cli.addCmd( "dbc", cliCmdSetDebounceDelayCb ); /*!< Set debounce time */
-    cliCmdSetDebounceDelay.addArg( "i" );                                   /*!< Input index */
-    cliCmdSetDebounceDelay.addArg( "t" );                                   /*!< Debounce time @unit ms */
-    cliCmdSetDebounceDelay.setDescription( "Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>" );
+    cmdSetDebounceDelay = cli.addCmd( "dbc", comLineIf_cmdSetDebounceDelayCb ); /*!< Set debounce time */
+    cmdSetDebounceDelay.addArg( "i" );                                   /*!< Input index */
+    cmdSetDebounceDelay.addArg( "t" );                                   /*!< Debounce time @unit ms */
+    cmdSetDebounceDelay.setDescription( "Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>" );
 
-    cliCmdGetInputState = cli.addSingleArgCmd( "inputs", cliCmdGetInputStateCb ); /*!< Get the input state */
-    cliCmdGetInputState.setDescription( "Get the input state of all buttons and switches" );
+    cmdGetInputState = cli.addSingleArgCmd( "inputs", comLineIf_cmdGetInputStateCb ); /*!< Get the input state */
+    cmdGetInputState.setDescription( "Get the input state of all buttons and switches" );
 
-    cliCmdHelp = cli.addCmd( "help", cliCmdHelpCb ); /*!< Help */
-    cliCmdHelp.setDescription( "Show the help" );
+    cmdHelp = cli.addCmd( "help", comLineIf_cmdHelpCb ); /*!< Help */
+    cmdHelp.setDescription( "Show the help" );
 
-    cli.setOnError( cliErrorCb );
+    cli.setOnError( comLineIf_cmdErrorCb );
 
 }
 
 
+void comLineIf_process( void )
+{
+    if ( Serial.available() )
+    {
+        String input = Serial.readStringUntil( '\n' );
+        cli.parse( input );
 
-static void cliCmdGetInfoCb( cmd* pCommand )
+                // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
+        // String testCommand( "log" );
+        // String testCommand1( "timer -u 30 -o 18 -b 180" );
+        // cli.parse( testCommand1);
+        // String testCommand2( "info" );
+        // cli.parse( testCommand2);
+        // String testCommand3( "time -f" );
+        // cli.parse( testCommand3 );
+        // String testCommand4( "dbc -i 3 -t 128" );
+        // cli.parse( testCommand4);
+        // String testCommand5( "dbc -t 300" );
+        // cli.parse( testCommand5);
+        // String testCommand6( "dbc -t 300" );
+        // cli.parse( testCommand6);
+    }
+}
+
+
+
+static void comLineIf_cmdGetInfoCb( cmd* pCommand )
 {
     Serial.println( "----------------------------------" );
     Serial.println( "Door Control System Information   " );
@@ -103,7 +125,7 @@ static void cliCmdGetInfoCb( cmd* pCommand )
  * 
  * @param pCommand - The command
  */
-static void cliCmdSetLogLevelCb( cmd* pCommand )
+static void comLineIf_cmdSetLogLevelCb( cmd* pCommand )
 {
     Command cmd( pCommand );
     Argument arg = cmd.getArgument();
@@ -123,7 +145,7 @@ static void cliCmdSetLogLevelCb( cmd* pCommand )
  * 
  * @param pCommand - The command
  */
-static void cliCmdSetTimerCb( cmd* pCommand )
+static void comLineIf_cmdSetTimerCb( cmd* pCommand )
 {
     Command  cmd( pCommand );
 
@@ -158,7 +180,7 @@ static void cliCmdSetTimerCb( cmd* pCommand )
  * 
  * @param pCommand - The command
  */
-static void cliCmdSetDebounceDelayCb( cmd* pCommand )
+static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand )
 {
     Command cmd( pCommand );
 
@@ -183,7 +205,7 @@ static void cliCmdSetDebounceDelayCb( cmd* pCommand )
  * 
  * @param pCommand - The command
  */
-static void cliCmdGetInputStateCb( cmd* pCommand )
+static void comLineIf_cmdGetInputStateCb( cmd* pCommand )
 {
     Serial.println( "----------------------------------" );
     Serial.println( "Input State" );
@@ -204,7 +226,7 @@ static void cliCmdGetInputStateCb( cmd* pCommand )
  * 
  * @param pCommand - The command
  */
-static void cliCmdHelpCb( cmd* pCommand )
+static void comLineIf_cmdHelpCb( cmd* pCommand )
 {
     Serial.println( "Help:" );
     Serial.println( "--------------------------------------------" );
@@ -217,7 +239,7 @@ static void cliCmdHelpCb( cmd* pCommand )
  * 
  * @param pError - The error
  */
-static void cliErrorCb( cmd_error* pError )
+static void comLineIf_cmdErrorCb( cmd_error* pError )
 {
     CommandError error( pError );
 
