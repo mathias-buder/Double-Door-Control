@@ -62,12 +62,14 @@ void appSettings_setup( void )
 
     if ( crcFromEeprom == EEPROM_EMPTY_CRC )
     {
-        Log.notice( "No settings found in EEPROM. Using default settings." );
+        Log.noticeln( "%s: No settings found in EEPROM. Using default settings.", __func__ );
         return;
     }
     else
     {
+        /* Local variable to store the settings read from the EEPROM */
         settings_t settings;
+
         /* Load the settings from the EEPROM */
         appSettings_loadSettings( &settings );
 
@@ -77,13 +79,13 @@ void appSettings_setup( void )
         /* Check if the CRC value in the EEPROM matches the calculated CRC value */
         if ( crcFromEeprom != crc )
         {
-            Log.warning( "CRC mismatch. Using default settings." );
+            Log.warningln( "%s: CRC mismatch. Using default settings.", __func__ );
         }
         else
         {
             /* Copy the settings to the global variable */
             appSettings = settings;
-            Log.notice( "Settings loaded from EEPROM." );
+            Log.noticeln( "%s: Settings loaded from EEPROM.", __func__ );
         }
     }
 }
@@ -130,7 +132,6 @@ void appSettings_loadSettings( settings_t* settings )
         address++;
     }
 }
-
 
 
 /**
