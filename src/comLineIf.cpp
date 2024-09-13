@@ -109,7 +109,6 @@ void comLineIf_process( void )
         /* Uncomment the following lines to test the command line interface */
         // cli.parse( String( "info" ) );
         // cli.parse( String( "log" ) );
-        // cli.parse( String( "timer -d 0 -u 5 -o 600 -b 500" ) );
         // cli.parse( String( "timer -u 30 -o 18 -b 180" ) );
         // cli.parse( String( "time -f" ) );
         // cli.parse( String( "dbc -i 3 -t 128" ) );
@@ -235,6 +234,9 @@ static void comLineIf_cmdSetTimerCb( cmd* pCommand )
         Timer1.setPeriod( ( (uint32_t) 2000 ) * ( (uint32_t) settings->ledBlinkInterval ) );
         Log.noticeln( "%s: Led blink interval set to %d ms", __func__, settings->ledBlinkInterval );
     }
+
+    /* Save the settings to the EEPROM */
+    appSettings_saveSettings();
 }
 
 
@@ -276,6 +278,9 @@ static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand )
     {
         Log.errorln( "%s: Invalid input index: %d", __func__, inputIdx );
     }
+
+    /* Save the settings to the EEPROM */
+    appSettings_saveSettings();
 }
 
 
