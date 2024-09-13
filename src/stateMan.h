@@ -11,6 +11,11 @@
 #ifndef STATEMANAGEMENT_H
 #define STATEMANAGEMENT_H
 
+#include <Arduino.h>
+#include "hsm.h"
+#include "appSettings.h"
+#include "ioMan.h"
+
 /**
  * @brief Enumeration of the door control state
  */
@@ -74,16 +79,27 @@ static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pSta
 static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
 
 static void                   faultBlinkLedIsrHandler( void );
-
-
 static void                   door1BlinkLedIsrHandler( void );
-
-
 static void                   door2BlinkLedIsrHandler( void );
-
-
 static void                   generateEvent( door_control_t* const pDoorControl );
-
 static void                   processTimers( door_control_t* const pDoorControl );
+
+void                          eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void                          resultLogger( uint32_t state, state_machine_result_t result );
+
+
+/**
+ * @brief The door control state machine
+ * @details The door control state machine is defined with the state machine and the door timers.
+ *          The state machine is initialized with the init-state and no event.
+ */
+door_control_t doorControl = {
+    .machine = { NULL, NULL },
+    .doorTimer = {
+                    { doorUnlockTimeoutHandler, (uint32_t) DOOR_UNLOCK_TIMEOUT * 1000, 0 },
+                    { doorOpenTimeoutHandler,   (uint32_t) DOOR_OPEN_TIMEOUT   * 1000, 0 }
+                }
+};
+
 
 #endif // STATEMANAGEMENT_H

@@ -11,6 +11,9 @@
 #ifndef APPSETTINGS_H
 #define APPSETTINGS_H
 
+#include "ioMan.h"
+
+
 /***************************************************************************************************/
 /*                                           MACRO DEFINITIONS                                      */
 /***************************************************************************************************/
@@ -54,5 +57,27 @@
 #define DOOR_UNLOCK_TIMEOUT             5              /*!< Timeout for the door unlock ( 0 = disabled ) @unit s */
 #define DOOR_OPEN_TIMEOUT               600            /*!< Timeout for the door open ( 0 = disabled ) @unit s */
 
+
+
+typedef struct
+{
+    uint8_t  doorUnlockTimeout;            /*!< The door unlock timeout */
+    uint16_t doorOpenTimeout;              /*!< The door open timeout */
+    uint16_t ledBlinkInterval;             /*!< The led blink interval */
+    uint16_t debounceDelay[IO_INPUT_SIZE]; /*!< The debounce delay of the inputs */
+} settings_t;
+
+
+static settings_t settings = {
+    .doorUnlockTimeout = DOOR_UNLOCK_TIMEOUT,
+    .doorOpenTimeout   = DOOR_OPEN_TIMEOUT,
+    .ledBlinkInterval  = LED_BLINK_INTERVAL,
+    .debounceDelay     = {
+                            DEBOUNCE_DELAY_DOOR_BUTTON_1,
+                            DEBOUNCE_DELAY_DOOR_BUTTON_2,
+                            DEBOUNCE_DELAY_DOOR_SWITCH_1,
+                            DEBOUNCE_DELAY_DOOR_SWITCH_2
+                        }
+};
 
 #endif  // APPSETTINGS_H
