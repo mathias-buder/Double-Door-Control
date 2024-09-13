@@ -16,14 +16,16 @@
 
 /*************************************** Defines ****************************************/
 
-#define EEPROM_SETTINGS_ADDRESS     0 /*!< The EEPROM address where the settings are stored */
-#define EEPROM_EMPTY_CRC            10737431656552524628 /*!< The initial value of the CRC in the EEPROM */
+#define EEPROM_SETTINGS_ADDRESS     0                                   /*!< The EEPROM address where the settings are stored */
+#define EEPROM_EMPTY_CRC            18446744073709551615ULL             /*!< The initial value of the CRC in the EEPROM */
 
 /******************************** Function prototype ************************************/
 
 
 /**************************** Static Function prototype *********************************/
 static uint64_t appSettings_calculateCrc( settings_t* settings );
+static void     appSettings_writeCrc( settings_t* settings );
+static uint64_t appSettings_readCrc( void );
 
 /******************************** Global variables **************************************/
 
@@ -43,14 +45,47 @@ static settings_t appSettings = {
 /******************************** Function definition ************************************/
 
 
+/**
+ * @brief Initializes the application settings.
+ *
+ * This function sets up the application settings by reading the CRC value from the EEPROM.
+ * If no settings are found in the EEPROM (indicated by a specific empty CRC value), it uses
+ * the default settings. If settings are found, it loads them and verifies their integrity
+ * by comparing the CRC value from the EEPROM with a newly calculated CRC value. If the CRC
+ * values match, the settings are copied to the global variable. If there is a CRC mismatch,
+ * it falls back to using the default settings.
+ */
 void appSettings_setup( void )
 {
-    settings_t eepromSettings;
-    appSettings_loadSettings( &eepromSettings );
-    uint64_t eepromCrc = appSettings_calculateCrc( &eepromSettings );
-    uint64_t appCrc    = appSettings_calculateCrc( &appSettings );
-    Log.noticeln( "EEPROM CRC: %u", eepromCrc );
-    Log.noticeln( "APP CRC: %u", appCrc );
+    /* Get the CRC value from the EEPROM */
+    uint64_t crcFromEeprom = appSettings_readCrc();
+
+    if ( crcFromEeprom == EEPROM_EMPTY_CRC )
+    {
+        Log.notice( "No settings found in EEPROM. Using default settings." );
+        return;
+    }
+    else
+    {
+        settings_t settings;
+        /* Load the settings from the EEPROM */
+        appSettings_loadSettings( &settings );
+
+        /* Calculate the CRC value for the settings */
+        uint64_t crc = appSettings_calculateCrc( &settings );
+
+        /* Check if the CRC value in the EEPROM matches the calculated CRC value */
+        if ( crcFromEeprom != crc )
+        {
+            Log.warning( "CRC mismatch. Using default settings." );
+        }
+        else
+        {
+            /* Copy the settings to the global variable */
+            appSettings = settings;
+            Log.notice( "Settings loaded from EEPROM." );
+        }
+    }
 }
 
 
@@ -97,15 +132,17 @@ void appSettings_loadSettings( settings_t* settings )
 }
 
 
+
 /**
  * @brief Saves the application settings to EEPROM.
  *
- * This function writes the provided settings structure to EEPROM memory.
- * It iterates over each byte of the settings structure and writes it to
- * the EEPROM starting from address 0.
+ * This function writes the provided settings structure to the EEPROM
+ * starting at a predefined address. It also updates the CRC value in
+ * the EEPROM to ensure data integrity.
  *
  * @param settings Pointer to the settings structure to be saved. If the
- *                 pointer is NULL, the function logs an error and returns.
+ *                 pointer is NULL, the function logs an error and returns
+ *                 without performing any operation.
  */
 void appSettings_saveSettings( settings_t* settings )
 {
@@ -124,6 +161,9 @@ void appSettings_saveSettings( settings_t* settings )
         ptr++;
         address++;
     }
+
+    /* Update the CRC value in the EEPROM */
+    appSettings_writeCrc( settings );
 }
 
 /**
@@ -156,6 +196,47 @@ static uint64_t appSettings_calculateCrc( settings_t* settings )
         }
         ptr++;
     }
+
+    return crc;
+}
+
+
+/**
+ * @brief Writes the CRC value for the given settings to the EEPROM memory.
+ *
+ * This function calculates the CRC value for the provided settings and writes
+ * it to the end of the EEPROM memory. The CRC value is used to ensure data
+ * integrity.
+ *
+ * @param settings Pointer to the settings structure for which the CRC is calculated.
+ */
+static void appSettings_writeCrc( settings_t* settings )
+{
+    /* Calculate the CRC value for the settings */
+    uint64_t crc = appSettings_calculateCrc( settings );
+
+    /* Write the CRC value to the end of the EEPROM memory */
+    uint16_t address = EEPROM.length() - sizeof( uint64_t ) - 1;
+    EEPROM.put( address, crc );
+}
+
+
+
+/**
+ * @brief Reads the CRC value from the end of the EEPROM memory.
+ *
+ * This function calculates the address of the CRC value stored at the end of the EEPROM memory,
+ * reads the CRC value from that address, and returns it.
+ *
+ * @return The CRC value read from the EEPROM memory.
+ */
+static uint64_t appSettings_readCrc( void )
+{
+    uint64_t crc = 0;
+
+    /* Read the CRC value from the end of the EEPROM memory */
+    uint16_t address = EEPROM.length() - sizeof( uint64_t ) - 1;
+    EEPROM.get( address, crc );
 
     return crc;
 }
