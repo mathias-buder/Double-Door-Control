@@ -57,18 +57,25 @@ settings_t* appSettings_getSettings( void )
 }
 
 
+
 /**
- * @brief Loads the application settings from EEPROM into the settings structure.
+ * @brief Loads the application settings from EEPROM into the provided settings structure.
  *
- * This function reads the settings data from EEPROM starting at address 0 and
- * stores it into the settings structure. It iterates through each byte of the
- * settings structure and reads the corresponding byte from EEPROM.
+ * This function reads the settings data stored in EEPROM and populates the provided
+ * settings structure with this data. It reads byte-by-byte from the EEPROM starting
+ * from address 0.
  *
- * @note Ensure that the EEPROM library is properly included and initialized before
- * calling this function.
+ * @param settings Pointer to the settings structure where the loaded data will be stored.
+ *                 If this pointer is NULL, the function logs an error and returns immediately.
  */
 void appSettings_loadSettings( settings_t* settings )
 {
+    if ( settings == NULL )
+    {
+        Log.error( "%s: settings is NULL", __func__ );
+        return;
+    }
+
     uint16_t address = 0;
     uint8_t* ptr     = (uint8_t*) settings;
 
@@ -80,16 +87,25 @@ void appSettings_loadSettings( settings_t* settings )
     }
 }
 
+
 /**
  * @brief Saves the application settings to EEPROM.
- * 
- * This function writes the current settings to the EEPROM starting from address 0.
- * It iterates over each byte of the settings structure and writes it to the EEPROM.
- * 
- * @note Ensure that the settings structure is properly defined and initialized before calling this function.
+ *
+ * This function writes the provided settings structure to EEPROM memory.
+ * It iterates over each byte of the settings structure and writes it to
+ * the EEPROM starting from address 0.
+ *
+ * @param settings Pointer to the settings structure to be saved. If the
+ *                 pointer is NULL, the function logs an error and returns.
  */
 void appSettings_saveSettings( settings_t* settings )
 {
+    if ( settings == NULL )
+    {
+        Log.error( "%s: settings is NULL", __func__ );
+        return;
+    }
+
     uint16_t address = 0;
     uint8_t* ptr     = (uint8_t*) settings;
 
