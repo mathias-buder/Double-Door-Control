@@ -246,7 +246,7 @@ void setLed( bool enable, door_type_t door, led_color_t color )
  * 
  * @param pDoorControl - Pointer to the door control
  */
-static void processTimers( door_control_t* const pDoorControl )
+static void ioMan_processTimers( door_control_t* const pDoorControl )
 {
     Log.verboseln( "%s", __func__ );
 

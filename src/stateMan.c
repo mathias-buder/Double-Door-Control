@@ -12,15 +12,35 @@
 #include "ioMan.h"
 
 
-/**
- * @brief The door control state machine
- * @details The door control state machine is used to control the door 1 and 2
- */
-typedef struct
-{
-    state_machine_t machine;                         /*!< Abstract state machine */
-    door_timer_t    doorTimer[DOOR_TIMER_TYPE_SIZE]; /*!< The door timers */
-} door_control_t;
+static state_machine_result_t initHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t initEntryHandler( state_machine_t* const pState, const uint32_t event );
+/* static state_machine_result_t initExitHandler( state_machine_t* const pState, const uint32_t event ); */
+
+static state_machine_result_t idleHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t idleEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t idleExitHandler( state_machine_t* const pState, const uint32_t event );
+
+static state_machine_result_t faultHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t faultEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t faultExitHandler( state_machine_t* const pState, const uint32_t event );
+
+static state_machine_result_t door1UnlockHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door1UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door1UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door1OpenHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door1OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door1OpenExitHandler( state_machine_t* const pState, const uint32_t event );
+
+static state_machine_result_t door2UnlockHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door2UnlockEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door2UnlockExitHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door2OpenHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door2OpenEntryHandler( state_machine_t* const pState, const uint32_t event );
+static state_machine_result_t door2OpenExitHandler( state_machine_t* const pState, const uint32_t event );
+
+static void                   faultBlinkLedIsrHandler( void );
+static void                   door1BlinkLedIsrHandler( void );
+static void                   door2BlinkLedIsrHandler( void );
 
 
 /**

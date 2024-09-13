@@ -12,19 +12,20 @@
 #define LOGGING_H
 
 
-#include <Arduino.h>
 #include <ArduinoLog.h>
 
 #include "hsm.h"
+#include "stateMan.h"
 
+void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event );
+void resultLogger(uint32_t state, state_machine_result_t result);
 
-
-static String                 stateToString( door_control_state_t state );
-static String                 inputStateToString( input_state_t state );
-static String                 eventToString( door_control_event_t event );
-static String                 resultToString( state_machine_result_t result );
-static String                 ioToString( io_t io );
-static String                 timerTypeToString( door_timer_type_t timerType );
-static String                 logLevelToString( uint8_t level );
+String stateToString( door_control_state_t state );
+String inputStateToString( input_state_t state );
+String eventToString( door_control_event_t event );
+String resultToString( state_machine_result_t result );
+String ioToString( io_t io );
+String timerTypeToString( door_timer_type_t timerType );
+String logLevelToString( uint8_t level );
 
 #endif  // LOGGING_H

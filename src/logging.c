@@ -8,7 +8,19 @@
  *  Copyright (c) 2024 Mathias Buder
  */
 
+#include <ArduinoLog.h>
+#include "logging.h"
 
+
+
+void logging_setup( void )
+{
+    /* Initialize with log level and log output */
+    Serial.begin( SERIAL_BAUD_RATE );
+    Log.begin( DEFAULT_LOG_LEVEL, &Serial );
+    Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
+    Log.noticeln( "Starting ... " );
+}
 
 
 /**
@@ -67,7 +79,7 @@ void resultLogger(uint32_t state, state_machine_result_t result)
  * @param state - The state to convert
  * @return String - The string representation of the state
  */
-static String stateToString( door_control_state_t state )
+String stateToString( door_control_state_t state )
 {
     switch ( state )
     {
@@ -97,7 +109,7 @@ static String stateToString( door_control_state_t state )
  * @param event - The event to convert
  * @return String - The string representation of the event
  */
-static String eventToString( door_control_event_t event )
+String eventToString( door_control_event_t event )
 {
     Log.verboseln( "%s: Event: %d", __func__, event );
 
@@ -141,7 +153,7 @@ static String eventToString( door_control_event_t event )
  * @param result - The result to convert
  * @return String - The string representation of the result
  */
-static String resultToString( state_machine_result_t result )
+String resultToString( state_machine_result_t result )
 {
     Log.verboseln( "%s: Result: %d", __func__, result );
 
@@ -165,7 +177,7 @@ static String resultToString( state_machine_result_t result )
  * @param sensor - The input/output to convert
  * @return String - The string representation of the input/output
  */
-static String ioToString( io_t io )
+String ioToString( io_t io )
 {
     Log.verboseln( "%s: IO: %d", __func__, io );
 
@@ -207,7 +219,7 @@ static String ioToString( io_t io )
  * @param timerType - The timer type to convert
  * @return String - The string representation of the timer type
  */
-static String timerTypeToString( door_timer_type_t timerType )
+String timerTypeToString( door_timer_type_t timerType )
 {
     Log.verboseln( "%s: Timer type: %d", __func__, timerType );
 
@@ -229,7 +241,7 @@ static String timerTypeToString( door_timer_type_t timerType )
  * @param state - The input state to convert
  * @return String - The string representation of the input state
  */
-static String inputStateToString( input_state_t state )
+String inputStateToString( input_state_t state )
 {
     Log.verboseln( "%s: State: %d", __func__, state );
 
@@ -245,7 +257,7 @@ static String inputStateToString( input_state_t state )
 }
 
 
-static String logLevelToString( uint8_t level )
+String logLevelToString( uint8_t level )
 {
     Log.verboseln( "%s: Level: %d", __func__, level );
 

@@ -12,7 +12,7 @@
 #define IO_MANAGEMENT_H
 
 #include <Arduino.h>
-#include "hsm.h"
+// #include "hsm.h"
 
 /**
  * @brief Enumeration of the door type
@@ -139,17 +139,6 @@ typedef struct
     uint16_t      debounceDelay; /*!< The debounce delay of the pin */
 } io_config_t;
 
-/**
- * @brief The timer structure
- * @details The timer structure is used to hold the door 1/2 open timeout timers
- */
-typedef struct
-{
-    void ( *handler )( uint32_t time );   //!< The handler function that is called when the timer expires
-    uint32_t timeout;                     //!< The timeout after which the handler is called @unit ms
-    uint64_t timeReference;               //!< The time reference when the timer is started @unit ms
-} door_timer_t;
-
 
 /******************************** Function prototype ************************************/
 
@@ -157,7 +146,5 @@ void           ioMan_Setup( void );
 void           ioMan_setDoorState( const door_type_t door, const lock_state_t state );
 input_status_t ioMan_getDoorIoState( const io_t sensor );
 void           ioMan_setLed( bool enable, door_type_t door, led_color_t color );
-void processTimers( door_control_t* const pDoorControl );
-
 
 #endif  // IO_MANAGEMENT_H

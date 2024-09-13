@@ -11,7 +11,7 @@
 #include <Arduino.h>
 #include <SimpleCLI.h>
 
-#include "cli.h"
+#include "comLineIf.h"
 #include "appSettings.h"
 
 

@@ -8,9 +8,9 @@
  *  Copyright (c) 2024 Mathias Buder
  */
 
-#ifndef CLI_H
-#define CLI_H
+#ifndef COMMAND_LINE_INTERFACE_H
+#define COMMAND_LINE_INTERFACE_H
 
 void cliSetup( void );
 
-#endif  // CLI_H
+#endif  // COMMAND_LINE_INTERFACE_H

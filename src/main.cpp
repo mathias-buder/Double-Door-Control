@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
 #include "appSettings.h"
-#include "stateManagement.h"
-#include "ioManagement.h"
+#include "stateMan.h"
+#include "ioMan.h"
 #include "logging.h"
 #include "storage.h"
 
@@ -13,11 +13,6 @@
 
 
 /******************************** Function prototype ************************************/
-
-
-static void                   doorOpenTimeoutHandler( uint32_t time );
-static void                   doorUnlockTimeoutHandler( uint32_t time );
-
 
 
 /**
