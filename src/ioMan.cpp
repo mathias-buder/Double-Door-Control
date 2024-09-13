@@ -105,7 +105,7 @@ static void ioMan_setDoorState( const door_type_t door, const lock_state_t state
  */
 static input_status_t ioMan_getDoorState( const io_t input )
 {
-    Log.verboseln( "%s: input: %s", __func__, ioToString( input ).c_str() );
+    Log.verboseln( "%s: input: %s", __func__, logging_ioToString( input ).c_str() );
 
     static bool           initialReadingDone[IO_INPUT_SIZE] = {0};
     static uint8_t        ioState[IO_INPUT_SIZE]            = {0};
@@ -149,12 +149,12 @@ static input_status_t ioMan_getDoorState( const io_t input )
             if ( ioState[input] == buttonSwitchIoConfig[input].activeState )
             {
                 state[input].state = INPUT_STATE_ACTIVE;
-                Log.noticeln( "%s: %s is active", __func__, ioToString( input ).c_str() );
+                Log.noticeln( "%s: %s is active", __func__, logging_ioToString( input ).c_str() );
             }
             else
             {
                 state[input].state = INPUT_STATE_INACTIVE;
-                Log.noticeln( "%s: %s is inactive", __func__, ioToString( input ).c_str() );
+                Log.noticeln( "%s: %s is inactive", __func__, logging_ioToString( input ).c_str() );
             }
 
             /* Set the first reading done flag */
@@ -238,4 +238,14 @@ void ioMan_setLed( bool enable, door_type_t door, led_color_t color )
         digitalWrite( ledIoConfig[door][RGB_LED_PIN_G].pinNumber, !ledIoConfig[door][RGB_LED_PIN_G].activeState );
         digitalWrite( ledIoConfig[door][RGB_LED_PIN_B].pinNumber, !ledIoConfig[door][RGB_LED_PIN_B].activeState );
     }
+}
+
+void ioMan_setDebounceDelay( const io_t io, const uint16_t delay )
+{
+    if ( io >= IO_INPUT_SIZE )
+    {
+        Log.errorln( "%s: Invalid input: %d", __func__, io );
+        return;
+    }
+    buttonSwitchIoConfig[io].debounceDelay = delay;
 }

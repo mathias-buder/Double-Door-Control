@@ -10,9 +10,12 @@
 
 #include <Arduino.h>
 #include <SimpleCLI.h>
+#include <TimerOne.h>
 
 #include "comLineIf.h"
 #include "appSettings.h"
+#include "logging.h"
+#include "ioMan.h"
 
 
 static void cliCmdGetInfoCb( cmd* pCommand );
@@ -79,7 +82,7 @@ static void cliCmdGetInfoCb( cmd* pCommand )
     Serial.println( "Build date: " + String( __DATE__ ) + " " + String( __TIME__ ) );
 
     /* Output current log level */
-    Serial.println( "Log level: " + logLevelToString( Log.getLevel() ) );
+    Serial.println( "Log level: " + logging_logLevelToString( Log.getLevel() ) );
 
     /* Output the all times and timeouts */
     Serial.println( "Door unlock timeout: " + String( settings.doorUnlockTimeout ) + " s" );
@@ -88,7 +91,7 @@ static void cliCmdGetInfoCb( cmd* pCommand )
 
     for ( uint8_t i = 0; i < IO_INPUT_SIZE; i++ )
     {
-        Serial.println( "Debounce delay " + ioToString( (io_t) i ) + ": " + String( settings.debounceDelay[i] ) + " ms" );
+        Serial.println( "Debounce delay " + logging_ioToString( (io_t) i ) + ": " + String( settings.debounceDelay[i] ) + " ms" );
     }
 
     Serial.println( "----------------------------------" );
@@ -106,11 +109,11 @@ static void cliCmdSetLogLevelCb( cmd* pCommand )
     Argument arg = cmd.getArgument();
     if ( !arg.isSet() )
     {
-        Log.errorln( "%s: No log level specified, remaining at %s.", __func__, logLevelToString( Log.getLevel() ).c_str() );
+        Log.errorln( "%s: No log level specified, remaining at %s.", __func__, logging_logLevelToString( Log.getLevel() ).c_str() );
         return;
     }
 
-    Log.noticeln( "Setting log level from %s to %s", logLevelToString( Log.getLevel() ).c_str(), logLevelToString( arg.getValue().toInt() ).c_str() );
+    Log.noticeln( "Setting log level from %s to %s", logging_logLevelToString( Log.getLevel() ).c_str(), logging_logLevelToString( arg.getValue().toInt() ).c_str() );
     Log.setLevel( arg.getValue().toInt() );
 }
 
@@ -128,7 +131,7 @@ static void cliCmdSetTimerCb( cmd* pCommand )
     if ( argUnlock.isSet() )
     {
         settings.doorUnlockTimeout = argUnlock.getValue().toInt();
-        doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeout = settings.doorUnlockTimeout * 1000;
+        stateMan_setDoorTimer( DOOR_TIMER_TYPE_UNLOCK, settings.doorUnlockTimeout );
         Log.noticeln( "%s: Door unlock timeout set to %d s", __func__, settings.doorUnlockTimeout );
     }
 
@@ -136,7 +139,7 @@ static void cliCmdSetTimerCb( cmd* pCommand )
     if ( argOpen.isSet() )
     {
         settings.doorOpenTimeout = argOpen.getValue().toInt();
-        doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeout = ( (uint32_t) settings.doorOpenTimeout ) * 60000;
+        stateMan_setDoorTimer( DOOR_TIMER_TYPE_OPEN, settings.doorOpenTimeout );
         Log.noticeln( "%s: Door open timeout set to %d min", __func__, settings.doorOpenTimeout );
     }
 
@@ -164,9 +167,9 @@ static void cliCmdSetDebounceDelayCb( cmd* pCommand )
 
     if ( inputIdx < IO_INPUT_SIZE )
     {
-        settings.debounceDelay[inputIdx]             = cmd.getArgument( "t" ).getValue().toInt();
-        buttonSwitchIoConfig[inputIdx].debounceDelay = settings.debounceDelay[inputIdx];
-        Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, ioToString( (io_t) inputIdx ).c_str(), settings.debounceDelay[inputIdx] );
+        settings.debounceDelay[inputIdx] = cmd.getArgument( "t" ).getValue().toInt();
+        ioMan_setDebounceDelay( (io_t) inputIdx, settings.debounceDelay[inputIdx] );
+        Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, logging_ioToString( (io_t) inputIdx ).c_str(), settings.debounceDelay[inputIdx] );
     }
     else
     {
@@ -188,8 +191,8 @@ static void cliCmdGetInputStateCb( cmd* pCommand )
 
     for ( uint8_t i = 0; i < IO_INPUT_SIZE; i++ )
     {
-        input_status_t inputState = getDoorIoState( (io_t) i );
-        Serial.println( ioToString( (io_t) i ) + ": " + inputStateToString( inputState.state ) );
+        input_status_t inputState = ioMan_getDoorState( (io_t) i );
+        Serial.println( logging_ioToString( (io_t) i ) + ": " + logging_inputStateToString( inputState.state ) );
     }
 
     Serial.println( "----------------------------------" );

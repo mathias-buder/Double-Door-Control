@@ -863,3 +863,25 @@ static void stateMan_processTimers( door_control_t* const pDoorControl )
         }
     }
 }
+
+
+void stateMan_setDoorTimer( door_timer_type_t timerType, uint32_t timeout )
+{
+    if ( timerType >= DOOR_TIMER_TYPE_SIZE )
+    {
+        Log.errorln( "%s: Invalid timer type", __func__ );
+        return;
+    }
+
+    switch ( timerType )
+    {
+    case DOOR_TIMER_TYPE_UNLOCK:
+        doorControl.doorTimer[DOOR_TIMER_TYPE_UNLOCK].timeout = ( (uint32_t)timeout * 1000 );
+        break;
+    case DOOR_TIMER_TYPE_OPEN:
+        doorControl.doorTimer[DOOR_TIMER_TYPE_OPEN].timeout = ( (uint32_t) timeout ) * 60000;
+        break;
+    default:
+        break;
+    }
+}

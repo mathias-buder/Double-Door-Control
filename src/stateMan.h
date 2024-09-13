@@ -74,5 +74,6 @@ typedef struct
 
 void stateMan_setup( void );
 void stateMan_process( void );
+void stateMan_setDoorTimer( door_timer_type_t timerType, uint32_t timeout );
 
 #endif // STATEMANAGEMENT_H

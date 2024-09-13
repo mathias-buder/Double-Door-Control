@@ -146,5 +146,6 @@ void           ioMan_Setup( void );
 void           ioMan_setDoorState( const door_type_t door, const lock_state_t state );
 input_status_t ioMan_getDoorState( const io_t sensor );
 void           ioMan_setLed( bool enable, door_type_t door, led_color_t color );
+void           ioMan_setDebounceDelay( const io_t io, const uint16_t delay );
 
 #endif  // IO_MANAGEMENT_H
