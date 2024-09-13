@@ -4,6 +4,7 @@
 #include "ioMan.h"
 #include "comLineIf.h"
 #include "logging.h"
+#include "appSettings.h"
 
 
 /**
@@ -24,6 +25,9 @@ void setup()
     logging_setup();
     Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
+
+    /* Initialize application settings */
+    appSettings_setup();
 
     /* Initialize command line interface, input/output management and state management */
     comLineIf_setup();
