@@ -146,6 +146,8 @@ static void stateMan_processTimers( door_control_t* const pDoorControl );
  */
 void stateMan_setup( void )
 {
+    Log.noticeln( "%s: Setting up the state manager", __func__ );
+
     /* Initialize the led blink timer */
     Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) settings.ledBlinkInterval ) );
 

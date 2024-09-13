@@ -36,6 +36,8 @@ static Command   cmdHelp;             /*!< Pint the help */
 
 void comLineIf_setup( void )
 {
+    Log.noticeln( "%s: Setting up the command line interface", __func__ );
+
     /* Initialize the command line interface */
     cmdGetInfo = cli.addSingleArgCmd( "info", comLineIf_cmdGetInfoCb ); /*!< Get software information */
     cmdGetInfo.setDescription( "Get software information" );
@@ -61,7 +63,6 @@ void comLineIf_setup( void )
     cmdHelp.setDescription( "Show the help" );
 
     cli.setOnError( comLineIf_cmdErrorCb );
-
 }
 
 

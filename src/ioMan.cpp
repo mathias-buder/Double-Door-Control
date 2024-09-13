@@ -44,6 +44,8 @@ static const io_config_t ledIoConfig[DOOR_TYPE_SIZE][RGB_LED_PIN_SIZE] = {
 
 void ioMan_Setup( void )
 {
+    Log.noticeln( "%s: Setting up the input/output management", __func__ );
+
     for ( uint8_t i = 0; i < sizeof( buttonSwitchIoConfig ) / sizeof( buttonSwitchIoConfig[0] ); i++ )
     {
         pinMode( buttonSwitchIoConfig[i].pinNumber, buttonSwitchIoConfig[i].direction );
