@@ -106,20 +106,15 @@ void comLineIf_process( void )
         String input = Serial.readStringUntil( '\n' );
         cli.parse( input );
 
-                // String testCommand( "timer -d 0 -u 5 -o 600 -b 500" );
-        // String testCommand( "log" );
-        // String testCommand1( "timer -u 30 -o 18 -b 180" );
-        // cli.parse( testCommand1);
-        // String testCommand2( "info" );
-        // cli.parse( testCommand2);
-        // String testCommand3( "time -f" );
-        // cli.parse( testCommand3 );
-        // String testCommand4( "dbc -i 3 -t 128" );
-        // cli.parse( testCommand4);
-        // String testCommand5( "dbc -t 300" );
-        // cli.parse( testCommand5);
-        // String testCommand6( "dbc -t 300" );
-        // cli.parse( testCommand6);
+        /* Uncomment the following lines to test the command line interface */
+        // cli.parse( String( "info" ) );
+        // cli.parse( String( "log" ) );
+        // cli.parse( String( "timer -d 0 -u 5 -o 600 -b 500" ) );
+        // cli.parse( String( "timer -u 30 -o 18 -b 180" ) );
+        // cli.parse( String( "time -f" ) );
+        // cli.parse( String( "dbc -i 3 -t 128" ) );
+        // cli.parse( String( "dbc -t 300" ) );
+        // cli.parse( String( "info" ) );
     }
 }
 
