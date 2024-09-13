@@ -68,16 +68,6 @@ typedef struct
 } settings_t;
 
 
-static settings_t settings = {
-    .doorUnlockTimeout = DOOR_UNLOCK_TIMEOUT,
-    .doorOpenTimeout   = DOOR_OPEN_TIMEOUT,
-    .ledBlinkInterval  = LED_BLINK_INTERVAL,
-    .debounceDelay     = {
-                            DEBOUNCE_DELAY_DOOR_BUTTON_1,
-                            DEBOUNCE_DELAY_DOOR_BUTTON_2,
-                            DEBOUNCE_DELAY_DOOR_SWITCH_1,
-                            DEBOUNCE_DELAY_DOOR_SWITCH_2
-                        }
-};
+extern settings_t settings;
 
 #endif  // APPSETTINGS_H

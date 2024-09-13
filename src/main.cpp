@@ -1,11 +1,8 @@
 #include <Arduino.h>
 
-#include "appSettings.h"
 #include "stateMan.h"
-#include "ioMan.h"
-#include "logging.h"
-#include "storage.h"
 #include "comLineIf.h"
+#include "logging.h"
 
 
 /********************************************** ENUMERATION ****************************************/
