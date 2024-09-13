@@ -15,6 +15,8 @@
 #include "logging.h"
 
 
+/******************************** Function prototype ************************************/
+
 static state_machine_result_t initHandler( state_machine_t* const pState, const uint32_t event );
 static state_machine_result_t initEntryHandler( state_machine_t* const pState, const uint32_t event );
 /* static state_machine_result_t initExitHandler( state_machine_t* const pState, const uint32_t event ); */
@@ -46,6 +48,9 @@ static void                   door1BlinkLedIsrHandler( void );
 static void                   door2BlinkLedIsrHandler( void );
 static void                   doorOpenTimeoutHandler( uint32_t time );
 static void                   doorUnlockTimeoutHandler( uint32_t time );
+
+
+/******************************** Global variables ************************************/
 
 /**
  * @brief The state machine for the door control
@@ -117,20 +122,28 @@ door_control_t doorControl = {
                 }
 };
 
-
 /**
  * @brief The array of state machines
  * @details The array of state machines is used to dispatch the event to the state machines.
  */
 state_machine_t* const stateMachines[] = {(state_machine_t*) &doorControl};
 
-
+/******************************** Static Function prototype ************************************/
 
 static void stateMan_generateEvent( door_control_t* const pDoorControl );
 static void stateMan_processTimers( door_control_t* const pDoorControl );
 
 
+/******************************** Function definition ************************************/
 
+
+/**
+ * @brief Sets up the state manager.
+ *
+ * This function initializes the LED blink timer with an interval specified
+ * by the settings.ledBlinkInterval. It also initializes the state machine
+ * by switching to the initial state defined in doorControlStates.
+ */
 void stateMan_setup( void )
 {
     /* Initialize the led blink timer */
@@ -140,6 +153,15 @@ void stateMan_setup( void )
     switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
 }
 
+
+/**
+ * @brief Processes the state management for the door control system.
+ *
+ * This function performs the following tasks:
+ * 1. Generates and processes events related to the door control.
+ * 2. Processes door open timers.
+ * 3. Dispatches the event to the state machine and logs an error if the event is not handled.
+ */
 void stateMan_process( void )
 {
     /* Generate/Process events */
@@ -154,8 +176,6 @@ void stateMan_process( void )
         Log.errorln( "Event is not handled" );
     }
 }
-
-
 
 
 /**
@@ -346,7 +366,6 @@ static state_machine_result_t idleExitHandler( state_machine_t* const pState, co
 
     return EVENT_HANDLED;
 }
-
 
 
 /**
@@ -743,8 +762,19 @@ static state_machine_result_t door2OpenExitHandler( state_machine_t* const pStat
 }
 
 
+
 /**
- * @brief Handler for the door 2 led blink
+ * @brief Interrupt Service Routine (ISR) handler for blinking LEDs on door 2.
+ *
+ * This function toggles the state of two LEDs each time it is called. The red LED
+ * on door 1 and the green LED on door 2 will be toggled between on and off states.
+ *
+ * The function uses a static variable to keep track of the current state of the LEDs.
+ * Each time the function is called, the state is inverted and the LEDs are updated
+ * accordingly.
+ *
+ * @note This function is intended to be used as an ISR handler and should be kept
+ *       as short and efficient as possible.
  */
 static void door2BlinkLedIsrHandler( void )
 {
@@ -755,10 +785,15 @@ static void door2BlinkLedIsrHandler( void )
 }
 
 
+
 /**
- * @brief Handler for the door 1 open timeout
- * 
- * @param time - The time
+ * @brief Handles the timeout event for the door open state.
+ *
+ * This function is called when the door open timeout occurs. It logs the event
+ * and switches the state machine to the fault state if the door is not closed
+ * within the specified time.
+ *
+ * @param time The time elapsed since the door was opened.
  */
 static void doorOpenTimeoutHandler( uint32_t time )
 {
@@ -769,6 +804,16 @@ static void doorOpenTimeoutHandler( uint32_t time )
 }
 
 
+/**
+ * @brief Handles the timeout event for door unlocking.
+ *
+ * This function is called when the door unlock timeout occurs. It logs the 
+ * event with the provided time and switches the state machine back to the 
+ * idle state if the door is not opened in time by pushing the appropriate 
+ * timeout events.
+ *
+ * @param time The time at which the timeout event occurred.
+ */
 static void doorUnlockTimeoutHandler( uint32_t time )
 {
     Log.verboseln("%s: Time: %d", __func__, time );
@@ -779,10 +824,22 @@ static void doorUnlockTimeoutHandler( uint32_t time )
 }
 
 
+
 /**
- * @brief Generate the event based on the door switches and buttons
+ * @brief Generates events based on the state of door switches.
  *
- * @param pDoorControl - Pointer to the door control
+ * This function reads the state of two door switches and generates corresponding events
+ * for the door control state machine. It logs the state of the door switches and pushes
+ * events to the event queue based on the following conditions:
+ * 
+ * - If both door switches are inactive, it generates a DOOR_CONTROL_EVENT_DOOR_1_2_OPEN event.
+ * - If both door switches are active, it generates a DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE event.
+ * - If door 1 switch is active, it generates a DOOR_CONTROL_EVENT_DOOR_1_CLOSE event.
+ * - If door 1 switch is inactive, it generates a DOOR_CONTROL_EVENT_DOOR_1_OPEN event.
+ * - If door 2 switch is active, it generates a DOOR_CONTROL_EVENT_DOOR_2_CLOSE event.
+ * - If door 2 switch is inactive, it generates a DOOR_CONTROL_EVENT_DOOR_2_OPEN event.
+ *
+ * @param pDoorControl Pointer to the door control structure.
  */
 static void stateMan_generateEvent( door_control_t* const pDoorControl )
 {
@@ -832,10 +889,15 @@ static void stateMan_generateEvent( door_control_t* const pDoorControl )
 }
 
 
+
 /**
- * @brief Process the door open timers
- * 
- * @param pDoorControl - Pointer to the door control
+ * @brief Processes the door control timers and handles timer expiration.
+ *
+ * This function checks the status of each door timer in the door control structure.
+ * If a timer is running and has expired, it calls the associated handler and resets the timer.
+ * It also logs the remaining time for each running timer.
+ *
+ * @param pDoorControl Pointer to the door control structure containing the timers.
  */
 static void stateMan_processTimers( door_control_t* const pDoorControl )
 {
@@ -868,6 +930,24 @@ static void stateMan_processTimers( door_control_t* const pDoorControl )
 }
 
 
+/**
+ * @brief Sets the door timer based on the specified timer type and timeout value.
+ *
+ * This function configures the timeout for a specific door timer type. The timeout
+ * value is converted to milliseconds or minutes depending on the timer type.
+ *
+ * @param timerType The type of the door timer to set. Must be a value of type `door_timer_type_t`.
+ *                  Valid values are:
+ *                  - DOOR_TIMER_TYPE_UNLOCK: Sets the unlock timer (timeout in seconds).
+ *                  - DOOR_TIMER_TYPE_OPEN: Sets the open timer (timeout in minutes).
+ * @param timeout The timeout value for the specified timer type. The unit of this value
+ *                depends on the timer type:
+ *                - For DOOR_TIMER_TYPE_UNLOCK, the timeout is in seconds.
+ *                - For DOOR_TIMER_TYPE_OPEN, the timeout is in minutes.
+ *
+ * @note If an invalid timer type is provided, the function logs an error and returns without
+ *       making any changes.
+ */
 void stateMan_setDoorTimer( door_timer_type_t timerType, uint32_t timeout )
 {
     if ( timerType >= DOOR_TIMER_TYPE_SIZE )

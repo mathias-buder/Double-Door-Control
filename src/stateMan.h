@@ -16,6 +16,8 @@
 #include "appSettings.h"
 #include "ioMan.h"
 
+/********************************************** ENUMERATION ****************************************/
+
 /**
  * @brief Enumeration of the door control state
  */
@@ -50,6 +52,9 @@ typedef enum
     DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE         /*!< The door 1 and 2 are closed */
 } door_control_event_t;
 
+
+/************************************* STRUCTURE **************************************/
+
 /**
  * @brief The timer structure
  * @details The timer structure is used to hold the door 1/2 open timeout timers
@@ -71,6 +76,9 @@ typedef struct
     door_timer_t    doorTimer[DOOR_TIMER_TYPE_SIZE]; /*!< The door timers */
 } door_control_t;
 
+
+
+/******************************** Function prototype ************************************/
 
 void stateMan_setup( void );
 void stateMan_process( void );
