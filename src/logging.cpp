@@ -29,7 +29,7 @@ void logging_setup( void )
  * @param event - The event to convert
  * @return String - The string representation of the event
  */
-void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
+void logging_eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
 {
     (void) stateMachine;
     static uint32_t lastEvent = 0;
@@ -40,8 +40,8 @@ void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
          && ( lastState != state ) )
     {
         Log.noticeln( "%s: Event: %s, State: %s", __func__,
-                    eventToString( (door_control_event_t) event ).c_str(),
-                    stateToString( (door_control_state_t) state ).c_str() );
+                    logging_eventToString( (door_control_event_t) event ).c_str(),
+                    logging_stateToString( (door_control_state_t) state ).c_str() );
     }
 
     /* Save the last event and state */
@@ -56,7 +56,7 @@ void eventLogger( uint32_t stateMachine, uint32_t state, uint32_t event )
  * @param state - The state to convert
  * @return String - The string representation of the state
  */
-void resultLogger(uint32_t state, state_machine_result_t result)
+void logging_resultLogger(uint32_t state, state_machine_result_t result)
 {
     static uint32_t lastState = 0;
 
@@ -64,8 +64,8 @@ void resultLogger(uint32_t state, state_machine_result_t result)
     if ( lastState != state )
     {
         Log.noticeln( "%s: Result: %s, Current state: %s", __func__,
-                                                            resultToString( result ).c_str(),
-                                                            stateToString( (door_control_state_t) state ).c_str() );
+                                                            logging_resultToString( result ).c_str(),
+                                                            logging_stateToString( (door_control_state_t) state ).c_str() );
     }
 
     /* Save the last state */
@@ -79,7 +79,7 @@ void resultLogger(uint32_t state, state_machine_result_t result)
  * @param state - The state to convert
  * @return String - The string representation of the state
  */
-String stateToString( door_control_state_t state )
+String logging_stateToString( door_control_state_t state )
 {
     switch ( state )
     {
@@ -109,7 +109,7 @@ String stateToString( door_control_state_t state )
  * @param event - The event to convert
  * @return String - The string representation of the event
  */
-String eventToString( door_control_event_t event )
+String logging_eventToString( door_control_event_t event )
 {
     Log.verboseln( "%s: Event: %d", __func__, event );
 
@@ -153,7 +153,7 @@ String eventToString( door_control_event_t event )
  * @param result - The result to convert
  * @return String - The string representation of the result
  */
-String resultToString( state_machine_result_t result )
+String logging_resultToString( state_machine_result_t result )
 {
     Log.verboseln( "%s: Result: %d", __func__, result );
 
@@ -177,7 +177,7 @@ String resultToString( state_machine_result_t result )
  * @param sensor - The input/output to convert
  * @return String - The string representation of the input/output
  */
-String ioToString( io_t io )
+String logging_ioToString( io_t io )
 {
     Log.verboseln( "%s: IO: %d", __func__, io );
 
@@ -219,7 +219,7 @@ String ioToString( io_t io )
  * @param timerType - The timer type to convert
  * @return String - The string representation of the timer type
  */
-String timerTypeToString( door_timer_type_t timerType )
+String logging_timerTypeToString( door_timer_type_t timerType )
 {
     Log.verboseln( "%s: Timer type: %d", __func__, timerType );
 
@@ -241,7 +241,7 @@ String timerTypeToString( door_timer_type_t timerType )
  * @param state - The input state to convert
  * @return String - The string representation of the input state
  */
-String inputStateToString( input_state_t state )
+String logging_inputStateToString( input_state_t state )
 {
     Log.verboseln( "%s: State: %d", __func__, state );
 
@@ -257,7 +257,7 @@ String inputStateToString( input_state_t state )
 }
 
 
-String logLevelToString( uint8_t level )
+String logging_logLevelToString( uint8_t level )
 {
     Log.verboseln( "%s: Level: %d", __func__, level );
 
