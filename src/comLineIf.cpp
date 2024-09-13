@@ -155,13 +155,14 @@ static void comLineIf_cmdGetInfoCb( cmd* pCommand )
     Serial.println( "Log level: " + logging_logLevelToString( Log.getLevel() ) );
 
     /* Output the all times and timeouts */
-    Serial.println( "Door unlock timeout: " + String( settings.doorUnlockTimeout ) + " s" );
-    Serial.println( "Door open timeout: " + String( settings.doorOpenTimeout ) + " min" );
-    Serial.println( "Led blink interval: " + String( settings.ledBlinkInterval ) + " ms" );
+    settings_t* settings = appSettings_getSettings();
+    Serial.println( "Door unlock timeout: " + String( settings->doorUnlockTimeout ) + " s" );
+    Serial.println( "Door open timeout: " + String( settings->doorOpenTimeout ) + " min" );
+    Serial.println( "Led blink interval: " + String( settings->ledBlinkInterval ) + " ms" );
 
     for ( uint8_t i = 0; i < IO_INPUT_SIZE; i++ )
     {
-        Serial.println( "Debounce delay " + logging_ioToString( (io_t) i ) + ": " + String( settings.debounceDelay[i] ) + " ms" );
+        Serial.println( "Debounce delay " + logging_ioToString( (io_t) i ) + ": " + String( settings->debounceDelay[i] ) + " ms" );
     }
 
     Serial.println( "----------------------------------" );
@@ -214,29 +215,30 @@ static void comLineIf_cmdSetLogLevelCb( cmd* pCommand )
 static void comLineIf_cmdSetTimerCb( cmd* pCommand )
 {
     Command  cmd( pCommand );
+    settings_t* settings = appSettings_getSettings();
 
     Argument argUnlock = cmd.getArgument( "u" );
     if ( argUnlock.isSet() )
     {
-        settings.doorUnlockTimeout = argUnlock.getValue().toInt();
-        stateMan_setDoorTimer( DOOR_TIMER_TYPE_UNLOCK, settings.doorUnlockTimeout );
-        Log.noticeln( "%s: Door unlock timeout set to %d s", __func__, settings.doorUnlockTimeout );
+        settings->doorUnlockTimeout = argUnlock.getValue().toInt();
+        stateMan_setDoorTimer( DOOR_TIMER_TYPE_UNLOCK, settings->doorUnlockTimeout );
+        Log.noticeln( "%s: Door unlock timeout set to %d s", __func__, settings->doorUnlockTimeout );
     }
 
     Argument argOpen = cmd.getArgument( "o" );
     if ( argOpen.isSet() )
     {
-        settings.doorOpenTimeout = argOpen.getValue().toInt();
-        stateMan_setDoorTimer( DOOR_TIMER_TYPE_OPEN, settings.doorOpenTimeout );
-        Log.noticeln( "%s: Door open timeout set to %d min", __func__, settings.doorOpenTimeout );
+        settings->doorOpenTimeout = argOpen.getValue().toInt();
+        stateMan_setDoorTimer( DOOR_TIMER_TYPE_OPEN, settings->doorOpenTimeout );
+        Log.noticeln( "%s: Door open timeout set to %d min", __func__, settings->doorOpenTimeout );
     }
 
     Argument argBlink = cmd.getArgument( "b" );
     if ( argBlink.isSet() )
     {
-        settings.ledBlinkInterval = argBlink.getValue().toInt();
-        Timer1.setPeriod( ( (uint32_t) 2000 ) * ( (uint32_t) settings.ledBlinkInterval ) );
-        Log.noticeln( "%s: Led blink interval set to %d ms", __func__, settings.ledBlinkInterval );
+        settings->ledBlinkInterval = argBlink.getValue().toInt();
+        Timer1.setPeriod( ( (uint32_t) 2000 ) * ( (uint32_t) settings->ledBlinkInterval ) );
+        Log.noticeln( "%s: Led blink interval set to %d ms", __func__, settings->ledBlinkInterval );
     }
 }
 
@@ -263,15 +265,17 @@ static void comLineIf_cmdSetTimerCb( cmd* pCommand )
 static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand )
 {
     Command cmd( pCommand );
+    settings_t* settings = appSettings_getSettings();
 
     Argument argInputIdx = cmd.getArgument( "i" );
     uint8_t  inputIdx    = argInputIdx.getValue().toInt();
 
+
     if ( inputIdx < IO_INPUT_SIZE )
     {
-        settings.debounceDelay[inputIdx] = cmd.getArgument( "t" ).getValue().toInt();
-        ioMan_setDebounceDelay( (io_t) inputIdx, settings.debounceDelay[inputIdx] );
-        Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, logging_ioToString( (io_t) inputIdx ).c_str(), settings.debounceDelay[inputIdx] );
+        settings->debounceDelay[inputIdx] = cmd.getArgument( "t" ).getValue().toInt();
+        ioMan_setDebounceDelay( (io_t) inputIdx, settings->debounceDelay[inputIdx] );
+        Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, logging_ioToString( (io_t) inputIdx ).c_str(), settings->debounceDelay[inputIdx] );
     }
     else
     {

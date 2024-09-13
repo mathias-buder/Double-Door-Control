@@ -76,8 +76,6 @@ typedef struct
 
 /******************************** Function prototype ************************************/
 
-
-extern settings_t settings;
-
+settings_t* appSettings_getSettings( void );
 
 #endif  // APPSETTINGS_H

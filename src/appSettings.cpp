@@ -33,3 +33,8 @@ settings_t settings = {
 
 
 /******************************** Function definition ************************************/
+
+settings_t* appSettings_getSettings( void )
+{
+    return &settings;
+}
