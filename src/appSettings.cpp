@@ -13,11 +13,17 @@
 
 #include "logging.h"
 
+
+/*************************************** Defines ****************************************/
+
+#define EEPROM_SETTINGS_ADDRESS     0 /*!< The EEPROM address where the settings are stored */
+#define EEPROM_EMPTY_CRC            10737431656552524628 /*!< The initial value of the CRC in the EEPROM */
+
 /******************************** Function prototype ************************************/
 
 
 /**************************** Static Function prototype *********************************/
-
+static uint64_t appSettings_calculateCrc( settings_t* settings );
 
 /******************************** Global variables **************************************/
 
@@ -37,10 +43,14 @@ static settings_t appSettings = {
 /******************************** Function definition ************************************/
 
 
-    settings_t eepromSettings;
 void appSettings_setup( void )
 {
+    settings_t eepromSettings;
     appSettings_loadSettings( &eepromSettings );
+    uint64_t eepromCrc = appSettings_calculateCrc( &eepromSettings );
+    uint64_t appCrc    = appSettings_calculateCrc( &appSettings );
+    Log.noticeln( "EEPROM CRC: %u", eepromCrc );
+    Log.noticeln( "APP CRC: %u", appCrc );
 }
 
 
@@ -55,7 +65,6 @@ settings_t* appSettings_getSettings( void )
 {
     return &appSettings;
 }
-
 
 
 /**
@@ -76,7 +85,7 @@ void appSettings_loadSettings( settings_t* settings )
         return;
     }
 
-    uint16_t address = 0;
+    uint16_t address = EEPROM_SETTINGS_ADDRESS;
     uint8_t* ptr     = (uint8_t*) settings;
 
     for ( uint8_t i = 0; i < sizeof( settings_t ); i++ )
@@ -106,7 +115,7 @@ void appSettings_saveSettings( settings_t* settings )
         return;
     }
 
-    uint16_t address = 0;
+    uint16_t address = EEPROM_SETTINGS_ADDRESS;
     uint8_t* ptr     = (uint8_t*) settings;
 
     for ( uint8_t i = 0; i < sizeof( settings_t ); i++ )
@@ -115,4 +124,38 @@ void appSettings_saveSettings( settings_t* settings )
         ptr++;
         address++;
     }
+}
+
+/**
+ * @brief Calculates the CRC-64 checksum for the given settings.
+ *
+ * This function computes the CRC-64 checksum using the polynomial 0xC96C5795D7870F42.
+ * It iterates over each byte of the settings structure and updates the CRC value accordingly.
+ *
+ * @param settings Pointer to the settings structure for which the CRC is to be calculated.
+ * @return The calculated CRC-64 checksum.
+ */
+static uint64_t appSettings_calculateCrc( settings_t* settings )
+{
+    uint64_t crc = 0xFFFFFFFF;
+    uint8_t* ptr = (uint8_t*) settings;
+
+    for ( uint8_t i = 0; i < sizeof( settings_t ); i++ )
+    {
+        crc = crc ^ *ptr;
+        for ( uint8_t j = 0; j < 8; j++ )
+        {
+            if ( crc & 1 )
+            {
+                crc = ( crc >> 1 ) ^ 0xC96C5795D7870F42; /*!< Polynomial used in CRC-64-ISO */
+            }
+            else
+            {
+                crc = crc >> 1;
+            }
+        }
+        ptr++;
+    }
+
+    return crc;
 }
