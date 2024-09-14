@@ -11,6 +11,7 @@
     - [What Happens in Case of Errors?](#what-happens-in-case-of-errors)
   - [User Tips](#user-tips)
 - [Command Line Interface (CLI)](#command-line-interface-cli)
+  - [Default Settings](#default-settings)
   - [Installation and Setup](#installation-and-setup)
     - [Step 1: Install Arduino IDE](#step-1-install-arduino-ide)
     - [Step 2: Connect Your Device](#step-2-connect-your-device)
@@ -93,6 +94,20 @@ This section will guide you through installing the required software and using t
 3. Door Open Timeout (minutes)
 4. LED Blink Interval (milliseconds)
 5. Debounce time for all buttons and switches (milliseconds)
+
+## Default Settings
+
+The system has the following default settings:
+
+- **Log Level:** LOG_LEVEL_NOTICE
+- **Door unlock timeout:** 5 seconds
+- **Door open timeout:** 10 minutes
+- **LED blink interval:** 500 milliseconds
+- **Debounce delay:**
+  - Door Button 1: 100 ms
+  - Door Button 2: 100 ms
+  - Door Switch 1: 100 ms
+  - Door Switch 2: 100 ms
 
 ---
 
