@@ -92,6 +92,7 @@ void appSettings_setup( void )
     }
 }
 
+
 /**
  * @brief Retrieves the application settings.
  *
@@ -224,7 +225,6 @@ static void appSettings_writeCrc( settings_t* settings )
 
     Log.verboseln( "%s: CRC %l written to EEPROM", __func__, crc );
 }
-
 
 
 /**
