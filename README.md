@@ -1,7 +1,86 @@
-# Metek Door Control
+# Metek Door Control System
 
-## State Diagram
+- [Metek Door Control System](#metek-door-control-system)
+- [Introduction](#introduction)
+  - [How It Works](#how-it-works)
+    - [Main System States](#main-system-states)
+    - [Common Events](#common-events)
+    - [What Happens in Case of Errors?](#what-happens-in-case-of-errors)
+  - [Summary of System Behavior](#summary-of-system-behavior)
+  - [User Tips](#user-tips)
+- [Command Line Interface (CLI) User Manual](#command-line-interface-cli-user-manual)
+  - [Installation and Setup](#installation-and-setup)
+    - [Step 1: Install Arduino IDE](#step-1-install-arduino-ide)
+    - [Step 2: Connect Your Device](#step-2-connect-your-device)
+    - [Step 3: Open the Serial Monitor](#step-3-open-the-serial-monitor)
+  - [Using the Command Line Interface (CLI)](#using-the-command-line-interface-cli)
+    - [1. **info** — Get Software Information](#1-info--get-software-information)
+    - [2. **log** — Set Log Level](#2-log--set-log-level)
+    - [3. **timer** — Set the Timer](#3-timer--set-the-timer)
+    - [4. **dbc** — Set Debounce Time](#4-dbc--set-debounce-time)
+    - [5. **inputs** — Get Input State](#5-inputs--get-input-state)
+    - [6. **help** — Show Help](#6-help--show-help)
+    - [Common Errors](#common-errors)
+
+
+# Introduction
+
+This Door Control System is designed to control the state of two doors in a way that ensures security and proper operation. The diagram below outlines how the system moves between different states depending on user actions or events related to the doors.
+
+## How It Works
+
+The system goes through different states based on the status of the doors (whether they are locked, unlocked, open, or closed). These states are triggered by specific events, such as a door being unlocked or an error occurring.
+
 ![](docs/state_diagram.jpeg "State Diagram")
+
+### Main System States
+
+1. **INIT (Initialization State)**  
+   The system starts here when it is first turned on. It checks that both doors are initially closed before moving to the next state.
+
+2. **IDLE (Waiting State)**  
+   Once the doors are closed, the system moves into IDLE, where it waits for further events. From here, the system can respond to several actions, such as unlocking or opening a door.
+
+3. **DOOR_1_UNLOCKED**  
+   When Door 1 is unlocked, the system transitions to this state. It waits for Door 1 to either open or relock.
+
+4. **DOOR_1_OPEN**  
+   If Door 1 is unlocked and then opened, the system enters this state. Once the door closes, it will return to the IDLE state. If the door remains open for too long, the system will move to a FAULT state.
+
+5. **DOOR_2_UNLOCKED**  
+   Similar to Door 1, when Door 2 is unlocked, the system moves to this state.
+
+6. **DOOR_2_OPEN**  
+   When Door 2 is unlocked and opened, the system transitions here. It will wait for the door to close before returning to the IDLE state. If the door remains open for too long, the system will move to a FAULT state.
+
+7. **FAULT (Error State)**  
+   If there is an issue, such as both doors being open at the same time, the system moves to the FAULT state. From here, it waits until the issue is resolved (i.e., both doors are closed) before returning to IDLE.
+
+### Common Events
+
+- **EVENT_DOOR_1_UNLOCK / EVENT_DOOR_2_UNLOCK:** These events trigger when either Door 1 or Door 2 is unlocked.
+- **EVENT_DOOR_1_OPEN / EVENT_DOOR_2_OPEN:** These events occur when a door is opened.
+- **EVENT_DOOR_1_CLOSE / EVENT_DOOR_2_CLOSE:** These events occur when a door is closed.
+- **EVENT_DOOR_1_UNLOCK_TIMEOUT / EVENT_DOOR_2_UNLOCK_TIMEOUT:** The system moves to a timeout state if a door is left unlocked for too long without being opened.
+
+### What Happens in Case of Errors?
+
+If both doors are open at the same time, or if there’s a problem closing the doors, the system will enter the FAULT state. This means there is a potential security issue or malfunction that needs to be resolved. The system will remain in the FAULT state until both doors are properly closed.
+
+---
+
+## Summary of System Behavior
+
+1. **Idle** - The system starts by waiting for action.
+2. **Unlock** - The system moves to an "unlocked" state when a door is unlocked.
+3. **Open** - Once unlocked, if the door is opened, the system moves to an "open" state.
+4. **Fault** - If something goes wrong (like both doors opening simultaneously), the system moves to a "fault" state.
+
+## User Tips
+
+- Ensure doors are closed properly to prevent the system from entering the FAULT state.
+- The system automatically moves back to IDLE after normal door operations (unlocking and opening).
+- In case of issues (FAULT state), check that both doors are closed and wait for the system to return to IDLE.
 
 
 # Command Line Interface (CLI) User Manual
