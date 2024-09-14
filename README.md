@@ -3,10 +3,10 @@
 - [Metek Door Control System](#metek-door-control-system)
 - [Introduction](#introduction)
   - [How It Works](#how-it-works)
+  - [Summary of System Behavior](#summary-of-system-behavior)
     - [Main System States](#main-system-states)
     - [Common Events](#common-events)
     - [What Happens in Case of Errors?](#what-happens-in-case-of-errors)
-  - [Summary of System Behavior](#summary-of-system-behavior)
   - [User Tips](#user-tips)
 - [Command Line Interface (CLI) User Manual](#command-line-interface-cli-user-manual)
   - [Installation and Setup](#installation-and-setup)
@@ -31,9 +31,16 @@ This Door Control System is designed to control the state of two doors in a way 
 
 The system goes through different states based on the status of the doors (whether they are locked, unlocked, open, or closed). These states are triggered by specific events, such as a door being unlocked or an error occurring.
 
-![](docs/state_diagram.jpeg "State Diagram")
+## Summary of System Behavior
+
+1. **Idle** - The system starts by waiting for action. This is indicated by both door leds being white.
+2. **Unlock** - The system moves to an "unlocked" state when a door is unlocked. This is indicated by the door led blink in red (for the closed door) and green (for the open door).
+3. **Open** - Once unlocked, if the door is opened, the system moves to an "open" state. This is indicated by the door led blink in red (for the closed door) and green (for the open door).
+4. **Fault** - If something goes wrong (like both doors opening simultaneously), the system moves to a "fault" state. This is indicated by both door leds blinking in magenta.
 
 ### Main System States
+
+![](docs/state_diagram.jpeg "State Diagram")
 
 1. **INIT (Initialization State)**  
    The system starts here when it is first turned on. It checks that both doors are initially closed before moving to the next state.
@@ -66,15 +73,6 @@ The system goes through different states based on the status of the doors (wheth
 ### What Happens in Case of Errors?
 
 If both doors are open at the same time, or if there’s a problem closing the doors, the system will enter the FAULT state. This means there is a potential security issue or malfunction that needs to be resolved. The system will remain in the FAULT state until both doors are properly closed.
-
----
-
-## Summary of System Behavior
-
-1. **Idle** - The system starts by waiting for action.
-2. **Unlock** - The system moves to an "unlocked" state when a door is unlocked.
-3. **Open** - Once unlocked, if the door is opened, the system moves to an "open" state.
-4. **Fault** - If something goes wrong (like both doors opening simultaneously), the system moves to a "fault" state.
 
 ## User Tips
 
