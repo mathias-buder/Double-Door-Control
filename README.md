@@ -11,7 +11,6 @@
     - [What Happens in Case of Errors?](#what-happens-in-case-of-errors)
   - [User Tips](#user-tips)
 - [Command Line Interface (CLI)](#command-line-interface-cli)
-  - [Default Settings](#default-settings)
   - [Installation and Setup](#installation-and-setup)
     - [Step 1: Install Arduino IDE](#step-1-install-arduino-ide)
     - [Step 2: Connect Your Device](#step-2-connect-your-device)
@@ -87,29 +86,17 @@ If both doors are open at the same time, or if there’s a problem closing the d
 
 # Command Line Interface (CLI)
 
-This section will guide you through installing the required software and using the command line interface (CLI) to control the following features of the system. No prior knowledge of computers or IT is required.
-
-1. Log Level
-2. Door Unlock Timeout (seconds)
-3. Door Open Timeout (minutes)
-4. LED Blink Interval (milliseconds)
-5. Debounce time for all buttons and switches (milliseconds)
-
-## Default Settings
-
-The system has the following default settings:
+This section will guide you through installing the required software and using the command line interface (CLI) to control the following features (with its default value) of the system. No prior knowledge of computers or IT is required.
 
 - **Log Level:** LOG_LEVEL_NOTICE
 - **Door unlock timeout:** 5 seconds
 - **Door open timeout:** 10 minutes
 - **LED blink interval:** 500 milliseconds
 - **Debounce delay:**
-  - Door Button 1: 100 ms
-  - Door Button 2: 100 ms
-  - Door Switch 1: 100 ms
-  - Door Switch 2: 100 ms
-
----
+  - Door Button 1: 100 mmillisecondss
+  - Door Button 2: 100 milliseconds
+  - Door Switch 1: 100 milliseconds
+  - Door Switch 2: 100 milliseconds
 
 ## Installation and Setup
 
@@ -291,3 +278,27 @@ Show the help
 
 ### Common Errors
 If you enter a command incorrectly, the system will display an error message. Double-check your spelling and make sure you include all the necessary arguments (e.g., numbers or letters that go with the command).
+
+**Example: Entering an incorrect command**
+```
+I: comLineIf_cmdErrorCb: Command not found at 'fd'
+I: Available commands:
+
+info <...>
+Get software information
+
+log <...>
+Set the log level: log <level (0..6)>
+
+timer [-u <5>] [-o <600>] [-b <500>]
+Set the timer. timer -u <unlock timeout (s)> -o <open timeout (min)> -b <blink interval (ms)>
+
+dbc -i <value> -t <value>
+Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>
+
+inputs <...>
+Get the input state of all buttons and switches
+
+help
+Show the help
+```
