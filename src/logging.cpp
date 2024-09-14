@@ -10,6 +10,7 @@
 
 #include <ArduinoLog.h>
 #include "logging.h"
+#include "appSettings.h"
 
 
 /**************************** Static Function prototype *********************************/
@@ -29,7 +30,7 @@
 void logging_setup( void )
 {
     /* Initialize with log level and log output */
-    Log.begin( DEFAULT_LOG_LEVEL, &Serial );
+    Log.begin( appSettings_getSettings()->logLevel, &Serial );
 }
 
 

@@ -4,6 +4,7 @@
 #include "ioMan.h"
 #include "comLineIf.h"
 #include "logging.h"
+#include "appSettings.h"
 
 
 /**
@@ -21,9 +22,15 @@ void setup()
 {
     /* Initialize serial communication and logging */
     Serial.begin( SERIAL_BAUD_RATE );
+
+    /* Initialize application settings */
+    appSettings_setup();
+
+    /* Initialize logging */
     logging_setup();
     Log.noticeln( "Door control application %s", GIT_VERSION_STRING );
     Log.noticeln( "Starting ... " );
+
 
     /* Initialize command line interface, input/output management and state management */
     comLineIf_setup();
