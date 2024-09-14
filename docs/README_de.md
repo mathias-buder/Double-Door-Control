@@ -167,18 +167,18 @@ info
 **Ausgabe:**
 ```
 ----------------------------------
-Informationen zum Türsteuerungssystem
+Door Control System Information
 ----------------------------------
 Version: 1.2.3-63-gb36a76e
-Erstellungsdatum: 14. September 2024 15:02:31
-Protokollebene: LOG_LEVEL_NOTICE
-Timeout für Türöffnen: 30 s
-Timeout für Türöffnen: 18 min
-LED-Blinkintervall: 180 ms
-Entprellverzögerung IO_BUTTON_1: 100 ms
-Entprellverzögerung IO_BUTTON_2: 100 ms
-Entprellverzögerung IO_SWITCH_1: 100 ms
-Entprellverzögerung IO_SWITCH_2: 100 ms
+Build date: Sep 14 2024 15:02:31
+Log level: LOG_LEVEL_NOTICE
+Door unlock timeout: 30 s
+Door open timeout: 18 min
+Led blink interval: 180 ms
+Debounce delay IO_BUTTON_1: 100 ms
+Debounce delay IO_BUTTON_2: 100 ms
+Debounce delay IO_SWITCH_1: 100 ms
+Debounce delay IO_SWITCH_2: 100 ms
 ----------------------------------
 ```
 
@@ -278,24 +278,24 @@ Wenn Sie einen Befehl falsch eingeben, zeigt das System eine Fehlermeldung an. �
 
 **Beispiel: Eingabe eines falschen Befehls**
 ```
-I: comLineIf_cmdErrorCb: Befehl unter „fd“ nicht gefunden
-I: Verfügbare Befehle:
+I: comLineIf_cmdErrorCb: Command not found at 'fd'
+I: Available commands:
 
 info <...>
-Softwareinformationen abrufen
+Get software information
 
 log <...>
-Protokollebene festlegen: log <Ebene (0..6)>
+Set the log level: log <level (0..6)>
 
-Timer [-u <5>] [-o <600>] [-b <500>]
-Timer festlegen. timer -u <Entsperr-Timeout (s)> -o <Öffnungs-Timeout (min)> -b <Blinkintervall (ms)>
+timer [-u <5>] [-o <600>] [-b <500>]
+Set the timer. timer -u <unlock timeout (s)> -o <open timeout (min)> -b <blink interval (ms)>
 
-dbc -i <Wert> -t <Wert>
-Entprellzeit einstellen. dbc -i <Eingabeindex (0..3)> -t <Entprellzeit (ms)>
+dbc -i <value> -t <value>
+Set the debounce time. dbc -i <input index (0..3)> -t <debounce time (ms)>
 
 inputs <...>
-Eingabestatus aller Tasten und Schalter abrufen
+Get the input state of all buttons and switches
 
 help
-Hilfe anzeigen
+Show the help
 ```
