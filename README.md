@@ -10,7 +10,7 @@
     - [Common Events](#common-events)
     - [What Happens in Case of Errors?](#what-happens-in-case-of-errors)
   - [User Tips](#user-tips)
-- [Command Line Interface (CLI) User Manual](#command-line-interface-cli-user-manual)
+- [Command Line Interface (CLI)](#command-line-interface-cli)
   - [Installation and Setup](#installation-and-setup)
     - [Step 1: Install Arduino IDE](#step-1-install-arduino-ide)
     - [Step 2: Connect Your Device](#step-2-connect-your-device)
@@ -83,7 +83,7 @@ If both doors are open at the same time, or if there’s a problem closing the d
 - In case of issues (FAULT state), check that both doors are closed and wait for the system to return to IDLE.
 
 
-# Command Line Interface (CLI) User Manual
+# Command Line Interface (CLI)
 
 This manual will guide you through installing the required software and using the command line interface (CLI) to control different features of the system. No prior knowledge of computers or IT is required.
 
