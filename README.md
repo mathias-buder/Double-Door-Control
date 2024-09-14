@@ -1,6 +1,8 @@
-# Metek Door Control System
+<img src="docs/metek_logo.png" width="300"/><br><br>
 
-- [Metek Door Control System](#metek-door-control-system)
+<span style="font-family:Helvetica; font-size:30pt;">Door Control System</span>
+---
+
 - [Introduction](#introduction)
   - [How It Works](#how-it-works)
   - [Summary of System Behavior](#summary-of-system-behavior)
