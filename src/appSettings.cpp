@@ -17,7 +17,7 @@
 /*************************************** Defines ****************************************/
 
 #define EEPROM_SETTINGS_ADDRESS     0                                   /*!< The EEPROM address where the settings are stored */
-#define EEPROM_EMPTY_CRC            18446744073709551615ULL             /*!< The initial value of the CRC in the EEPROM */
+#define EEPROM_EMPTY_CRC            13768940222999549550ULL             /*!< The initial value of the CRC in the EEPROM */
 
 /******************************** Function prototype ************************************/
 
@@ -59,35 +59,35 @@ static settings_t appSettings = {
  */
 void appSettings_setup( void )
 {
-    /* Get the CRC value from the EEPROM */
-    uint64_t crcFromEeprom = appSettings_readCrc();
+    Serial.println( String( __func__ ) + ": Setting up the application settings" );
 
-    if ( crcFromEeprom == EEPROM_EMPTY_CRC )
+    /* Read the settings from the EEPROM */
+    settings_t settings;
+    appSettings_loadSettings( &settings );
+
+    /* Calculate the CRC value for the settings */
+    uint64_t crc = appSettings_calculateCrc( &settings );
+
+    /* Check if the CRC value equals the empty CRC value */
+    if ( crc == EEPROM_EMPTY_CRC )
     {
-        Serial.println( String( __func__ ) + " : No settings found in EEPROM. Using default settings." );
-        return;
+        Serial.println( String( __func__ ) + ": No settings found in EEPROM. Using default settings" );
     }
     else
     {
-        /* Local variable to store the settings read from the EEPROM */
-        settings_t settings;
+        /* Read the CRC value from the EEPROM */
+        uint64_t eepromCrc = appSettings_readCrc();
 
-        /* Load the settings from the EEPROM */
-        appSettings_loadSettings( &settings );
-
-        /* Calculate the CRC value for the settings */
-        uint64_t crc = appSettings_calculateCrc( &settings );
-
-        /* Check if the CRC value in the EEPROM matches the calculated CRC value */
-        if ( crcFromEeprom != crc )
+        /* Check if the CRC values match */
+        if ( crc == eepromCrc )
         {
-            Serial.println( String( __func__ ) + " : CRC mismatch. Using default settings." );
+            /* Copy the settings to the global variable */
+            memcpy( &appSettings, &settings, sizeof( settings_t ) );
+            Serial.println( String( __func__ ) + ": Settings loaded from EEPROM" );
         }
         else
         {
-            /* Copy the settings to the global variable */
-            appSettings = settings;
-            Serial.println( String( __func__ ) + " : Settings loaded from EEPROM." );
+            Serial.println( String( __func__ ) + ": CRC mismatch. Using default settings" );
         }
     }
 }
