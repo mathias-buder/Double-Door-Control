@@ -1,4 +1,4 @@
-<img src="docs/metek_logo.png" width="300"/><br><br>
+<img src="docs/img/metek_logo.png" width="300"/><br><br>
 
 <span style="font-family:Helvetica; font-size:30pt;">Door Control System</span>
 ---
@@ -120,7 +120,7 @@ If you would like to try the simulation yourself, simply visit [Wokwi - Door Con
 The system consists of two doors, each controlled by relays, buttons, RGB LEDs, and switches connected to an Arduino Mega. The following is a breakdown of each component and its role in the system.
 
 <div style="text-align: center;">
-   <img src="docs/wokwi_schematics.png" width="70%" />
+   <img src="docs/img/wokwi_schematics.png" width="70%" />
 </div>
 
 ### 1. Arduino Mega
@@ -258,6 +258,10 @@ Follow these steps to install Arduino IDE:
 3. **Select the Port:**
    - Go to **Tools > Port** and select the port to which the **UNO R4 Minima** is connected.
 
+<div style="text-align: center;">
+   <img src="docs/img/com_port.png" width="80%" />
+</div>
+
 ---
 
 ### Step 3: Open the Serial Monitor
@@ -276,7 +280,9 @@ Once the Arduino IDE is set up, the **Serial Monitor** will allow you to interac
 4. **Now you're ready to use the CLI!**
    - You can type commands into the Serial Monitor and see the system's responses.
 
-![Adino Serial Monitor](docs/aduino_serial_monitor.png)
+<div style="text-align: center;">
+   <img src="docs/img/aduino_serial_monitor.png" width="80%" />
+</div>
 
 ---
 
@@ -311,6 +317,9 @@ Debounce delay IO_SWITCH_2: 100 ms
 ----------------------------------
 ```
 
+<div style="text-align: center;">
+   <img src="docs/img/info.png" width="80%" />
+</div>
 
 ### 2. **log** — Set Log Level
 Use this command to set the "log level," which controls the amount of information recorded by the software. The log level can be set to a number between 0 and 6.
@@ -330,6 +339,10 @@ Where `<level>` can be:
 log 6
 ```
 
+<div style="text-align: center;">
+   <img src="docs/img/log.png" width="80%" />
+</div>
+
 ### 3. **timer** — Set the Timer
 This command allows you to set different timers that control how the software behaves in certain situations.
 - **Command:** `timer -u <unlock timeout> -o <open timeout> -b <blink interval>`
@@ -343,6 +356,10 @@ Where:
 ```
 timer -u 5 -o 2 -b 500
 ```
+
+<div style="text-align: center;">
+   <img src="docs/img/timer.png" width="80%" />
+</div>
 
 ### 4. **dbc** — Set Debounce Time
 This command sets the "debounce" time for inputs (such as buttons). Debounce time ensures that accidental multiple presses are ignored.
@@ -361,6 +378,10 @@ Where:
 dbc -i 1 -t 200
 ```
 
+<div style="text-align: center;">
+   <img src="docs/img/dbc.png" width="80%" />
+</div>
+
 ### 5. **inputs** — Get Input State
 This command shows the current state of all inputs (like buttons or switches).
 - **Command:** `inputs`
@@ -369,6 +390,10 @@ This command shows the current state of all inputs (like buttons or switches).
 ```
 inputs
 ```
+
+<div style="text-align: center;">
+   <img src="docs/img/inputs.png" width="80%" />
+</div>
 
 ### 6. **help** — Show Help
 If you need to see all the available commands and what they do, use this command.
@@ -402,6 +427,10 @@ help
 Show the help
 ```
 ---
+
+<div style="text-align: center;">
+   <img src="docs/img/help.png" width="80%" />
+</div>
 
 ### Common Errors
 If you enter a command incorrectly, the system will display an error message. Double-check your spelling and make sure you include all the necessary arguments (e.g., numbers or letters that go with the command).
