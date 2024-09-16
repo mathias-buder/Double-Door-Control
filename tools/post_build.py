@@ -26,7 +26,7 @@ def after_build(source, target, env):
     # Generate a custom ZIP file name
     gitVersion = func.getGitVersion()
     timeStamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    zipFileName = f"{gitVersion}_{timeStamp}.zip"
+    zipFileName = f"v{gitVersion}_{timeStamp}.zip"
 
     # Full path for the zip file
     zipFilePath = os.path.join(buildDir, zipFileName)
@@ -35,7 +35,7 @@ def after_build(source, target, env):
     with zipfile.ZipFile(zipFilePath, 'w') as zipf:
         # Add the .hex file to the zip
         binFilepath = os.path.join(buildDir, binFile)
-        customBinFileName = f"{programName}_{gitVersion}.bin"
+        customBinFileName = f"{programName}_v{gitVersion}.bin"
         customBinFilepath = os.path.join(buildDir, customBinFileName)
         
         # Rename the bin file
