@@ -10,6 +10,18 @@
     - [Common Events](#common-events)
     - [What Happens in Case of Errors?](#what-happens-in-case-of-errors)
   - [User Tips](#user-tips)
+- [Simulation and Testing with Wokwi](#simulation-and-testing-with-wokwi)
+    - [How the Simulation Works](#how-the-simulation-works)
+- [Schematic Diagram Explanation](#schematic-diagram-explanation)
+    - [1. Arduino Mega](#1-arduino-mega)
+    - [2. RGB LEDs](#2-rgb-leds)
+    - [3. Push Buttons](#3-push-buttons)
+    - [4. Relays](#4-relays)
+    - [5. Slide Switches](#5-slide-switches)
+    - [6. Resistors](#6-resistors)
+    - [7. NOT Gates](#7-not-gates)
+    - [8. Power and Ground Connections](#8-power-and-ground-connections)
+  - [Summary of Operation](#summary-of-operation)
 - [Command Line Interface (CLI)](#command-line-interface-cli)
   - [Installation and Setup](#installation-and-setup)
     - [Step 1: Install Arduino IDE](#step-1-install-arduino-ide)
@@ -23,6 +35,13 @@
     - [5. **inputs** — Get Input State](#5-inputs--get-input-state)
     - [6. **help** — Show Help](#6-help--show-help)
     - [Common Errors](#common-errors)
+- [Persistence and Memory Storage](#persistence-and-memory-storage)
+    - [How It Works](#how-it-works-1)
+    - [Example](#example)
+    - [Why This Matters](#why-this-matters)
+- [Flashing the Board Over USB](#flashing-the-board-over-usb)
+    - [Flashing Instructions](#flashing-instructions)
+    - [Why Use a Batch Script?](#why-use-a-batch-script)
 
 
 # Introduction
@@ -83,6 +102,114 @@ If both doors are open at the same time, or if there’s a problem closing the d
 - The system automatically moves back to IDLE after normal door operations (unlocking and opening).
 - In case of issues (FAULT state), check that both doors are closed and wait for the system to return to IDLE.
 
+# Simulation and Testing with Wokwi
+
+The development and testing of this software have been carried out using the **Wokwi Simulator**. Wokwi is an online platform that allows for easy simulation of hardware components, including microcontrollers and sensors, which are essential in building and testing control systems like this one.
+
+### How the Simulation Works
+
+- **Virtual Components**: In the Wokwi simulator, virtual components such as buttons, LEDs, and sensors were used to simulate door events. For example, a button press simulates a door being opened or closed.
+- **Real-time Testing**: The simulator allows real-time testing of state transitions without needing the physical hardware. This makes it easier to test the software logic, ensuring that all states, events, and transitions work as expected.
+- **Debugging**: Wokwi provides tools to debug the system and observe how it behaves with various inputs, allowing for fine-tuning and improvements in software stability.
+
+If you would like to try the simulation yourself, simply visit [Wokwi - Door Control System](https://wokwi.com/projects/404671162937705473) to load the project.
+
+
+# Schematic Diagram Explanation
+
+The system consists of two doors, each controlled by relays, buttons, RGB LEDs, and switches connected to an Arduino Mega. The following is a breakdown of each component and its role in the system.
+
+<div style="text-align: center;">
+   <img src="docs/wokwi_schematics.png" width="70%" />
+</div>
+
+### 1. Arduino Mega
+   - **ID**: `mega`
+   - **Position**: Center of the circuit.
+   - **Role**: The Arduino Mega acts as the central microcontroller, managing the control logic for the doors, buttons, RGB LEDs, and relays. The Mega controls the state transitions based on the input from switches and buttons and provides feedback using the RGB LEDs.
+   
+### 2. RGB LEDs
+   - **RGB1**: 
+     - **ID**: `rgb1`, labeled as "test".
+     - **Position**: Bottom center, near door 1.
+     - **Connections**: Pins 5 (blue), 6 (green), and 7 (red) of the Arduino Mega.
+     - **Role**: Indicates the status of Door 1 (e.g., locked, unlocked, open, etc.).
+   
+   - **RGB2**: 
+     - **ID**: `rgb2`
+     - **Position**: Top center, near door 2.
+     - **Connections**: Pins 11 (blue), 12 (green), and 13 (red) of the Arduino Mega.
+     - **Role**: Indicates the status of Door 2 similarly to RGB1.
+
+### 3. Push Buttons
+   - **Button 1 (Tür1)**:
+     - **ID**: `btn1`, labeled as "Tür1".
+     - **Position**: Bottom right.
+     - **Connections**: Connected to pin 2 on the Mega.
+     - **Role**: Simulates a door open/close command for Door 1.
+
+   - **Button 2 (Tür2)**:
+     - **ID**: `btn2`, labeled as "Tür2".
+     - **Position**: Top right.
+     - **Connections**: Connected to pin 10 on the Mega.
+     - **Role**: Simulates a door open/close command for Door 2.
+
+### 4. Relays
+   - **Relay 1**:
+     - **ID**: `relay1`
+     - **Position**: Top center, near door 2.
+     - **Connections**: Connected to NOT gate (`not2`) output, which is controlled by pin 8 of the Arduino.
+     - **Role**: Controls the lock/unlock state of Door 2 based on the signal from the NOT gate.
+   
+   - **Relay 2**:
+     - **ID**: `relay2`
+     - **Position**: Bottom center, near door 1.
+     - **Connections**: Connected to NOT gate (`not1`) output, which is controlled by pin 4 of the Arduino.
+     - **Role**: Controls the lock/unlock state of Door 1 based on the signal from the NOT gate.
+
+### 5. Slide Switches
+   - **Switch 1**:
+     - **ID**: `sw1`
+     - **Position**: Top left.
+     - **Connections**: Connected to pin 9 of the Arduino Mega.
+     - **Role**: This switch provides a manual override for Door 1, allowing it to remain open or closed based on user input.
+
+   - **Switch 2**:
+     - **ID**: `sw2`
+     - **Position**: Middle left.
+     - **Connections**: Connected to pin 3 of the Arduino Mega.
+     - **Role**: Similar to Switch 1, this switch provides a manual override for Door 2.
+
+### 6. Resistors
+   - Several resistors (`r2`, `r3`, `r4`, etc.) are used throughout the circuit, primarily to limit current and protect the components. Resistor values are listed (1000Ω, 10000Ω) and are connected in series with the buttons, LEDs, and relays.
+
+### 7. NOT Gates
+   - **NOT Gate 1 (`not1`)**:
+     - **ID**: `not1`
+     - **Position**: Bottom center.
+     - **Connections**: Receives input from pin 4 on the Mega and outputs to Relay 2.
+     - **Role**: Inverts the signal from the Arduino before sending it to the relay, controlling Door 1’s state.
+
+   - **NOT Gate 2 (`not2`)**:
+     - **ID**: `not2`
+     - **Position**: Top center.
+     - **Connections**: Receives input from pin 8 on the Mega and outputs to Relay 1.
+     - **Role**: Inverts the signal from the Arduino before sending it to the relay, controlling Door 2’s state.
+
+### 8. Power and Ground Connections
+   - **VCC and GND**: Multiple VCC and GND connections are used throughout the circuit to provide power to the components. Components like the Arduino, relays, switches, and RGB LEDs are connected to VCC (5V) and GND to ensure they operate correctly.
+
+
+## Summary of Operation
+
+This system controls two doors (Tür1 and Tür2) with the following components:
+- **Buttons** to open and close the doors.
+- **Relays** to lock and unlock the doors.
+- **RGB LEDs** to provide visual feedback about each door’s state.
+- **Switches** for manual door overrides.
+- **NOT gates** to invert signals controlling the relays.
+
+When a button is pressed, the corresponding RGB LED indicates the status of the door, and the relay either locks or unlocks the door. The switches allow for manual overrides, and the relays are controlled by the Arduino Mega, which receives inputs from the buttons, switches, and processes commands.
 
 # Command Line Interface (CLI)
 
@@ -302,3 +429,62 @@ Get the input state of all buttons and switches
 help
 Show the help
 ```
+
+# Persistence and Memory Storage
+
+To ensure the system settings are retained between power cycles, the Door Control System uses **EEPROM** (Electrically Erasable Programmable Read-Only Memory) to store configuration settings. This persistence mechanism makes sure that any changes made through the command-line interface (CLI) are not lost when the system is restarted or powered off.
+
+### How It Works
+
+- **Saving Settings**: When a setting is modified using the CLI, the system automatically saves the new setting into the internal EEPROM. This ensures that the new configuration is preserved even after the system is rebooted.
+  
+- **Loading Settings**: Upon each system startup (or reboot), the system will check if settings have been saved in the EEPROM. If settings exist, they are loaded automatically, ensuring that the system resumes with the same configuration as before the restart.
+
+### Example
+
+- **Scenario**: If you unlock Door 1 and adjust the unlocking timeout via the CLI, this new timeout value will be stored in EEPROM.
+- **Next Boot**: When the system is restarted, it will load the adjusted timeout value, meaning you don’t have to reconfigure it manually.
+
+### Why This Matters
+
+The use of EEPROM allows the system to be **configured and fine-tuned on-site without the need for reprogramming**. This means that technicians or operators can easily adjust system settings (such as door timeout values, behavior after unlocking, etc.) directly via the CLI. Once these settings are saved to EEPROM, the system will retain them even after a reboot, making it highly adaptable for different environments or requirements.
+
+This eliminates the need to alter the code or reflash the system when operational changes are required. As a result, maintenance, configuration, and system updates become faster and more convenient, significantly reducing downtime and technical overhead.
+
+
+# Flashing the Board Over USB
+
+Flashing the Door Control System to the hardware can be done over USB using a simple batch script that will be provided by the software team. This script automates the process of loading the compiled firmware onto the board, making it quick and easy to update the system without needing detailed knowledge of the underlying programming.
+
+### Flashing Instructions
+
+1. **Obtain the Batch Script**: You will receive a batch script file (`flash.bat`) from the software team. This script is pre-configured to flash the firmware to the board over USB.
+   
+2. **Connect the Board**: Plug the hardware board into your computer via a USB cable. Ensure that the board is powered on and detected by your computer.
+
+3. **Run the Batch Script**:
+   - Locate the `flash.bat` script provided.
+   - Double-click on the batch file to execute it.
+   - The script will automatically find the correct port, upload the firmware, and flash the board.
+
+4. **Wait for the Flash to Complete**: The script will display progress information in the terminal window, indicating when the flash process starts and finishes. Once completed, the system will be ready to use with the newly flashed firmware.
+
+5. **Verify the Software Version**:
+   - After flashing, connect to the system’s command-line interface (CLI).
+   - Run the command `info` to display the current software version.
+   - Compare the displayed version against the version supplied by the software team to ensure the correct firmware has been installed.
+
+   ```bash
+   > info
+   Software Version: X.Y.Z
+   ```
+
+   If the displayed version does not match the expected version, try reflashing the board or contact the software team for assistance.
+
+### Why Use a Batch Script?
+
+- **Ease of Use**: The batch script abstracts all the technical complexity, allowing non-technical users to update the system with minimal effort.
+- **Fast Updates**: Firmware updates can be applied quickly, making it convenient for field updates or rapid testing.
+- **No Additional Tools Required**: The batch script handles all the necessary steps, so you won’t need to install or use any additional tools or software to flash the board.
+
+If you encounter any issues during the flashing process, please refer to the troubleshooting section or contact the software team for support.
