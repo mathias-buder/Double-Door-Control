@@ -426,7 +426,6 @@ Get the input state of all buttons and switches
 help
 Show the help
 ```
----
 
 <div style="text-align: center;">
    <img src="docs/img/help.png" width="80%" />
