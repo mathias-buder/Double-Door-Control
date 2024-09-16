@@ -1,5 +1,5 @@
 import os
-import subprocess
+import func
 import shutil
 import zipfile
 from datetime import datetime
@@ -24,7 +24,7 @@ def after_build(source, target, env):
         return
 
     # Generate a custom ZIP file name
-    gitVersion = subprocess.run(["git", "describe", "--always", "--long"], stdout=subprocess.PIPE, text=True).stdout.strip()
+    gitVersion = func.getGitVersion()
     timeStamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     zipFileName = f"{gitVersion}_{timeStamp}.zip"
 
