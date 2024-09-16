@@ -61,7 +61,9 @@ The system goes through different states based on the status of the doors (wheth
 
 ### Main System States
 
-![](docs/state_diagram.jpeg "State Diagram")
+<div style="text-align: center;">
+   <img src="docs/img/state_diagram.jpeg" width="100%" />
+</div>
 
 1. **INIT (Initialization State)**
    The system starts here when it is first turned on. It checks that both doors are initially closed before moving to the next state.
@@ -120,7 +122,7 @@ If you would like to try the simulation yourself, simply visit [Wokwi - Door Con
 The system consists of two doors, each controlled by relays, buttons, RGB LEDs, and switches connected to an Arduino Mega. The following is a breakdown of each component and its role in the system.
 
 <div style="text-align: center;">
-   <img src="docs/img/wokwi_schematics.png" width="70%" />
+   <img src="docs/img/wokwi_schematics.png" width="65%" />
 </div>
 
 ### 1. Arduino Mega
@@ -482,16 +484,21 @@ This eliminates the need to alter the code or reflash the system when operationa
 
 # Flashing the Board Over USB
 
-Flashing the Door Control System to the hardware can be done over USB using a simple batch script that will be provided by the software team. This script automates the process of loading the compiled firmware onto the board, making it quick and easy to update the system without needing detailed knowledge of the underlying programming.
+Flashing the Door Control System to the hardware can be done over USB using a simple batch script that will be provided by the software team/owner. This script automates the process of loading the compiled firmware onto the board, making it quick and easy to update the system without needing detailed knowledge of the underlying programming.
 
 ### Flashing Instructions
 
-1. **Obtain the Batch Script**: You will receive a batch script file (`flash.bat`) from the software team. This script is pre-configured to flash the firmware to the board over USB.
-   
+1. **Obtain the software release**: You will receive a software release package named like `v1.2.3-0-g1a2b3c4_20241224_121212.zip` from the software team. This package contains the following items:
+   - `firmware_v1.2.3-0-g1a2b3c4.bin`: Compiled firmware binary for the Door Control System.
+   - `program_board.bat`: Batch script file for flashing the firmware to the board over USB.
+   - `platformio.ini`: The platform specific configuration file that is required by the batch script.
+   - `docs`: Documentation folder containing manual, software description, and other relevant information in english and german.
+
 2. **Connect the Board**: Plug the hardware board into your computer via a USB cable. Ensure that the board is powered on and detected by your computer.
 
 3. **Run the Batch Script**:
-   - Locate the `flash.bat` script provided.
+   - Extract release package contents to a folder on your computer.
+   - Locate the `program_board.bat` script inside the extracted folder.
    - Double-click on the batch file to execute it.
    - The script will automatically find the correct port, upload the firmware, and flash the board.
 
@@ -502,9 +509,22 @@ Flashing the Door Control System to the hardware can be done over USB using a si
    - Run the command `info` to display the current software version.
    - Compare the displayed version against the version supplied by the software team to ensure the correct firmware has been installed.
 
-   ```bash
-   > info
-   Software Version: X.Y.Z
+   **Example Output:**
+   ```
+   ----------------------------------
+   Door Control System Information   
+   ----------------------------------
+   Version: 1.2.3-0-g1a2b3c4
+   Build date: Sep 14 2024 15:02:31
+   Log level: LOG_LEVEL_NOTICE
+   Door unlock timeout: 30 s
+   Door open timeout: 18 min
+   Led blink interval: 180 ms
+   Debounce delay IO_BUTTON_1: 100 ms
+   Debounce delay IO_BUTTON_2: 100 ms
+   Debounce delay IO_SWITCH_1: 100 ms
+   Debounce delay IO_SWITCH_2: 100 ms
+   ----------------------------------
    ```
 
    If the displayed version does not match the expected version, try reflashing the board or contact the software team for assistance.
@@ -514,5 +534,3 @@ Flashing the Door Control System to the hardware can be done over USB using a si
 - **Ease of Use**: The batch script abstracts all the technical complexity, allowing non-technical users to update the system with minimal effort.
 - **Fast Updates**: Firmware updates can be applied quickly, making it convenient for field updates or rapid testing.
 - **No Additional Tools Required**: The batch script handles all the necessary steps, so you won’t need to install or use any additional tools or software to flash the board.
-
-If you encounter any issues during the flashing process, please refer to the troubleshooting section or contact the software team for support.
