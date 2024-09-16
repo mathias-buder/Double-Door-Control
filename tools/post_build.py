@@ -73,8 +73,15 @@ def after_build(source, target, env):
 
         for readmeFile in readmeFiles:
             if os.path.exists(readmeFile):
+            # Append "_en" to the english README files version
+                if readmeFile.endswith("README.md"):
+                    newName = "README_en.md"
+                elif readmeFile.endswith("README.pdf"):
+                    newName = "README_en.pdf"
+                else:
+                    newName = os.path.basename(readmeFile)
                 # Save README files in the "docs" subdirectory within the zip
-                zipf.write(readmeFile, os.path.join(docsDir, os.path.basename(readmeFile)))
+                zipf.write(readmeFile, os.path.join(docsDir, newName))
             else:
                 print(f"Warning: README file not found: {readmeFile}")
 
