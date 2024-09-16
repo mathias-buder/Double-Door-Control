@@ -39,7 +39,7 @@
     - [Funktionsweise](#funktionsweise-1)
     - [Beispiel](#beispiel)
     - [Warum das wichtig ist?](#warum-das-wichtig-ist)
-- [Flashen der Platine über USB](#flashen-der-platine-über-usb)
+- [Flashen des Steuerung über USB](#flashen-des-steuerung-über-usb)
     - [Flash-Anweisungen](#flash-anweisungen)
     - [Warum ein Batch-Skript verwenden?](#warum-ein-batch-skript-verwenden)
 
@@ -465,7 +465,7 @@ Um sicherzustellen, dass die Systemeinstellungen zwischen den Einschaltzyklen er
 
 ### Beispiel
 
-- **Szenario**: Wenn Sie Tür 1 öffnen und das Zeitlimit für das Öffnen über die CLI anpassen, wird dieser neue Zeitlimitwert im EEPROM gespeichert.
+- **Szenario**: Wenn Sie Tür 1 öffnen/scgließen und feststellen, dass die Entprellzeit für Türschalter 1 unpassend ist, können Sie die Diese über die CLI anpassen. Der neue Wert wird dabei automatisch im EEPROM gespeichert.
 - **Nächster Start**: Wenn das System neu gestartet wird, wird der angepasste Zeitlimitwert geladen, sodass Sie es nicht manuell neu konfigurieren müssen.
 
 ### Warum das wichtig ist?
@@ -474,7 +474,7 @@ Durch die Verwendung von EEPROM kann das System **vor Ort konfiguriert und feina
 
 Dadurch entfällt die Notwendigkeit, den Code zu ändern oder das System neu zu flashen, wenn Betriebsänderungen erforderlich sind. Dadurch werden Wartung, Konfiguration und Systemaktualisierungen schneller und bequemer, was Ausfallzeiten und technischen Aufwand erheblich reduziert.
 
-# Flashen der Platine über USB
+# Flashen des Steuerung über USB
 
 Das Flashen des Türsteuerungssystems auf die Hardware kann über USB mithilfe eines einfachen Batch-Skripts erfolgen, das vom Softwareteam/Eigentümer bereitgestellt wird. Dieses Skript automatisiert den Prozess des Ladens der kompilierten Firmware auf die Platine, sodass das System schnell und einfach aktualisiert werden kann, ohne dass detaillierte Kenntnisse der zugrunde liegenden Programmierung erforderlich sind.
 
