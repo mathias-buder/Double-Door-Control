@@ -73,7 +73,7 @@ IF "%SERIAL_PORT%"=="" (
 
 REM Flash the board using the detected port and the found .bin file
 REM You can specify the board type if needed using --board BOARD_NAME
-platformio run --target upload --upload-port %SERIAL_PORT% --upload-file %BIN_FILE% --environment uno_r4_minima
+platformio run --target upload --upload-port %SERIAL_PORT% --upload-file %BIN_FILE% --environment uno_r4_minima_release
 
 IF ERRORLEVEL 1 (
     echo Failed to flash the board. Please check the connection and try again.
