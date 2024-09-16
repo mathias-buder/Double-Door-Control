@@ -47,6 +47,11 @@ def after_build(source, target, env):
         # Optionally, remove the copied file after adding to zip
         os.remove(customBinFilepath)
 
+
+        # Add the platformio.ini and program_board.bat to the zip
+        zipf.write(os.path.join(projectDir, "platformio.ini"), "platformio.ini")
+        zipf.write(os.path.join(projectDir, "tools","program_board.bat"), "program_board.bat")
+
         # Add all README.md and radme.pdf files to the zip
         readmeFiles = [
             # English versions
