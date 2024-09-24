@@ -47,6 +47,9 @@ def after_build(source, target, env):
         # Optionally, remove the copied file after adding to zip
         os.remove(customBinFilepath)
 
+        # Add renesas driver files to the zip
+        zipf.write(os.path.join(projectDir, "tools", "renesas_drivers.zip"), "renesas_drivers.zip")
+
         # Add the DFU unitilty and program_board.bat to the zip
         zipf.write(os.path.join(projectDir, "tools", "dfu-util.exe"), "dfu-util.exe")
         zipf.write(os.path.join(projectDir, "tools","program_board.bat"), "program_board.bat")
