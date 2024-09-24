@@ -486,7 +486,11 @@ Das Flashen des Türsteuerungssystems auf die Hardware kann über USB mithilfe e
    - `platformio.ini`: Die plattformspezifische Konfigurationsdatei, die vom Batch-Skript benötigt wird.
    - `docs`: Dokumentationsordner mit Handbuch, Softwarebeschreibung und anderen relevanten Informationen in Englisch und Deutsch.
 
-2. **Board anschließen**: Schließen Sie das Hardwareboard über ein USB-Kabel an Ihren Computer an. Stellen Sie sicher, dass das Board eingeschaltet und von Ihrem Computer erkannt wird.
+2. **Board anschließen**: Schließen Sie das Hardwareboard über ein USB-Kabel an Ihren Computer an. Stellen Sie sicher, dass das Board eingeschaltet und von Ihrem Computer erkannt wird so wie unten dargestellt. Für den Fall, dass Board nicht erkannt wird, installieren Sie die erforderlichen Treiber `renesas_drivers.zip` aus dem Release-Paket.
+
+<div style="text-align: center;">
+   <img src="img/dfu_rt_port.png" width="60%" />
+</div>
 
 3. **Batch-Skript ausführen**:
    - Extrahieren Sie den Inhalt des Release-Pakets in einen Ordner auf Ihrem Computer.
@@ -494,9 +498,9 @@ Das Flashen des Türsteuerungssystems auf die Hardware kann über USB mithilfe e
    - Doppelklicken Sie auf die Batch-Datei, um sie auszuführen.
    - Das Skript findet automatisch den richtigen Port, lädt die Firmware hoch und flasht das Board.
 
-4. **Warten Sie, bis das Flashen abgeschlossen ist**: Das Skript zeigt im Terminalfenster Fortschrittsinformationen an, die angeben, wann der Flashvorgang beginnt und endet. Nach Abschluss ist das System mit der neu geflashten Firmware einsatzbereit.
+3. **Warten Sie, bis das Flashen abgeschlossen ist**: Das Skript zeigt im Terminalfenster Fortschrittsinformationen an, die angeben, wann der Flashvorgang beginnt und endet. Nach Abschluss ist das System mit der neu geflashten Firmware einsatzbereit.
 
-5. **Softwareversion überprüfen**:
+4. **Softwareversion überprüfen**:
    - Stellen Sie nach dem Flashen eine Verbindung zur Befehlszeilenschnittstelle (CLI) des Systems her.
    - Führen Sie den Befehl `info` aus, um die aktuelle Softwareversion anzuzeigen.
    - Vergleichen Sie die angezeigte Version mit der vom Softwareteam bereitgestellten Version, um sicherzustellen, dass die richtige Firmware installiert wurde.

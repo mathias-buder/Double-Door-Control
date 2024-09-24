@@ -494,7 +494,11 @@ Flashing the Door Control System to the hardware can be done over USB using a si
    - `platformio.ini`: The platform specific configuration file that is required by the batch script.
    - `docs`: Documentation folder containing manual, software description, and other relevant information in english and german.
 
-2. **Connect the Board**: Plug the hardware board into your computer via a USB cable. Ensure that the board is powered on and detected by your computer.
+2. **Connect the Board**: Plug the hardware board into your computer via a USB cable. Ensure that the board is powered on and detected by your computer as shonw in the device manager below. In case the board is not detected, you may need to install the USB drivers `renesas_drivers.zip` provided by with the software release package.
+
+<div style="text-align: center;">
+   <img src="docs/img/dfu_rt_port.png" width="60%" />
+</div>
 
 3. **Run the Batch Script**:
    - Extract release package contents to a folder on your computer.
