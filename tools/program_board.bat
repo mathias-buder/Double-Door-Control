@@ -1,50 +1,6 @@
 @echo off
-REM Check if Python is installed
-python --version >nul 2>&1
-IF ERRORLEVEL 1 (
-    echo Python is not installed. Downloading Python installer...
-    
-    REM Set up temporary directory to store the installer
-    SET TEMP_DIR=%TEMP%\pyinstaller
-    IF NOT EXIST "%TEMP_DIR%" (
-        mkdir "%TEMP_DIR%"
-    )
-    
-    REM Download Python installer (64-bit version)
-    echo Downloading Python...
-    powershell -Command "Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.9.9/python-3.9.9-amd64.exe -OutFile %TEMP_DIR%\python_installer.exe"
-    
-    IF ERRORLEVEL 1 (
-        echo Failed to download Python. Please check your internet connection.
-        exit /b 1
-    )
-
-    REM Install Python silently
-    echo Installing Python...
-    "%TEMP_DIR%\python_installer.exe" /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-    
-    REM Check if Python was installed successfully
-    python --version >nul 2>&1
-    IF ERRORLEVEL 1 (
-        echo Python installation failed. Please install Python manually and try again.
-        exit /b 1
-    )
-    
-    REM Clean up
-    del /Q "%TEMP_DIR%\python_installer.exe"
-    rmdir "%TEMP_DIR%"
-)
-
-REM Check if PlatformIO is installed
-pip show platformio >nul 2>&1
-IF ERRORLEVEL 1 (
-    echo PlatformIO not found. Installing PlatformIO...
-    pip install platformio
-    IF ERRORLEVEL 1 (
-        echo Failed to install PlatformIO. Please check your internet connection.
-        exit /b 1
-    )
-)
+REM Set the path to DFU programmer application
+SET DFU_PROGRAMMER_PATH="dfu-util.exe"
 
 REM Search for .bin file in the same directory as the script
 SET BIN_FILE=
@@ -61,19 +17,31 @@ IF "%BIN_FILE%"=="" (
 REM Display the .bin file found
 echo Found .bin file: %BIN_FILE%
 
-REM Detect connected devices (assumes one device is connected)
-platformio device list > temp_devices.txt
-FOR /F "tokens=2 delims= " %%A IN ('findstr /C:"Port" temp_devices.txt') DO SET SERIAL_PORT=%%A
-del temp_devices.txt
+@REM REM Detect connected devices (assumes one device is connected)
+@REM platformio device list > temp_devices.txt
+@REM FOR /F "tokens=2 delims= " %%A IN ('findstr /C:"Port" temp_devices.txt') DO SET SERIAL_PORT=%%A
+@REM del temp_devices.txt
 
-IF "%SERIAL_PORT%"=="" (
-    echo No devices found. Please connect your board and try again.
-    exit /b 1
-)
+@REM IF "%SERIAL_PORT%"=="" (
+@REM     echo No devices found. Please connect your board and try again.
+@REM     exit /b 1
+@REM )
 
-REM Flash the board using the detected port and the found .bin file
-REM You can specify the board type if needed using --board BOARD_NAME
-platformio run --target upload --upload-port %SERIAL_PORT% --upload-file %BIN_FILE% --environment uno_r4_minima_release
+REM This batch script is used to program a board using the dfu-programmer tool.
+REM 
+REM The script performs the following actions:
+REM 1. Uses the dfu-programmer tool to program the board.
+REM 2. The -v flag enables verbose output.
+REM 3. The -a 0 option specifies the address to start programming from.
+REM 4. The -D option specifies the binary file to be programmed.
+REM 5. The --reset option resets the device after programming.
+REM 
+REM Environment Variables:
+REM - DFU_PROGRAMMER_PATH: Path to the dfu-programmer executable.
+REM - BIN_FILE: Path to the binary file to be programmed.
+echo Flashing the board...
+%DFU_PROGRAMMER_PATH% -v -a 0 -D %BIN_FILE% --reset
+
 
 IF ERRORLEVEL 1 (
     echo Failed to flash the board. Please check the connection and try again.
@@ -81,4 +49,7 @@ IF ERRORLEVEL 1 (
 )
 
 echo Board flashed successfully!
+
+rem Make the user press a key to close the window
+pause
 exit /b 0

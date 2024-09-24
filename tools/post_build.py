@@ -33,7 +33,7 @@ def after_build(source, target, env):
 
     # Create ZIP file
     with zipfile.ZipFile(zipFilePath, 'w') as zipf:
-        # Add the .hex file to the zip
+        # Add the .bin file to the zip
         binFilepath = os.path.join(buildDir, binFile)
         customBinFileName = f"{programName}_v{gitVersion}.bin"
         customBinFilepath = os.path.join(buildDir, customBinFileName)
@@ -47,9 +47,8 @@ def after_build(source, target, env):
         # Optionally, remove the copied file after adding to zip
         os.remove(customBinFilepath)
 
-
-        # Add the platformio.ini and program_board.bat to the zip
-        zipf.write(os.path.join(projectDir, "platformio.ini"), "platformio.ini")
+        # Add the DFU unitilty and program_board.bat to the zip
+        zipf.write(os.path.join(projectDir, "tools", "dfu-util.exe"), "dfu-util.exe")
         zipf.write(os.path.join(projectDir, "tools","program_board.bat"), "program_board.bat")
 
         # Add all README.md and radme.pdf files to the zip
