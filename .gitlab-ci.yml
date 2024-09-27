@@ -1,20 +1,15 @@
+image: python:3.11
+
 stages:
   - build
-  - test
 
-create_file:
-  image: alpine
+before_script:
+  - "pip install -U platformio"
+
+build_software:
   stage: build
   script:
-    - echo "Building ..."
-    - mkdir build
-    - touch build/somefile.txt
+    - "pio run --environment uno_r4_minima_release"
   artifacts:
     paths:
-      - build/
-
-test_file:
-  image: alpine
-  stage: test
-  script:
-    - test -f build/somefile.txt
+      - .pio/build/
