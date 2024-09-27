@@ -1,7 +1,7 @@
-image: python:3.11
+image: eclipse/platformio
 
-before_script:
-  - "pip install -U platformio"
+# before_script:
+#  - "pip install -U platformio"
 
 build:
   script:
