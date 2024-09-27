@@ -1,13 +1,9 @@
 image: python:3.11
 
-stages:
-  - build
-
 before_script:
   - "pip install -U platformio"
 
-build_software:
-  stage: build
+build:
   script:
     - "pio run --environment uno_r4_minima_release"
   artifacts:
