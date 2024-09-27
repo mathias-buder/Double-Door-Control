@@ -1,5 +1,11 @@
 create_file:
+  image: alpine
   script:
     - echo "Building ..."
     - mkdir build
     - touch build/somefile.txt
+
+test_file:
+  image: alpine
+  script:
+    - test -f build/somefile.txt
