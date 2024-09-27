@@ -12,4 +12,4 @@ build_software:
     - "pio run --environment uno_r4_minima_release"
   artifacts:
     paths:
-      - .pio/build/
+      - .pio/build/uno_r4_minima_release/*.zip
