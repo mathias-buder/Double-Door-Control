@@ -848,45 +848,53 @@ static void doorUnlockTimeoutHandler( uint32_t time )
 static void stateMan_generateEvent( door_control_t* const pDoorControl )
 {
     /* Read the state of both door switches */
-    input_state_t door1Switch = ioMan_getDoorState( IO_SWITCH_1 ).state;
-    input_state_t door2Switch = ioMan_getDoorState( IO_SWITCH_2 ).state;
+    input_status_t door1SwitchStatus = ioMan_getDoorState( IO_SWITCH_1 );
+    input_status_t door2SwitchStatus = ioMan_getDoorState( IO_SWITCH_2 );
 
     Log.verboseln( "%s: Door 1 switch: %s, Door 2 switch: %s", __func__, 
-                    logging_inputStateToString( door1Switch ).c_str(),
-                    logging_inputStateToString( door2Switch ).c_str() );
+                    logging_inputStateToString( door1SwitchStatus.state ).c_str(),
+                    logging_inputStateToString( door2SwitchStatus.state ).c_str() );
 
     /* Get pointer to the current event */
     event_t** pCurrentEvent = &pDoorControl->machine.event;
 
     /* Generate the event */
-    if (    ( door1Switch == INPUT_STATE_INACTIVE )
-         && ( door2Switch == INPUT_STATE_INACTIVE ) )
+    if (    (     ( door1SwitchStatus.state == INPUT_STATE_INACTIVE )
+               && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
+         && (     ( door2SwitchStatus.state == INPUT_STATE_INACTIVE )
+               && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_OPEN );
     }
 
-    if (    ( door1Switch == INPUT_STATE_ACTIVE )
-         && ( door2Switch == INPUT_STATE_ACTIVE ) )
+    if (    (    ( door1SwitchStatus.state == INPUT_STATE_ACTIVE )
+              && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
+         && (    ( door2SwitchStatus.state == INPUT_STATE_ACTIVE )
+              && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
     }
 
-    if ( door1Switch == INPUT_STATE_ACTIVE )
+    if (    ( door1SwitchStatus.state == INPUT_STATE_ACTIVE )
+         && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_CLOSE );
     }
 
-    if ( door1Switch == INPUT_STATE_INACTIVE )
+    if (    ( door1SwitchStatus.state == INPUT_STATE_INACTIVE )
+         && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
     }
 
-    if ( door2Switch == INPUT_STATE_ACTIVE )
+    if (    ( door2SwitchStatus.state == INPUT_STATE_ACTIVE )
+         && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_2_CLOSE );
     }
 
-    if ( door2Switch == INPUT_STATE_INACTIVE )
+    if (    ( door2SwitchStatus.state == INPUT_STATE_INACTIVE )
+         && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_2_OPEN );
     }
