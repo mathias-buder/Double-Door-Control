@@ -148,8 +148,10 @@ void stateMan_setup( void )
 {
     Log.noticeln( "%s: Setting up the state manager", __func__ );
 
-    /* Initialize the led blink timer */
-    Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) appSettings_getSettings()->ledBlinkInterval) );
+    /* Initialize timers */
+    Timer1.initialize( ( (uint32_t) 2000 ) * ( (uint32_t) appSettings_getSettings()->ledBlinkInterval ) );
+    stateMan_setDoorTimer( DOOR_TIMER_TYPE_UNLOCK, appSettings_getSettings()->doorUnlockTimeout );
+    stateMan_setDoorTimer( DOOR_TIMER_TYPE_OPEN, appSettings_getSettings()->doorOpenTimeout );
 
     /* Initialize the state machine */
     switch_state( &doorControl.machine, &doorControlStates[DOOR_CONTROL_STATE_INIT] );
