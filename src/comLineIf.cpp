@@ -290,17 +290,16 @@ static void comLineIf_cmdSetDebounceDelayCb( cmd* pCommand )
     Argument argInputIdx = cmd.getArgument( "i" );
     uint8_t  inputIdx    = argInputIdx.getValue().toInt();
 
-
-    if ( inputIdx < IO_INPUT_SIZE )
-    {
-        settings->debounceDelay[inputIdx] = cmd.getArgument( "t" ).getValue().toInt();
-        ioMan_setDebounceDelay( (io_t) inputIdx, settings->debounceDelay[inputIdx] );
-        Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, logging_ioToString( (io_t) inputIdx ).c_str(), settings->debounceDelay[inputIdx] );
-    }
-    else
+    if ( inputIdx >= IO_INPUT_SIZE )
     {
         Log.errorln( "%s: Invalid input index: %d", __func__, inputIdx );
+        return;
     }
+
+    /* Update the debounce delay and log the change */
+    settings->debounceDelay[inputIdx] = cmd.getArgument( "t" ).getValue().toInt();
+    ioMan_setDebounceDelay( (io_t) inputIdx, settings->debounceDelay[inputIdx] );
+    Log.noticeln( "%s: Debounce delay for input %s set to %d ms", __func__, logging_ioToString( (io_t) inputIdx ).c_str(), settings->debounceDelay[inputIdx] );
 
     /* Save the settings to the EEPROM */
     appSettings_saveSettings();
