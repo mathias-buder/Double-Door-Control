@@ -225,6 +225,15 @@ static void comLineIf_cmdSetTimerCb( cmd* pCommand )
     Command  cmd( pCommand );
     settings_t* settings = appSettings_getSettings();
 
+    /* Check if at least one argument is set */
+    if (    !cmd.getArgument( "u" ).isSet()
+         && !cmd.getArgument( "o" ).isSet()
+         && !cmd.getArgument( "b" ).isSet() )
+    {
+        Log.errorln( "%s",cmd.toString().c_str() );
+        return;
+    }
+
     Argument argUnlock = cmd.getArgument( "u" );
     if ( argUnlock.isSet() )
     {
