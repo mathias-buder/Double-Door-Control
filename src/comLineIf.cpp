@@ -63,7 +63,7 @@ void comLineIf_setup( void )
     cmdGetInfo.setDescription( "Get software information" );
 
     cmdSetLogLevel = cli.addSingleArgCmd( "log", comLineIf_cmdSetLogLevelCb ); /*!< Set log level */
-    cmdSetLogLevel.setDescription( "Set the log level: log <level (0..6)>" );
+    cmdSetLogLevel.setDescription( "Set the log level: log <level (0:Silent, 1:Fatal, 2:Error, 3:Warning, 4:Notice, 5:Trace, 6:Verbose)>" );
 
     cmdSetTimer = cli.addCmd( "timer", comLineIf_cmdSetTimerCb );       /*!< Set timer */
     cmdSetTimer.addArg( "u", STRINGIFY( DOOR_UNLOCK_TIMEOUT ) ); /*!< Unlock timeout */
@@ -178,12 +178,21 @@ static void comLineIf_cmdSetLogLevelCb( cmd* pCommand )
     Argument    arg      = cmd.getArgument();
     settings_t* settings = appSettings_getSettings();
 
+    /* Check if the log level argument is set */
     if ( !arg.isSet() )
     {
         Log.errorln( "%s: No log level specified, remaining at %s.", __func__, logging_logLevelToString( settings->logLevel ).c_str() );
         return;
     }
 
+    /* Check if the log level is valid */
+    if ( arg.getValue().toInt() < LOG_LEVEL_SILENT || arg.getValue().toInt() > LOG_LEVEL_VERBOSE )
+    {
+        Log.errorln( "%s: Invalid log level: %d, remaining at %s.", __func__, arg.getValue().toInt(), logging_logLevelToString( settings->logLevel ).c_str() );
+        return;
+    }
+
+    /* Update the log level and log the change */
     Log.noticeln( "Setting log level from %s to %s", logging_logLevelToString( settings->logLevel ).c_str(), logging_logLevelToString( arg.getValue().toInt() ).c_str() );
     settings->logLevel = arg.getValue().toInt();
     Log.setLevel( settings->logLevel );
