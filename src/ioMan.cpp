@@ -72,6 +72,7 @@ void ioMan_Setup( void )
     for ( uint8_t i = 0; i < sizeof( buttonSwitchIoConfig ) / sizeof( buttonSwitchIoConfig[0] ); i++ )
     {
         pinMode( buttonSwitchIoConfig[i].pinNumber, buttonSwitchIoConfig[i].direction );
+        ioMan_setDebounceDelay( (io_t) i, appSettings_getSettings()->debounceDelay[i] );
     }
 
     for ( uint8_t i = 0; i < sizeof( magnetIoConfig ) / sizeof( magnetIoConfig[0] ); i++ )
