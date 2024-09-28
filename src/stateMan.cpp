@@ -859,41 +859,41 @@ static void stateMan_generateEvent( door_control_t* const pDoorControl )
     event_t** pCurrentEvent = &pDoorControl->machine.event;
 
     /* Generate the event */
-    if (    (     ( door1SwitchStatus.state == INPUT_STATE_INACTIVE )
-               && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
-         && (     ( door2SwitchStatus.state == INPUT_STATE_INACTIVE )
-               && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) ) )
+    if (    (     ( door1SwitchStatus.state   == INPUT_STATE_INACTIVE  )
+              && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
+         && (     ( door2SwitchStatus.state   == INPUT_STATE_INACTIVE  )
+              && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_OPEN );
     }
 
-    if (    (    ( door1SwitchStatus.state == INPUT_STATE_ACTIVE )
+    if (    (    ( door1SwitchStatus.state    == INPUT_STATE_ACTIVE    )
               && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
-         && (    ( door2SwitchStatus.state == INPUT_STATE_ACTIVE )
+         && (    ( door2SwitchStatus.state    == INPUT_STATE_ACTIVE    )
               && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE );
     }
 
-    if (    ( door1SwitchStatus.state == INPUT_STATE_ACTIVE )
+    if (    ( door1SwitchStatus.state    == INPUT_STATE_ACTIVE    )
          && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_CLOSE );
     }
 
-    if (    ( door1SwitchStatus.state == INPUT_STATE_INACTIVE )
+    if (    ( door1SwitchStatus.state    == INPUT_STATE_INACTIVE  )
          && ( door1SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_1_OPEN );
     }
 
-    if (    ( door2SwitchStatus.state == INPUT_STATE_ACTIVE )
+    if (    ( door2SwitchStatus.state    == INPUT_STATE_ACTIVE    )
          && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( pCurrentEvent, DOOR_CONTROL_EVENT_DOOR_2_CLOSE );
     }
 
-    if (    ( door2SwitchStatus.state == INPUT_STATE_INACTIVE )
+    if (    ( door2SwitchStatus.state    == INPUT_STATE_INACTIVE  )
          && ( door2SwitchStatus.debounce == INPUT_DEBOUNCE_STABLE ) )
     {
         pushEvent( &pDoorControl->machine.event, DOOR_CONTROL_EVENT_DOOR_2_OPEN );
