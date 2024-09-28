@@ -829,21 +829,23 @@ static void doorUnlockTimeoutHandler( uint32_t time )
 
 
 
+
 /**
- * @brief Generates events based on the state of door switches.
+ * @brief Generates door control events based on the state of door switches.
  *
- * This function reads the state of two door switches and generates corresponding events
- * for the door control state machine. It logs the state of the door switches and pushes
- * events to the event queue based on the following conditions:
- * 
- * - If both door switches are inactive, it generates a DOOR_CONTROL_EVENT_DOOR_1_2_OPEN event.
- * - If both door switches are active, it generates a DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE event.
- * - If door 1 switch is active, it generates a DOOR_CONTROL_EVENT_DOOR_1_CLOSE event.
- * - If door 1 switch is inactive, it generates a DOOR_CONTROL_EVENT_DOOR_1_OPEN event.
- * - If door 2 switch is active, it generates a DOOR_CONTROL_EVENT_DOOR_2_CLOSE event.
- * - If door 2 switch is inactive, it generates a DOOR_CONTROL_EVENT_DOOR_2_OPEN event.
+ * This function reads the state of two door switches and generates appropriate
+ * events for the door control state machine. It logs the state of the door switches
+ * and pushes events to the state machine's event queue based on the switch states.
  *
  * @param pDoorControl Pointer to the door control structure.
+ *
+ * The function generates the following events:
+ * - DOOR_CONTROL_EVENT_DOOR_1_2_OPEN: Both door switches are inactive and stable.
+ * - DOOR_CONTROL_EVENT_DOOR_1_2_CLOSE: Both door switches are active and stable.
+ * - DOOR_CONTROL_EVENT_DOOR_1_CLOSE: Door 1 switch is active and stable.
+ * - DOOR_CONTROL_EVENT_DOOR_1_OPEN: Door 1 switch is inactive and stable.
+ * - DOOR_CONTROL_EVENT_DOOR_2_CLOSE: Door 2 switch is active and stable.
+ * - DOOR_CONTROL_EVENT_DOOR_2_OPEN: Door 2 switch is inactive and stable.
  */
 static void stateMan_generateEvent( door_control_t* const pDoorControl )
 {
