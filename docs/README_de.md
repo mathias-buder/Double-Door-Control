@@ -498,7 +498,11 @@ Das Flashen des Türsteuerungssystems auf die Hardware kann über USB mithilfe e
    - Doppelklicken Sie auf die Batch-Datei, um sie auszuführen.
    - Das Skript findet automatisch den richtigen Port, lädt die Firmware hoch und flasht das Board.
 
-3. **Warten Sie, bis das Flashen abgeschlossen ist**: Das Skript zeigt im Terminalfenster Fortschrittsinformationen an, die angeben, wann der Flashvorgang beginnt und endet. Nach Abschluss ist das System mit der neu geflashten Firmware einsatzbereit.
+3. **Warten Sie, bis das Flashen abgeschlossen ist**: Das Skript zeigt im Terminalfenster Fortschrittsinformationen an, die angeben, wann der Flashvorgang beginnt und endet. Nach Abschluss ist das System mit der neu geflashten Firmware einsatzbereit so wie unten dargestellt.
+
+<div style="text-align: center;">
+   <img src="img/boad_program_log.png" width="80%" />
+</div>
 
 4. **Softwareversion überprüfen**:
    - Stellen Sie nach dem Flashen eine Verbindung zur Befehlszeilenschnittstelle (CLI) des Systems her.

@@ -506,7 +506,11 @@ Flashing the Door Control System to the hardware can be done over USB using a si
    - Double-click on the batch file to execute it.
    - The script will automatically find the correct port, upload the firmware, and flash the board.
 
-4. **Wait for the Flash to Complete**: The script will display progress information in the terminal window, indicating when the flash process starts and finishes. Once completed, the system will be ready to use with the newly flashed firmware.
+4. **Wait for the Flash to Complete**: The script will display progress information in the terminal window, indicating when the flash process starts and finishes. Once completed, the system will be ready to use with the newly flashed firmware as shown below.
+
+<div style="text-align: center;">
+   <img src="docs/img/boad_program_log.png" width="80%" />
+</div>
 
 5. **Verify the Software Version**:
    - After flashing, connect to the system’s command-line interface (CLI).
