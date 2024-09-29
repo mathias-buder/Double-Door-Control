@@ -39,7 +39,7 @@
     - [Funktionsweise](#funktionsweise-1)
     - [Beispiel](#beispiel)
     - [Warum das wichtig ist?](#warum-das-wichtig-ist)
-- [Flashen des Steuerung über USB](#flashen-des-steuerung-über-usb)
+- [Softwareaktualisierung über USB](#softwareaktualisierung-über-usb)
     - [Flash-Anweisungen](#flash-anweisungen)
     - [Warum ein Batch-Skript verwenden?](#warum-ein-batch-skript-verwenden)
 
@@ -474,7 +474,7 @@ Durch die Verwendung von EEPROM kann das System **vor Ort konfiguriert und feina
 
 Dadurch entfällt die Notwendigkeit, den Code zu ändern oder das System neu zu flashen, wenn Betriebsänderungen erforderlich sind. Dadurch werden Wartung, Konfiguration und Systemaktualisierungen schneller und bequemer, was Ausfallzeiten und technischen Aufwand erheblich reduziert.
 
-# Flashen des Steuerung über USB
+# Softwareaktualisierung über USB
 
 Das Flashen des Türsteuerungssystems auf die Hardware kann über USB mithilfe eines einfachen Batch-Skripts erfolgen, das vom Softwareteam/Eigentümer bereitgestellt wird. Dieses Skript automatisiert den Prozess des Ladens der kompilierten Firmware auf die Platine, sodass das System schnell und einfach aktualisiert werden kann, ohne dass detaillierte Kenntnisse der zugrunde liegenden Programmierung erforderlich sind.
 
@@ -484,7 +484,7 @@ Das Flashen des Türsteuerungssystems auf die Hardware kann über USB mithilfe e
    - `firmware_v1.2.3-0-g1a2b3c4.bin`: Kompilierte Firmware-Binärdatei für das Türsteuerungssystem.
    - `program_board.bat`: Batch-Skriptdatei zum Flashen der Firmware auf die Platine über USB.
    - `platformio.ini`: Die plattformspezifische Konfigurationsdatei, die vom Batch-Skript benötigt wird.
-   - `docs`: Dokumentationsordner mit Handbuch, Softwarebeschreibung und anderen relevanten Informationen in Englisch und Deutsch.
+   - `README_de/en.pdf`: Softwaredokumentation / Bedienungsanleitung in Englisch und Deutsch.
 
 2. **Board anschließen**: Schließen Sie das Hardwareboard über ein USB-Kabel an Ihren Computer an. Stellen Sie sicher, dass das Board eingeschaltet und von Ihrem Computer erkannt wird so wie unten dargestellt. Für den Fall, dass Board nicht erkannt wird, installieren Sie die erforderlichen Treiber `renesas_drivers.zip` aus dem Release-Paket.
 

@@ -10,6 +10,8 @@ build:
   stage: build
   script:
     - "pio run --environment uno_r4_minima_release"
+    - "mv .pio/build/uno_r4_minima_release/*.zip /"
   artifacts:
+    name: "Release_Package"
     paths:
-      - .pio/build/uno_r4_minima_release/*.zip
+      - /*.zip

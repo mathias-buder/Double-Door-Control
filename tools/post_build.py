@@ -54,13 +54,9 @@ def after_build(source, target, env):
         zipf.write(os.path.join(projectDir, "tools", "dfu-util.exe"), "dfu-util.exe")
         zipf.write(os.path.join(projectDir, "tools","program_board.bat"), "program_board.bat")
 
-        # Add all README.md and radme.pdf files to the zip
+        # Add all english and german README PDF files to the zip
         readmeFiles = [
-            # English versions
-            os.path.join(projectDir, "README.md"),
             os.path.join(projectDir, "README.pdf"),
-            # German versions
-            os.path.join(projectDir, "docs","README_de.md"),
             os.path.join(projectDir, "docs","README_de.pdf")
         ]
 
@@ -68,10 +64,6 @@ def after_build(source, target, env):
         # print("Adding the following README files to the ZIP:")
         # for readmeFile in readmeFiles:
         #     print(readmeFile)
-
-        # Create a subdirectory "docs" in the zip file
-        docsDir = "docs/"
-        zipf.write(docsDir, docsDir)
 
         for readmeFile in readmeFiles:
             if os.path.exists(readmeFile):
@@ -82,8 +74,8 @@ def after_build(source, target, env):
                     newName = "README_en.pdf"
                 else:
                     newName = os.path.basename(readmeFile)
-                # Save README files in the "docs" subdirectory within the zip
-                zipf.write(readmeFile, os.path.join(docsDir, newName))
+                # Add the file to the zip
+                zipf.write(readmeFile, newName)
             else:
                 print(f"Warning: README file not found: {readmeFile}")
 
