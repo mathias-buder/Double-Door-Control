@@ -10,7 +10,7 @@ build:
   stage: build
   script:
     - "pio run --environment uno_r4_minima_release"
-    - "find .pio/build/uno_r4_minima_release/ -name '*.zip' -exec cp {} ./ \;"
+    - find .pio/build/uno_r4_minima_release/ -name '*.zip' -exec cp {} ./ \;
   artifacts:
     name: "Release_Package"
     paths:
