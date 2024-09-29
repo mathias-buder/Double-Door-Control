@@ -46,8 +46,8 @@
 /***************************************************************************************************/
 #define DEBOUNCE_DELAY_DOOR_BUTTON_1    100            /*!< Debounce delay for the door button @unit ms*/
 #define DEBOUNCE_DELAY_DOOR_BUTTON_2    100            /*!< Debounce delay for the door button @unit ms*/
-#define DEBOUNCE_DELAY_DOOR_SWITCH_1    100            /*!< Debounce delay for the door switch @unit ms*/
-#define DEBOUNCE_DELAY_DOOR_SWITCH_2    100            /*!< Debounce delay for the door switch @unit ms*/
+#define DEBOUNCE_DELAY_DOOR_SWITCH_1    300            /*!< Debounce delay for the door switch @unit ms*/
+#define DEBOUNCE_DELAY_DOOR_SWITCH_2    300            /*!< Debounce delay for the door switch @unit ms*/
 #define DEBOUNCE_STABLE_TIMEOUT         300            /*!< Timeout for the debounce stable state @unit ms */
 
 #define SERIAL_BAUD_RATE                115200         /*!< Baud rate of the serial communication @unit bps */
