@@ -11,6 +11,7 @@ FOR %%F IN ("%~dp0*.bin") DO (
 REM Check if a .bin file was found
 IF "%BIN_FILE%"=="" (
     echo No .bin file found in the current directory. Please add a .bin file and try again.
+    pause
     exit /b 1
 )
 
@@ -45,6 +46,7 @@ echo Flashing the board...
 
 IF ERRORLEVEL 1 (
     echo Failed to flash the board. Please check the connection and try again.
+    pause
     exit /b 1
 )
 
