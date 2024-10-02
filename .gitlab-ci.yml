@@ -12,6 +12,6 @@ build:
     - "pio run --environment uno_r4_minima_release"
     - find .pio/build/uno_r4_minima_release/ -name '*.zip' -exec cp {} ./ \;
   artifacts:
-    name: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}_${CI_COMMIT_TIMESTAMP}"
+    name: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_NAME}-g${CI_COMMIT_SHORT_SHA}_${CI_COMMIT_TIMESTAMP}"
     paths:
       - "*.zip"
