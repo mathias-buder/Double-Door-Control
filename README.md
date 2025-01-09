@@ -1,6 +1,4 @@
-<img src="docs/img/metek_logo.png" width="300"/><br><br>
-
-<span style="font-family:Helvetica; font-size:30pt;">Door Control System</span>
+<span style="font-family:Helvetica; font-size:30pt;">Double Door Control System</span>
 ---
 
 - [Introduction](#introduction)
