@@ -1,6 +1,4 @@
-<img src="docs/img/metek_logo.png" width="300"/><br><br>
-
-<span style="font-family:Helvetica; font-size:30pt;">Door Control System</span>
+<span style="font-family:Helvetica; font-size:30pt;">Double Door Control System</span>
 ---
 
 - [Introduction](#introduction)
@@ -60,6 +58,7 @@ The system goes through different states based on the status of the doors (wheth
 4. **Fault** - If something goes wrong (like both doors opening simultaneously), the system moves to a "fault" state. This is indicated by both door leds blinking in magenta.
 
 ### Main System States
+The statemaching shown below has been implemented using [UML-State-Machine-in-C](https://github.com/kiishor/UML-State-Machine-in-C) by [kiishor](https://github.com/kiishor). Thanks a lot for this nice piece of software!
 
 <div style="text-align: center;">
    <img src="docs/img/state_diagram.jpeg" width="100%" />
