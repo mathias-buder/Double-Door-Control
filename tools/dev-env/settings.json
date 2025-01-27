@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "arduino.h": "c",
+        "simplecli.h": "c",
+        "string": "cpp"
+    }
+}
